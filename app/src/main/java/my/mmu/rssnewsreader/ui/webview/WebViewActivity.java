@@ -637,6 +637,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 adjustTextZoom(false);
                 return true;
 
+            case R.id.pitchUp:
+                adjustPitch(true);
+                return true;
+
+            case R.id.pitchDown:
+                adjustPitch(false);
+                return true;
+
             case R.id.bookmark:
                 toggleBookmark();
                 return true;
@@ -761,6 +769,16 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         int newZoom = zoomIn ? currentZoom + 10 : currentZoom - 10;
         webView.getSettings().setTextZoom(newZoom);
         sharedPreferencesRepository.setTextZoom(newZoom);
+    }
+
+    private void adjustPitch(boolean pitchUp) {
+        float currentPitch = sharedPreferencesRepository.getTtsPitch();
+        float newPitch = pitchUp ? currentPitch + 0.1f : currentPitch - 0.1f;
+        // Clamp pitch between 0.5 and 2.0 for reasonable values
+        newPitch = Math.max(0.5f, Math.min(2.0f, newPitch));
+        sharedPreferencesRepository.setTtsPitch(newPitch);
+        ttsPlayer.setTtsPitch(newPitch);
+        makeSnackbar(String.format("Pitch set to %.1f", newPitch));
     }
 
     private void toggleBookmark() {

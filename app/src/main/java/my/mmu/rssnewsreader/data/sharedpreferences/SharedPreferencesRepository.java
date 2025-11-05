@@ -79,6 +79,15 @@ public class SharedPreferencesRepository {
         return sharedPreferences.getInt("textZoom", 0);
     }
 
+    public void setTtsPitch(float ttsPitch) {
+        editor.putFloat("ttsPitch", ttsPitch);
+        editor.apply();
+    }
+
+    public float getTtsPitch() {
+        return sharedPreferences.getFloat("ttsPitch", 1.0f);
+    }
+
     public void setSortBy(String sortBy) {
         editor.putString("sortBy", sortBy);
         editor.apply();

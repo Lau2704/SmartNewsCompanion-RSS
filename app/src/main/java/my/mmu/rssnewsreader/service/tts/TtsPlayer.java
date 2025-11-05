@@ -371,6 +371,11 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 setLanguage(Locale.ENGLISH, true);
             }
 
+            // Apply pitch setting
+            float pitch = sharedPreferencesRepository.getTtsPitch();
+            setTtsPitch(pitch);
+            Log.d(TAG, "TTS pitch set to: " + pitch);
+
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 isSettingUpNewArticle = false;
 
@@ -643,6 +648,15 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             }
         }
         tts.setSpeechRate(speechRate);
+    }
+
+    public void setTtsPitch(float pitch) {
+        if (tts != null) {
+            if (pitch == 0) {
+                pitch = 1.0f;
+            }
+            tts.setPitch(pitch);
+        }
     }
 
     public void setWebViewCallback(WebViewListener listener) {

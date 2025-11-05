@@ -31,6 +31,20 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/pitchUp"
+        android:icon="@drawable/ic_pitch_up"
+        android:title="@string/pitch_up"
+        android:contentDescription="@string/pitch_up"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/pitchDown"
+        android:icon="@drawable/ic_pitch_down"
+        android:title="@string/pitch_down"
+        android:contentDescription="@string/pitch_down"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/bookmark"
         android:icon="@drawable/ic_bookmark_outline"
         android:title="@string/bookmark"
