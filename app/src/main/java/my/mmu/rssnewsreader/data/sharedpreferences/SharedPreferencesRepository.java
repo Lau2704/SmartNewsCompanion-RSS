@@ -213,4 +213,13 @@ public class SharedPreferencesRepository {
     public long getCurrentReadingEntryId() {
         return sharedPreferences.getLong(KEY_CURRENT_READING_ENTRY_ID, -1);
     }
+
+    public void setTtsPitch(float pitch) {
+        editor.putFloat("ttsPitch", pitch);
+        editor.apply();
+    }
+
+    public float getTtsPitch() {
+        return sharedPreferences.getFloat("ttsPitch", 1.0f);
+    }
 }

@@ -645,6 +645,15 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         tts.setSpeechRate(speechRate);
     }
 
+    public void setTtsPitch(float pitch) {
+        if (pitch == 0) {
+            pitch = 1.0f;
+        }
+        if (tts != null) {
+            tts.setPitch(pitch);
+        }
+    }
+
     public void setWebViewCallback(WebViewListener listener) {
         this.webViewCallback = listener;
     }

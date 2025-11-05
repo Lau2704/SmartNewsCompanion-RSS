@@ -69,6 +69,8 @@
     <!-- Top App Bar WebView -->
     <string name="zoom_in">Zoom In</string>
     <string name="zoom_out">Zoom Out</string>
+    <string name="pitch_up">Increase Pitch</string>
+    <string name="pitch_down">Decrease Pitch</string>
     <string name="bookmark">Bookmark</string>
     <string name="open_in_browser">Open in browser</string>
     <string name="exit_browser">Offline mode</string>
