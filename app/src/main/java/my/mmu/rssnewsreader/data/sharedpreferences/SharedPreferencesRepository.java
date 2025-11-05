@@ -21,6 +21,7 @@ public class SharedPreferencesRepository {
     private static final String KEY_SCROLL_Y_PREFIX = "scroll_y_";
     private static final String KEY_WEB_VIEW_MODE = "web_view_mode_";
     private static final String KEY_CURRENT_READING_ENTRY_ID = "current_reading_entry_id";
+    private static final String KEY_TTS_PITCH = "ttsPitch";
 
     @Inject
     public SharedPreferencesRepository(@ApplicationContext Context context) {
@@ -215,11 +216,11 @@ public class SharedPreferencesRepository {
     }
 
     public void setTtsPitch(float pitch) {
-        editor.putFloat("ttsPitch", pitch);
+        editor.putFloat(KEY_TTS_PITCH, pitch);
         editor.apply();
     }
 
     public float getTtsPitch() {
-        return sharedPreferences.getFloat("ttsPitch", 1.0f);
+        return sharedPreferences.getFloat(KEY_TTS_PITCH, 1.0f);
     }
 }
