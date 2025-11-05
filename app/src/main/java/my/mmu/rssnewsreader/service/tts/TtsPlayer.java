@@ -646,12 +646,13 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void setTtsPitch(float pitch) {
+        if (tts == null) {
+            return;
+        }
         if (pitch == 0) {
             pitch = 1.0f;
         }
-        if (tts != null) {
-            tts.setPitch(pitch);
-        }
+        tts.setPitch(pitch);
     }
 
     public void setWebViewCallback(WebViewListener listener) {
