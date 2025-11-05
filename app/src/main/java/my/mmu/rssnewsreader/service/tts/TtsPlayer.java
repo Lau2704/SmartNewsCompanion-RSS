@@ -649,7 +649,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         if (tts == null) {
             return;
         }
-        if (pitch == 0) {
+        // Ensure pitch is in valid range (0.5 to 2.0), default to 1.0 if invalid
+        if (pitch <= 0 || pitch < 0.5f || pitch > 2.0f) {
             pitch = 1.0f;
         }
         tts.setPitch(pitch);
