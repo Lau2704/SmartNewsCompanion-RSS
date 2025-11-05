@@ -81,6 +81,7 @@
     <string name="highlight_text_turn_off">Turn off highlight text</string>
     <string name="background_music_turn_on">Turn on background music</string>
     <string name="background_music_turn_off">Turn off background music</string>
+    <string name="pitch_set_to">Pitch set to %.1f</string>
 
     <!-- Top App Bar WebView -->
     <string name="filter">Filter</string>

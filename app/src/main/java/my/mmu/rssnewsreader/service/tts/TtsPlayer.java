@@ -54,6 +54,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     public static final String TAG = TtsPlayer.class.getSimpleName();
+    private static final float DEFAULT_TTS_PITCH = 1.0f;
 
     private TextToSpeech tts;
     private PlaybackStateListener listener;
@@ -653,7 +654,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     public void setTtsPitch(float pitch) {
         if (tts != null) {
             if (pitch == 0) {
-                pitch = 1.0f;
+                pitch = DEFAULT_TTS_PITCH;
             }
             tts.setPitch(pitch);
         }

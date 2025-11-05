@@ -778,7 +778,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         newPitch = Math.max(0.5f, Math.min(2.0f, newPitch));
         sharedPreferencesRepository.setTtsPitch(newPitch);
         ttsPlayer.setTtsPitch(newPitch);
-        makeSnackbar(String.format("Pitch set to %.1f", newPitch));
+        makeSnackbar(getString(R.string.pitch_set_to, newPitch));
     }
 
     private void toggleBookmark() {
