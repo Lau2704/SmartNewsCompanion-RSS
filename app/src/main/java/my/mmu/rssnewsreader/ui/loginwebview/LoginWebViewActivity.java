@@ -44,6 +44,7 @@ public class LoginWebViewActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
