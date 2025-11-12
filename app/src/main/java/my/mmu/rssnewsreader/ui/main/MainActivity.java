@@ -1,22 +1,12 @@
 package my.mmu.rssnewsreader.ui.main;
 
 import android.annotation.SuppressLint;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Xml;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import my.mmu.rssnewsreader.R;
@@ -25,24 +15,17 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
-import androidx.core.view.MenuProvider;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
-import androidx.navigation.NavHost;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -50,15 +33,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import my.mmu.rssnewsreader.data.entry.Entry;
 import my.mmu.rssnewsreader.data.feed.Feed;
-import my.mmu.rssnewsreader.data.feed.FeedRepository;
 import my.mmu.rssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.rssnewsreader.databinding.ActivityMainBinding;
-import my.mmu.rssnewsreader.ui.allentries.AllEntriesFragment;
-import my.mmu.rssnewsreader.ui.allentries.AllEntriesViewModel;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import com.google.android.material.materialswitch.MaterialSwitch;
-import com.google.android.material.navigation.NavigationBarView;
-import com.google.android.material.navigation.NavigationView;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -312,6 +290,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
 
         mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
+        sharedPreferencesRepository.initializeDefaultTranslationLanguageOnFirst();
 
         themeSwitch = binding.themeSwitch;
 

@@ -2,7 +2,6 @@ package my.mmu.rssnewsreader.data.sharedpreferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
@@ -142,13 +141,24 @@ public class SharedPreferencesRepository {
         editor.apply();
     }
 
+    public String getSystemCurrentLanguage(){
+        return context.getResources().getConfiguration().getLocales().get(0).getLanguage();
+    }
     public String getDefaultTranslationLanguage() {
-        return sharedPreferences.getString("defaultTranslationLanguage", "zh");
+        return sharedPreferences.getString("defaultTranslationLanguage", getSystemCurrentLanguage());
     }
 
     public void setDefaultTranslationLanguage(String language) {
-        sharedPreferences.edit().putString("target_language", language).apply();
+        sharedPreferences.edit().putString("defaultTranslationLanguage", language).apply();
     }
+
+    public void initializeDefaultTranslationLanguageOnFirst() {
+        if (!sharedPreferences.contains("defaultTranslationLanguage")) {
+            editor.putString("defaultTranslationLanguage", getSystemCurrentLanguage());
+            editor.apply();
+        }
+    }
+
 
     public String getTranslationMethod() {
         return sharedPreferences.getString("translationMethod", "allAtOnce");
