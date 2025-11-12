@@ -141,8 +141,11 @@ public class SharedPreferencesRepository {
         editor.apply();
     }
 
+    public String getSystemCurrentLanguage(){
+        return context.getResources().getConfiguration().getLocales().get(0).getLanguage();
+    }
     public String getDefaultTranslationLanguage() {
-        return sharedPreferences.getString("defaultTranslationLanguage", "en");
+        return sharedPreferences.getString("defaultTranslationLanguage", getSystemCurrentLanguage());
     }
 
     public void setDefaultTranslationLanguage(String language) {
@@ -151,7 +154,7 @@ public class SharedPreferencesRepository {
 
     public void initializeDefaultTranslationLanguageOnFirst() {
         if (!sharedPreferences.contains("defaultTranslationLanguage")) {
-            editor.putString("defaultTranslationLanguage", "en");
+            editor.putString("defaultTranslationLanguage", getSystemCurrentLanguage());
             editor.apply();
         }
     }
