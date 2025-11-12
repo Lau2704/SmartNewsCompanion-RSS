@@ -146,7 +146,7 @@ public class SharedPreferencesRepository {
     }
 
     public void setDefaultTranslationLanguage(String language) {
-        sharedPreferences.edit().putString("target_language", language).apply();
+        sharedPreferences.edit().putString("defaultTranslationLanguage", language).apply();
     }
 
     public void initializeDefaultTranslationLanguageOnFirst() {
