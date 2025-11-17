@@ -100,6 +100,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private boolean isTranslatedView = true;
     private MaterialToolbar toolbar;
 
+    // JavaScript failure detection
+    private int pageLoadRetryCount = 0;
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+    private boolean isJavaScriptError = false;
+    private Handler retryHandler = new Handler(Looper.getMainLooper());
+    private String currentLoadingUrl = null;
+
     // Translation
     private String targetLanguage;
     private String translationMethod;
@@ -861,6 +868,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setBuiltInZoomControls(true);
         webView.getSettings().setDisplayZoomControls(false);
+        webView.getSettings().setLoadsImagesAutomatically(true);
+        webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         int textZoom = sharedPreferencesRepository.getTextZoom();
         if (textZoom != 0) {
@@ -888,6 +897,23 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 if (combinedProgress >= 95 && (!ttsPlayer.isPreparing() || ttsPlayer.ttsIsNull())) {
                     loading.setVisibility(View.GONE);
                 }
+
+                // Check for JavaScript execution after page loaded
+                if (newProgress == 100 && currentLoadingUrl != null) {
+                    checkJavaScriptExecution();
+                }
+            }
+
+            @Override
+            public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
+                // Detect JavaScript errors
+                if (consoleMessage.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                    Log.e(TAG, "JavaScript Error: " + consoleMessage.message() +
+                            " at line " + consoleMessage.lineNumber() +
+                            " of " + consoleMessage.sourceId());
+                    isJavaScriptError = true;
+                }
+                return super.onConsoleMessage(consoleMessage);
             }
         });
     }
@@ -1154,6 +1180,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             autoTranslationObserver.removeObserver(checkAutoTranslated);
         }
 
+        // Clean up retry handler
+        if (retryHandler != null) {
+            retryHandler.removeCallbacksAndMessages(null);
+        }
+
         if (isReadingMode) {
             switchPlayModeButton.setVisible(false);
             functionButtonsReadingMode.setVisibility(View.INVISIBLE);
@@ -1245,9 +1276,30 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             super.onPageStarted(view, url, favicon);
             Log.d(TAG, "WebClient: onPageStarted - loadingWebView visible.");
             webViewViewModel.setLoadingState(true);
+            currentLoadingUrl = url;
+            isJavaScriptError = false;
             if (clearHistory) {
                 clearHistory = false;
                 webView.clearHistory();
+            }
+        }
+
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            super.onReceivedError(view, errorCode, description, failingUrl);
+            Log.e(TAG, "Page load error: " + description + " (code: " + errorCode + ")");
+            handlePageLoadFailure(failingUrl, "Page load error: " + description);
+        }
+
+        @Override
+        public void onReceivedError(WebView view, android.webkit.WebResourceRequest request,
+                                    android.webkit.WebResourceError error) {
+            super.onReceivedError(view, request, error);
+            if (request.isForMainFrame()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Log.e(TAG, "Main frame error: " + error.getDescription());
+                    handlePageLoadFailure(request.getUrl().toString(), error.getDescription().toString());
+                }
             }
         }
 
@@ -1287,10 +1339,31 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             super.onPageStarted(view, url, favicon);
             Log.d(TAG, "ReadingWebClient: onPageStarted - loadingWebView visible.");
             webViewViewModel.setLoadingState(true);
+            currentLoadingUrl = url;
+            isJavaScriptError = false;
             ttsExtractor.setCallback(WebViewActivity.this);
             if (clearHistory) {
                 clearHistory = false;
                 webView.clearHistory();
+            }
+        }
+
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            super.onReceivedError(view, errorCode, description, failingUrl);
+            Log.e(TAG, "Page load error (Reading mode): " + description + " (code: " + errorCode + ")");
+            handlePageLoadFailure(failingUrl, "Page load error: " + description);
+        }
+
+        @Override
+        public void onReceivedError(WebView view, android.webkit.WebResourceRequest request,
+                                    android.webkit.WebResourceError error) {
+            super.onReceivedError(view, request, error);
+            if (request.isForMainFrame()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Log.e(TAG, "Main frame error (Reading mode): " + error.getDescription());
+                    handlePageLoadFailure(request.getUrl().toString(), error.getDescription().toString());
+                }
             }
         }
 
@@ -1410,5 +1483,94 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private void updatePlayPauseButtonIcon(boolean playing) {
         int iconRes = playing ? R.drawable.ic_pause : R.drawable.ic_play;
         playPauseButton.setIcon(ContextCompat.getDrawable(this, iconRes));
+    }
+
+    /**
+     * Check if JavaScript executed successfully by injecting a test script
+     */
+    private void checkJavaScriptExecution() {
+        retryHandler.postDelayed(() -> {
+            webView.evaluateJavascript(
+                "(function() { " +
+                "   try { " +
+                "       return document.readyState === 'complete' && " +
+                "              document.body !== null && " +
+                "              document.body.innerHTML.trim().length > 0; " +
+                "   } catch(e) { " +
+                "       return false; " +
+                "   } " +
+                "})();",
+                result -> {
+                    boolean isPageHealthy = "true".equals(result);
+                    Log.d(TAG, "JavaScript execution check: " + (isPageHealthy ? "SUCCESS" : "FAILED") + ", result=" + result);
+
+                    if (!isPageHealthy || isJavaScriptError) {
+                        handlePageLoadFailure(currentLoadingUrl, "JavaScript execution failed or incomplete page load");
+                    } else {
+                        // Page loaded successfully, reset retry count
+                        pageLoadRetryCount = 0;
+                    }
+                }
+            );
+        }, 1000); // Wait 1 second after page finish to check
+    }
+
+    /**
+     * Handle page load failures with automatic retry or user prompt
+     */
+    private void handlePageLoadFailure(String failedUrl, String errorMessage) {
+        if (failedUrl == null || !failedUrl.equals(currentLoadingUrl)) {
+            return; // Ignore errors from sub-resources
+        }
+
+        runOnUiThread(() -> {
+            loading.setVisibility(View.GONE);
+
+            if (pageLoadRetryCount < MAX_RETRY_ATTEMPTS) {
+                pageLoadRetryCount++;
+                Log.w(TAG, "Auto-retry attempt " + pageLoadRetryCount + "/" + MAX_RETRY_ATTEMPTS + " for URL: " + failedUrl);
+
+                makeSnackbar("Page failed to load. Retrying (" + pageLoadRetryCount + "/" + MAX_RETRY_ATTEMPTS + ")...");
+
+                // Retry after a delay
+                retryHandler.postDelayed(() -> {
+                    webView.reload();
+                }, 2000);
+            } else {
+                // Max retries reached, prompt user
+                Log.e(TAG, "Max retry attempts reached for URL: " + failedUrl);
+                showRetryDialog(failedUrl, errorMessage);
+            }
+        });
+    }
+
+    /**
+     * Show dialog to prompt user to retry or cancel
+     */
+    private void showRetryDialog(String url, String errorMessage) {
+        new AlertDialog.Builder(this)
+            .setTitle("Page Load Failed")
+            .setMessage("The page failed to load correctly after " + MAX_RETRY_ATTEMPTS + " attempts.\n\n" +
+                       "Error: " + errorMessage + "\n\n" +
+                       "Would you like to retry loading the page?")
+            .setPositiveButton("Retry", (dialog, which) -> {
+                pageLoadRetryCount = 0;
+                webView.reload();
+                dialog.dismiss();
+            })
+            .setNegativeButton("Cancel", (dialog, which) -> {
+                pageLoadRetryCount = 0;
+                makeSnackbar("Page load cancelled");
+                dialog.dismiss();
+            })
+            .setNeutralButton("Reload with Delay", (dialog, which) -> {
+                pageLoadRetryCount = 0;
+                ReloadDialog reloadDialog = new ReloadDialog(this, feedId,
+                    R.string.reload_confirmation, R.string.reload_suggestion_message);
+                reloadDialog.show(getSupportFragmentManager(), ReloadDialog.TAG);
+                dialog.dismiss();
+            })
+            .setCancelable(false)
+            .show();
     }
 }
