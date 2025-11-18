@@ -2,8 +2,11 @@ package my.mmu.rssnewsreader.service.tts;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -101,10 +104,131 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     public void initTts(TtsService ttsService, PlaybackStateListener listener, MediaSessionCompat.Callback callback) {
         this.listener = listener;
         this.callback = callback;
+
+        if (tts != null) {
+            Log.w(TAG, "TTS already exists, shutting down old instance first");
+            try {
+                tts.stop();
+                tts.shutdown();
+            } catch (Exception e) {
+                Log.e(TAG, "Error shutting down old TTS", e);
+            }
+            tts = null;
+            isInit = false;
+        }
+
+        Log.d(TAG, "Creating new TextToSpeech instance");
+
+        String preferredEngine = null;
+        try {
+            Intent checkIntent = new Intent();
+            checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+            List<android.content.pm.ResolveInfo> engines = ttsService.getPackageManager()
+                    .queryIntentActivities(checkIntent, 0);
+
+            Log.d(TAG, "Found " + engines.size() + " TTS engine(s)");
+
+            if (engines.isEmpty()) {
+                Log.e(TAG, "No TTS engines found on the device.");
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("No TTS engine found. Please install one from the Play Store.");
+                }
+                return;
+            }
+
+            for (android.content.pm.ResolveInfo info : engines) {
+                String packageName = info.activityInfo.packageName;
+                Log.d(TAG, "Available TTS engine: " + packageName);
+
+                if (packageName.equals("com.google.android.tts")) {
+                    preferredEngine = packageName;
+                    Log.d(TAG, "Selected Google TTS engine");
+                    break; 
+                }
+            }
+
+            if (preferredEngine == null) {
+                Log.w(TAG, "Google TTS engine not found, using default");
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking TTS engines", e);
+        }
+
+        final String engineToUse = preferredEngine;
+        Log.d(TAG, "Initializing TTS with engine: " + (engineToUse != null ? engineToUse : "default"));
+
         tts = new TextToSpeech(ttsService, status -> {
+            Log.d(TAG, "TTS init callback received with status: " + status + " (SUCCESS=0, ERROR=" + TextToSpeech.ERROR + ")");
+
             if (status == TextToSpeech.SUCCESS) {
-                Log.d(TAG, "initTts successful");
-                isInit = true;
+                Log.d(TAG, "initTts successful - TTS engine bound");
+
+                try {
+                    String defaultEngine = tts.getDefaultEngine();
+                    Log.d(TAG, "Default TTS engine: " + defaultEngine);
+
+                    List<TextToSpeech.EngineInfo> enginesList = tts.getEngines();
+                    Log.d(TAG, "Total engines available: " + enginesList.size());
+                    for (TextToSpeech.EngineInfo engine : enginesList) {
+                        Log.d(TAG, "Engine: " + engine.name + " (label: " + engine.label + ")");
+                    }
+
+                    if (defaultEngine == null || defaultEngine.isEmpty()) {
+                        Log.e(TAG, "TTS initialized but default engine is null!");
+                        if (!enginesList.isEmpty()) {
+                            String fallbackEngine = enginesList.get(0).name;
+                            Log.d(TAG, "Attempting to use fallback engine: " + fallbackEngine);
+                            isInit = true;
+                        } else {
+                            isInit = false;
+                            if (webViewCallback != null) {
+                                webViewCallback.makeSnackbar("No TTS engine found. Please enable Google Text-to-Speech in Settings.");
+                            }
+                            return;
+                        }
+                    } else {
+                        isInit = true;
+                    }
+
+                    Locale[] testLocales = {Locale.ENGLISH, Locale.US, Locale.getDefault()};
+                    boolean languageFound = false;
+
+                    for (Locale testLocale : testLocales) {
+                        int available = tts.isLanguageAvailable(testLocale);
+                        Log.d(TAG, "Language " + testLocale + " availability: " + available + " (LANG_AVAILABLE=0, LANG_COUNTRY_AVAILABLE=1, LANG_COUNTRY_VAR_AVAILABLE=2)");
+
+                        if (available >= TextToSpeech.LANG_AVAILABLE) {
+                            languageFound = true;
+                            Log.d(TAG, "Found working language: " + testLocale);
+                            break;
+                        }
+                    }
+
+                    if (!languageFound) {
+                        Log.w(TAG, "No languages available, but TTS may still work. Proceeding...");
+                    }
+
+                    Log.d(TAG, "TTS fully initialized and ready");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error verifying TTS engine", e);
+                    isInit = false;
+                    if (webViewCallback != null) {
+                        webViewCallback.makeSnackbar("TTS verification failed: " + e.getMessage());
+                    }
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    android.media.AudioAttributes audioAttributes = new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+                    int result = tts.setAudioAttributes(audioAttributes);
+                    Log.d(TAG, "TTS audio attributes set, result: " + (result == TextToSpeech.SUCCESS ? "SUCCESS" : "ERROR"));
+                } else {
+                    Log.d(TAG, "Android version < LOLLIPOP, using legacy audio stream");
+                }
 
                 if (actionNeeded) {
                     Log.d(TAG, "Deferred auto-play activated — TTS is now ready");
@@ -116,21 +240,42 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     }
                     actionNeeded = false;
                 }
+            } else {
+                Log.e(TAG, "TTS initialization FAILED with status: " + status);
+                isInit = false;
+
+                Log.e(TAG, "Common causes:");
+                Log.e(TAG, "1. Google Text-to-Speech is DISABLED in app settings");
+                Log.e(TAG, "2. TTS data is corrupted or not downloaded");
+                Log.e(TAG, "3. Device doesn't support TTS");
+
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("TTS initialization failed. Please install or enable a TTS engine.");
+                }
             }
-        });
+        }, engineToUse);
+
         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
-            public void onStart(String s) {
+            public void onStart(String utteranceId) {
+                Log.d(TAG, "TTS onStart - utteranceId: " + utteranceId + ", isSpeaking: " + tts.isSpeaking());
 
+                android.media.AudioManager audioManager = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                if (audioManager != null) {
+                    int volume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+                    Log.d(TAG, "TTS onStart - Media volume: " + volume);
+                }
             }
 
             @Override
-            public void onDone(String s) {
+            public void onDone(String utteranceId) {
+                Log.d(TAG, "TTS onDone - utteranceId: " + utteranceId);
+
                 if (isManualSkip) {
                     Log.d(TAG, "Manual skip — skipping sentenceCounter++ in onDone");
                     isManualSkip = false;
 
-                    if (sentenceCounter < sentences.size() - 1) {
+                    if (sentences != null && sentenceCounter < sentences.size() - 1) {
                         sentenceCounter++;
                         speak();
                         entryRepository.updateSentCount(sentenceCounter, currentId);
@@ -140,7 +285,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                         entryRepository.updateSentCount(0, currentId);
                         sentenceCounter = 0;
                         isArticleFinished = true;
-                        callback.onSkipToNext();
+                        if (callback != null) {
+                            callback.onSkipToNext();
+                        }
                     }
                     return;
                 }
@@ -150,7 +297,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     return;
                 }
 
-                if (sentenceCounter < sentences.size() - 1) {
+                if (sentences != null && sentenceCounter < sentences.size() - 1) {
                     sentenceCounter++;
                     speak();
                     entryRepository.updateSentCount(sentenceCounter, currentId);
@@ -160,13 +307,25 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     entryRepository.updateSentCount(0, currentId);
                     sentenceCounter = 0;
                     isArticleFinished = true;
-                    callback.onSkipToNext();
+                    if (callback != null) {
+                        callback.onSkipToNext();
+                    }
                 }
             }
 
             @Override
-            public void onError(String s) {
-                Log.d("TTS", "onError");
+            public void onError(String utteranceId) {
+                Log.e(TAG, "TTS ERROR - utteranceId: " + utteranceId);
+                Log.e(TAG, "TTS engine state - isInit: " + isInit + ", isSpeaking: " + (tts != null && tts.isSpeaking()));
+
+                if (tts != null) {
+                    Log.e(TAG, "TTS engine info - Engines available: " + tts.getEngines());
+                    Log.e(TAG, "Current language: " + language);
+                }
+
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("TTS playback error. Please check TTS settings.");
+                }
             }
         });
     }
@@ -181,8 +340,15 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void stopTtsPlayback() {
-        if (tts != null && tts.isSpeaking()) {
-            tts.stop();
+        if (tts != null) {
+            try {
+                if (tts.isSpeaking()) {
+                    tts.stop();
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "TTS not bound when stopping playback", e);
+                isInit = false;
+            }
         }
 
         currentId = -1;
@@ -197,8 +363,16 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void pauseTts() {
-        if (tts != null && tts.isSpeaking()) {
-            tts.stop();
+        if (tts != null) {
+            try {
+                if (tts.isSpeaking()) {
+                    tts.stop();
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "TTS not bound to engine when checking isSpeaking", e);
+                // TTS engine disconnected, need to reinitialize
+                isInit = false;
+            }
         }
         isPausedManually = true;
         sharedPreferencesRepository.setIsPausedManually(true);
@@ -212,6 +386,12 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     public void extract(long currentId, long feedId, String content, String language) {
         Log.d(TAG, "Switching to new article: ID=" + currentId);
 
+        // Safety checks
+        if (currentId <= 0) {
+            Log.e(TAG, "Invalid article ID: " + currentId);
+            return;
+        }
+
         boolean wasSpeaking = tts != null && tts.isSpeaking();
         isPausedManually = !wasSpeaking && sharedPreferencesRepository.getIsPausedManually();
         sharedPreferencesRepository.setIsPausedManually(isPausedManually);
@@ -222,9 +402,12 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             tts.stop();
         }
 
+        // Reset state
         isPreparing = true;
         isSettingUpNewArticle = true;
-        sentences = new ArrayList<>();
+        if (sentences != null) {
+            sentences.clear();
+        }
         isArticleFinished = false;
 
         this.language = language;
@@ -233,23 +416,22 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         hasSpokenAfterSetup = false;
         countDownLatch = new CountDownLatch(1);
 
-        if (language != null && !language.isEmpty()) {
+        if (language != null && !language.isEmpty() && ttsExtractor != null) {
             ttsExtractor.setCurrentLanguage(language, true);
             Log.d(TAG, "[extract] Locked language = " + language);
         }
 
-        if (content != null) {
+        if (content != null && !content.trim().isEmpty()) {
             new Thread(() -> {
-                extractToTts(content, language);
-
                 try {
+                    extractToTts(content, language);
                     countDownLatch.await();
 
                     if (isInit) {
                         setupTts();
                         if (!isPausedManually) {
                             Log.d(TAG, "TTS ready and not manually paused — auto speaking");
-                            speak();
+                            ContextCompat.getMainExecutor(context).execute(() -> speak());
                         } else {
                             Log.d(TAG, "TTS ready but paused manually — not speaking");
                         }
@@ -258,12 +440,18 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                         actionNeeded = true;
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Interrupted while waiting for extraction", e);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception during extraction", e);
                 }
             }).start();
         } else {
-            ttsExtractor.setCallback(this);
-            ttsExtractor.prioritize();
+            if (ttsExtractor != null) {
+                ttsExtractor.setCallback(this);
+                ttsExtractor.prioritize();
+            } else {
+                Log.e(TAG, "TtsExtractor is null");
+            }
         }
     }
 
@@ -412,28 +600,53 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     private void setLanguage(Locale locale, boolean fromService) {
         if (tts == null) {
+            Log.w(TAG, "TTS is null, cannot set language to: " + locale);
             return;
         }
-        int result = tts.setLanguage(locale);
+        
+        if (locale == null) {
+            Log.w(TAG, "Locale is null, cannot set language");
+            return;
+        }
+        
+        synchronized (this) {
+            // Check if the TTS engine is available
+            int engineCheck = tts.isLanguageAvailable(locale);
+            Log.d(TAG, "Language availability check for " + locale + ": " + engineCheck);
+            
+            int result = tts.setLanguage(locale);
 
-        Log.d(TAG, "setLanguage() called with: " + locale.toString());
-        Log.d(TAG, "setLanguage() result: " + result);
+            Log.d(TAG, "setLanguage() called with: " + locale.toString());
+            Log.d(TAG, "setLanguage() result: " + result);
 
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            Log.d(TAG, "Language not supported" + locale);
-            if (webViewCallback != null) {
-                webViewCallback.makeSnackbar("Language not installed. Required language: " + locale.getDisplayLanguage());
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.w(TAG, "Language not supported: " + locale);
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("Language not installed. Required language: " + locale.getDisplayLanguage());
+                }
+                // Try to set to English as fallback
+                int fallbackCheck = tts.isLanguageAvailable(Locale.ENGLISH);
+                Log.d(TAG, "English availability: " + fallbackCheck);
+                
+                int fallbackResult = tts.setLanguage(Locale.ENGLISH);
+                if (fallbackResult == TextToSpeech.LANG_MISSING_DATA || fallbackResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e(TAG, "Even English language is not supported");
+                    if (webViewCallback != null) {
+                        webViewCallback.makeSnackbar("TTS engine error: No supported language found");
+                    }
+                } else {
+                    Log.d(TAG, "Fallback to English successful");
+                }
             }
-            tts.setLanguage(Locale.ENGLISH);
-        }
-        else {
-            Log.d(TAG, "Language successfully set to: " + locale);
-        }
+            else {
+                Log.d(TAG, "Language successfully set to: " + locale);
+            }
 
-        if (fromService) {
-            callback.onCustomAction("playFromService", null);
-        } else {
-            Log.d(TAG, "Language set. Waiting for speak() to be called.");
+            if (fromService && callback != null) {
+                callback.onCustomAction("playFromService", null);
+            } else {
+                Log.d(TAG, "Language set. Waiting for speak() to be called.");
+            }
         }
     }
 
@@ -448,31 +661,95 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             actionNeeded = true;
             return;
         }
+        
+        // Verify TTS is still bound to engine
+        try {
+            String engine = tts.getDefaultEngine();
+            if (engine == null) {
+                Log.e(TAG, "TTS engine is null - not bound!");
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("TTS engine disconnected. Reloading...");
+                }
+                isInit = false;
+                actionNeeded = true;
+                return;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "TTS not bound to engine", e);
+            isInit = false;
+            actionNeeded = true;
+            return;
+        }
+        
+        if (isPausedManually) {
+            Log.d(TAG, "speak() called but isPausedManually=true, will not speak");
+            return;
+        }
+        
         if (sentences == null || sentences.size() == 0) {
-            Log.d(TAG, "Waiting latch");
+            Log.d(TAG, "Waiting for sentences to be ready");
             try {
-                countDownLatch.await();
+                if (countDownLatch != null) {
+                    countDownLatch.await();
+                }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Interrupted while waiting for sentences", e);
+                return;
             }
         }
-        if (sentenceCounter < 0) sentenceCounter = 0;
+        
+        if (sentences == null || sentences.isEmpty()) {
+            Log.d(TAG, "No sentences available to speak");
+            return;
+        }
+        
+        if (sentenceCounter < 0) {
+            sentenceCounter = 0;
+        }
 
         if (sentenceCounter >= sentences.size()) {
             Log.d(TAG, "sentenceCounter out of bounds, skipping speak()");
             return;
         }
 
-        if (sentences.size() != 0) {
-            Log.d(TAG, "speak() with language = " + language + ", sentence = " + sentences.get(sentenceCounter));
+        try {
+            String sentence = sentences.get(sentenceCounter);
+            if (sentence == null || sentence.trim().isEmpty()) {
+                Log.w(TAG, "Empty sentence at index " + sentenceCounter + ", skipping");
+                sentenceCounter++;
+                if (sentenceCounter < sentences.size()) {
+                    speak();
+                }
+                return;
+            }
+
+            Log.d(TAG, "speak() with language = " + language + ", sentence = " + sentence);
 
             if (language == null) {
-                identifyLanguage(sentences.get(sentenceCounter), false);
+                Log.d(TAG, "Language not set, identifying language first");
+                identifyLanguage(sentence, false);
+                return;
             } else {
-                String sentence = sentences.get(sentenceCounter);
                 Log.d(TAG, "TTS Speaking [#" + sentenceCounter + "]: " + sentence);
+                
+                // Create a unique utterance ID
+                String utteranceId = "utterance_" + currentId + "_" + sentenceCounter;
+                
+                // Create Bundle with audio stream type for better audio routing
+                Bundle params = new Bundle();
+                params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC);
+                params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                
                 int queueMode = isManualSkip ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD;
-                tts.speak(sentence, queueMode, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+                int result = tts.speak(sentence, queueMode, params, utteranceId);
+                
+                Log.d(TAG, "tts.speak() called with utteranceId: " + utteranceId + ", result: " + (result == TextToSpeech.SUCCESS ? "SUCCESS" : "ERROR"));
+                
+                if (result == TextToSpeech.ERROR) {
+                    Log.e(TAG, "TTS speak() failed with ERROR");
+                    return;
+                }
+                
                 setUiControlPlayback(true);
                 setNewState(PlaybackStateCompat.STATE_PLAYING);
                 if (playbackUiListener != null) {
@@ -482,6 +759,11 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     webViewCallback.highlightText(sentence);
                 }
             }
+        } catch (IndexOutOfBoundsException e) {
+            Log.e(TAG, "IndexOutOfBoundsException in speak(): " + e.getMessage());
+            sentenceCounter = 0;
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in speak(): " + e.getMessage(), e);
         }
     }
 
@@ -562,15 +844,62 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     @Override
     public boolean isPlaying() {
-        return tts != null && tts.isSpeaking();
+        if (tts == null) {
+            return false;
+        }
+        try {
+            return tts.isSpeaking();
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "TTS not bound when checking isPlaying", e);
+            isInit = false;
+            return false;
+        }
+    }
+
+    public void play() {
+        Log.d(TAG, "play() called - isInit=" + isInit + ", isPausedManually=" + isPausedManually + ", sentences.size=" + (sentences != null ? sentences.size() : 0));
+        
+        if (!isInit) {
+            Log.w(TAG, "TTS not initialized, cannot play");
+            actionNeeded = true;
+            return;
+        }
+        
+        if (sentences == null || sentences.isEmpty()) {
+            Log.w(TAG, "No sentences loaded, cannot play");
+            return;
+        }
+        
+        // Check audio volume
+        android.media.AudioManager audioManager = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            int currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+            int maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+            Log.d(TAG, "Current media volume: " + currentVolume + "/" + maxVolume);
+            
+            if (currentVolume == 0) {
+                Log.w(TAG, "Media volume is MUTED! User may not hear TTS.");
+                if (webViewCallback != null) {
+                    webViewCallback.makeSnackbar("Media volume is muted. Please increase volume.");
+                }
+            }
+        }
+        
+        isPausedManually = false;
+        sharedPreferencesRepository.setIsPausedManually(false);
+        
+        if (!isSettingUpNewArticle) {
+            speak();
+            setNewState(PlaybackStateCompat.STATE_PLAYING);
+        } else {
+            Log.d(TAG, "Article setup in progress, deferring play");
+            actionNeeded = true;
+        }
     }
 
     @Override
     protected void onPlay() {
-        if (tts != null && !isPausedManually) {
-            speak();
-            setNewState(PlaybackStateCompat.STATE_PLAYING);
-        }
+        play();
     }
 
     @Override
@@ -585,12 +914,20 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     protected void onStop() {
         stopMediaPlayer();
         Log.d(TAG, " player stopped");
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-            tts = null;
-            isInit = false;
+        
+        synchronized (this) {
+            if (tts != null) {
+                try {
+                    tts.stop();
+                    tts.shutdown();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error during TTS shutdown", e);
+                }
+                tts = null;
+                isInit = false;
+            }
         }
+        
         currentId = 0;
         setNewState(PlaybackStateCompat.STATE_STOPPED);
     }
@@ -633,16 +970,27 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void setTtsSpeechRate(float speechRate) {
+        if (tts == null) {
+            Log.w(TAG, "TTS is null, cannot set speech rate");
+            return;
+        }
+        
         if (speechRate == 0) {
             try {
                 int systemRate = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.TTS_DEFAULT_RATE);
                 speechRate = systemRate / 100.0f;
             } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
+                Log.e(TAG, "TTS default rate setting not found", e);
                 speechRate = 1.0f;
             }
         }
-        tts.setSpeechRate(speechRate);
+        
+        try {
+            tts.setSpeechRate(speechRate);
+            Log.d(TAG, "TTS speech rate set to: " + speechRate);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to set TTS speech rate", e);
+        }
     }
 
     public void setWebViewCallback(WebViewListener listener) {
@@ -703,10 +1051,52 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public boolean isSpeaking() {
-        return tts != null && tts.isSpeaking();
+        if (tts == null) {
+            return false;
+        }
+        try {
+            return tts.isSpeaking();
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "TTS not bound when checking isSpeaking()", e);
+            isInit = false;
+            return false;
+        }
     }
 
     public int getCurrentExtractProgress() {
         return currentExtractProgress;
+    }
+    
+    /**
+     * Check if TTS engine is healthy and bound
+     */
+    public boolean isTtsHealthy() {
+        if (tts == null || !isInit) {
+            return false;
+        }
+        try {
+            String engine = tts.getDefaultEngine();
+            return engine != null;
+        } catch (Exception e) {
+            Log.e(TAG, "TTS health check failed", e);
+            isInit = false;
+            return false;
+        }
+    }
+    
+    /**
+     * Check if Google TTS app is installed and enabled
+     */
+    public boolean isGoogleTtsEnabled(Context context) {
+        try {
+            android.content.pm.ApplicationInfo appInfo = context.getPackageManager()
+                    .getApplicationInfo("com.google.android.tts", 0);
+            boolean enabled = appInfo.enabled;
+            Log.d(TAG, "Google TTS app enabled: " + enabled);
+            return enabled;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Google TTS app not installed", e);
+            return false;
+        }
     }
 }

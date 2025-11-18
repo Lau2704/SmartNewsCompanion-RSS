@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -180,8 +182,15 @@ public class TtsService extends MediaBrowserServiceCompat {
 
                 ttsPlayer.extract(mediaId, feedId, content, languageToUse);
 
+                Log.d(TAG, "Extraction started for mediaId=" + mediaId + ", feedId=" + feedId + ", language=" + languageToUse);
+                Log.d(TAG, "Content length: " + (content != null ? content.length() : 0));
+                Log.d(TAG, "isPausedManually: " + ttsPlayer.isPausedManually());
+
                 if (!ttsPlayer.isPausedManually()) {
+                    Log.d(TAG, "Auto-speaking after extraction");
                     ttsPlayer.speak();
+                } else {
+                    Log.d(TAG, "Skipping auto-speak due to manual pause");
                 }
             }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe();
         }
@@ -189,7 +198,20 @@ public class TtsService extends MediaBrowserServiceCompat {
         @Override
         public void onPlay() {
             Log.d(TAG, "onPlay called");
-            if (!ttsPlayer.isPreparing()) {
+
+            if (!ttsPlayer.isTtsHealthy()) {
+                Log.w(TAG, "TTS engine not healthy, attempting reinitialize...");
+
+                // Show user feedback
+                WebViewListener callback = ttsPlayer.getWebViewCallback();
+                if (callback != null) {
+                    callback.makeSnackbar("Initializing TTS engine...");
+                }
+
+                ttsPlayer.initTts(TtsService.this, new TtsPlayerListener(), this);
+                play();
+            } else {
+                Log.d(TAG, "TTS engine healthy, proceeding with playback");
                 ttsPlayer.setPausedManually(false);
                 ttsPlayer.setupMediaPlayer(false);
                 play();
@@ -318,11 +340,15 @@ public class TtsService extends MediaBrowserServiceCompat {
         }
 
         private void play() {
+            Log.d(TAG, "play() called - preparedData=" + (preparedData != null));
             if (preparedData == null) {
+                Log.d(TAG, "preparedData is null, calling onPrepare()");
                 onPrepare();
             } else {
+                Log.d(TAG, "preparedData exists, calling ttsPlayer.play()");
                 ttsPlayer.play();
                 ttsPlayer.setUiControlPlayback(false);
+                updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
             }
         }
 

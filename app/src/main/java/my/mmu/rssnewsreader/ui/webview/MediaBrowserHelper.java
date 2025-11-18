@@ -47,6 +47,7 @@ public class MediaBrowserHelper {
 
     public void onStart() {
         if (mMediaBrowser == null) {
+            Log.d(TAG, "Creating new MediaBrowser instance");
             mMediaBrowser =
                     new MediaBrowserCompat(
                             mContext,
@@ -54,8 +55,10 @@ public class MediaBrowserHelper {
                             mMediaBrowserConnectionCallback,
                             null);
             mMediaBrowser.connect();
+            Log.d(TAG, "MediaBrowser.connect() called");
+        } else {
+            Log.d(TAG, "MediaBrowser already exists, state: " + (mMediaBrowser.isConnected() ? "connected" : "disconnected"));
         }
-        Log.d(TAG, "onStart: Creating MediaBrowser, and connecting");
     }
 
     public void onStop() {
@@ -101,8 +104,10 @@ public class MediaBrowserHelper {
 
     public MediaControllerCompat.TransportControls getTransportControls() {
         if (mMediaController != null) {
+            Log.d(TAG, "getTransportControls: MediaController available");
             return mMediaController.getTransportControls();
         }
+        Log.w(TAG, "getTransportControls: MediaController is null!");
         return null;
     }
 
@@ -141,16 +146,31 @@ public class MediaBrowserHelper {
 
         @Override
         public void onConnected() {
+            Log.d(TAG, "MediaBrowser onConnected - creating MediaController");
             mMediaController =
                     new MediaControllerCompat(mContext, mMediaBrowser.getSessionToken());
             mMediaController.registerCallback(mMediaControllerCallback);
+            Log.d(TAG, "MediaController registered with callback");
 
 //            mMediaControllerCallback.onMetadataChanged(mMediaController.getMetadata());
 //            mMediaControllerCallback.onPlaybackStateChanged(mMediaController.getPlaybackState());
 
 //            MediaBrowserHelper.this.onConnected(mMediaController);
 
+            Log.d(TAG, "Subscribing to root: " + mMediaBrowser.getRoot());
             mMediaBrowser.subscribe(mMediaBrowser.getRoot(), mMediaBrowserSubscriptionCallback);
+        }
+        
+        @Override
+        public void onConnectionFailed() {
+            Log.e(TAG, "MediaBrowser connection FAILED!");
+            super.onConnectionFailed();
+        }
+        
+        @Override
+        public void onConnectionSuspended() {
+            Log.w(TAG, "MediaBrowser connection suspended");
+            super.onConnectionSuspended();
         }
     }
 

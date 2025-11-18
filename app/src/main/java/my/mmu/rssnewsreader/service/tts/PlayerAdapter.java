@@ -51,7 +51,7 @@ public abstract class PlayerAdapter {
 
     public abstract boolean isPlayingMediaPlayer();
 
-    public final void play() {
+    public void play() {
         if (mAudioFocusHelper.requestAudioFocus()) {
             registerAudioNoisyReceiver();
             onPlay();

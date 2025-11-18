@@ -1013,6 +1013,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private void setupMediaPlaybackButtons() {
         playPauseButton.setOnClickListener(view -> {
+            Log.d(TAG, "Play/Pause button clicked - isPlaying: " + isPlaying);
+            if (mMediaBrowserHelper == null) {
+                Log.e(TAG, "MediaBrowserHelper is null!");
+                makeSnackbar("Media service not connected");
+                return;
+            }
+            
+            if (mMediaBrowserHelper.getTransportControls() == null) {
+                Log.e(TAG, "TransportControls is null!");
+                makeSnackbar("Media controls not ready");
+                return;
+            }
+            
             if (isPlaying) {
                 mMediaBrowserHelper.getTransportControls().pause();
                 Log.d(TAG, "switchPlayMode: pausing " + ttsPlaylist.getPlayingId());
@@ -1022,10 +1035,29 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
         });
 
-        skipNextButton.setOnClickListener(view -> mMediaBrowserHelper.getTransportControls().skipToNext());
-        skipPreviousButton.setOnClickListener(view -> mMediaBrowserHelper.getTransportControls().skipToPrevious());
-        fastForwardButton.setOnClickListener(view -> mMediaBrowserHelper.getTransportControls().fastForward());
-        rewindButton.setOnClickListener(view -> mMediaBrowserHelper.getTransportControls().rewind());
+        skipNextButton.setOnClickListener(view -> {
+            if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
+                mMediaBrowserHelper.getTransportControls().skipToNext();
+            }
+        });
+        
+        skipPreviousButton.setOnClickListener(view -> {
+            if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
+                mMediaBrowserHelper.getTransportControls().skipToPrevious();
+            }
+        });
+        
+        fastForwardButton.setOnClickListener(view -> {
+            if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
+                mMediaBrowserHelper.getTransportControls().fastForward();
+            }
+        });
+        
+        rewindButton.setOnClickListener(view -> {
+            if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
+                mMediaBrowserHelper.getTransportControls().rewind();
+            }
+        });
     }
 
     private void setupReadingWebView() {
@@ -1391,11 +1423,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         protected void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaBrowserCompat.MediaItem> children) {
             super.onChildrenLoaded(parentId, children);
 
+            Log.d(TAG, "MediaBrowser children loaded, parentId: " + parentId);
+            
             final MediaControllerCompat mediaController = getMediaController();
             if (mediaController != null) {
+                Log.d(TAG, "MediaController obtained, setting up TTS callbacks");
                 ttsPlayer.setWebViewCallback(WebViewActivity.this);
                 ttsPlayer.setWebViewConnected(true);
                 mediaController.getTransportControls().prepare();
+                Log.d(TAG, "Transport controls prepare() called");
+            } else {
+                Log.e(TAG, "MediaController is null in onChildrenLoaded!");
             }
         }
     }
