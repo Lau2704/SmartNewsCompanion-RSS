@@ -178,6 +178,11 @@ public class TtsService extends MediaBrowserServiceCompat {
                     return;
                 }
 
+                if (ttsPlayer.isSameArticleState(mediaId, languageToUse)) {
+                    Log.d(TAG, "Service: TTS is already prepared for " + mediaId + ". Skipping re-extraction.");
+                    return;
+                }
+
                 ttsPlayer.stopTtsPlayback();
 
                 ttsPlayer.extract(mediaId, feedId, content, languageToUse);

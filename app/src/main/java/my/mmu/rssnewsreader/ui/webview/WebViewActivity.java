@@ -512,7 +512,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         if (html != null && !html.trim().isEmpty()) {
             loadHtmlIntoWebView(html);
-            ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
+            if (!ttsPlayer.isSameArticleState(entry.getId(), lang)) {
+                ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
+            } else {
+                Log.d(TAG, "TTS is already prepared for this article/language. Skipping re-extraction.");
+                syncLoadingWithTts();
+            }
         } else {
             Log.w(TAG, "HTML missing, skipping load.");
         }
