@@ -20,6 +20,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -44,13 +45,11 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
     public LanguageSelectionDialog(FeedSettingDialogListener listener, Context context) {
         this.listener = listener;
 
-        tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                Log.d(TAG, "tts is initialized");
-                if (status == TextToSpeech.SUCCESS) {
-                    listener.showDialog();
-                }
+        tts = new TextToSpeech(context, status -> {
+            Log.d(TAG, "TTS init status: " + status);
+            // Show dialog regardless of success/fail so user isn't blocked
+            if (listener != null) {
+                listener.showDialog();
             }
         });
     }
@@ -62,8 +61,25 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
         View view = inflater.inflate(R.layout.dialog_languageselection, null);
         radioGroup = view.findViewById(R.id.languageRadioGroup);
 
-        Set<Locale> availableLanguages = tts.getAvailableLanguages();
-        tts.shutdown();
+        Set<Locale> availableLanguages = null;
+        try {
+            if (tts != null) {
+                availableLanguages = tts.getAvailableLanguages();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting available languages", e);
+        }
+
+        if (availableLanguages == null || availableLanguages.isEmpty()) {
+            availableLanguages = new HashSet<>();
+            availableLanguages.add(Locale.ENGLISH);
+            availableLanguages.add(Locale.US);
+            availableLanguages.add(Locale.getDefault());
+        }
+
+        if (tts != null) {
+            tts.shutdown();
+        }
         languagesMap = new TreeMap<>();
         int checkId = 0;
 

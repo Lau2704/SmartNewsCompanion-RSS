@@ -40,8 +40,11 @@ import org.w3c.dom.Text;
 import java.io.File;
 import java.io.IOException;
 import java.text.BreakIterator;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
@@ -93,6 +96,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private boolean hasSpokenAfterSetup = false;
     private PlaybackUiListener playbackUiListener;
     private int currentExtractProgress = 0;
+
+    private List<String> availableTtsEngines;
+    private int currentTtsEngineIndex = -1;
 
     @Inject
     public TtsPlayer(@ApplicationContext Context context, TtsExtractor ttsExtractor, EntryRepository entryRepository, SharedPreferencesRepository sharedPreferencesRepository) {
@@ -147,7 +153,15 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             isInit = false;
         }
 
-        tts = new TextToSpeech(ttsService, status -> {
+        availableTtsEngines = null;
+        currentTtsEngineIndex = -1;
+        initializeTtsEngine(ttsService, null);
+    }
+
+    private void initializeTtsEngine(Context ttsContext, String enginePackage) {
+        Log.d(TAG, "Initializing TTS with engine: " + (enginePackage == null ? "DEFAULT" : enginePackage));
+        
+        tts = new TextToSpeech(ttsContext, status -> {
             Log.d(TAG, "TTS init callback received with status: " + status + " (SUCCESS=0, ERROR=" + TextToSpeech.ERROR + ")");
 
             if (status == TextToSpeech.SUCCESS) {
@@ -170,10 +184,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                             Log.d(TAG, "Attempting to use fallback engine: " + fallbackEngine);
                             isInit = true;
                         } else {
-                            isInit = false;
-                            if (webViewCallback != null) {
-                                webViewCallback.makeSnackbar("No TTS engine found. Please enable Google Text-to-Speech in Settings.");
-                            }
+                            // Try next engine if available
+                            Log.w(TAG, "Default engine null and no internal engines reported. Trying next available system engine...");
+                            attemptNextTtsEngine(ttsContext);
                             return;
                         }
                     } else {
@@ -201,10 +214,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     Log.d(TAG, "TTS fully initialized and ready");
                 } catch (Exception e) {
                     Log.e(TAG, "Error verifying TTS engine", e);
-                    isInit = false;
-                    if (webViewCallback != null) {
-                        webViewCallback.makeSnackbar("TTS verification failed: " + e.getMessage());
-                    }
+                    attemptNextTtsEngine(ttsContext);
                     return;
                 }
 
@@ -231,18 +241,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 }
             } else {
                 Log.e(TAG, "TTS initialization FAILED with status: " + status);
-                isInit = false;
-
-                Log.e(TAG, "Common causes:");
-                Log.e(TAG, "1. Google Text-to-Speech is DISABLED in app settings");
-                Log.e(TAG, "2. TTS data is corrupted or not downloaded");
-                Log.e(TAG, "3. Device doesn't support TTS");
-
-                if (webViewCallback != null) {
-                    webViewCallback.makeSnackbar("TTS initialization failed. Please install or enable a TTS engine.");
-                }
+                attemptNextTtsEngine(ttsContext);
             }
-        });
+        }, enginePackage);
 
         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
@@ -278,6 +279,52 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 }
             }
         });
+    }
+
+    private void attemptNextTtsEngine(Context ttsContext) {
+        if (availableTtsEngines == null) {
+            availableTtsEngines = getAvailableTtsEngines(ttsContext);
+            currentTtsEngineIndex = -1;
+        }
+
+        currentTtsEngineIndex++;
+        if (currentTtsEngineIndex < availableTtsEngines.size()) {
+            String nextEngine = availableTtsEngines.get(currentTtsEngineIndex);
+            Log.d(TAG, "Attempting fallback to next TTS engine: " + nextEngine);
+            
+            // Shutdown previous instance if any
+            if (tts != null) {
+                try {
+                    tts.shutdown();
+                } catch (Exception e) { /* ignore */ }
+            }
+            
+            initializeTtsEngine(ttsContext, nextEngine);
+        } else {
+            Log.e(TAG, "All TTS engines failed initialization.");
+            isInit = false;
+            if (webViewCallback != null) {
+                webViewCallback.makeSnackbar("TTS init failed. Please check system TTS settings.");
+            }
+        }
+    }
+
+    private List<String> getAvailableTtsEngines(Context context) {
+        List<String> engines = new ArrayList<>();
+        try {
+            PackageManager pm = context.getPackageManager();
+            Intent intent = new Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE);
+            List<ResolveInfo> resolveInfos = pm.queryIntentServices(intent, PackageManager.MATCH_ALL);
+            for (ResolveInfo info : resolveInfos) {
+                if (info.serviceInfo != null) {
+                    engines.add(info.serviceInfo.packageName);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying TTS services", e);
+        }
+        Log.d(TAG, "Found system TTS engines: " + engines);
+        return engines;
     }
 
     public interface PlaybackUiListener {
@@ -557,7 +604,11 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                         setLanguage(new Locale(languageCode), fromService);
                     }
                 })
-                .addOnFailureListener(Throwable::printStackTrace);
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Language identification failed (likely due to missing GMS or network): " + e.getMessage());
+                    // Fallback to English so the app doesn't hang
+                    setLanguage(Locale.ENGLISH, fromService);
+                });
     }
 
     private void setLanguage(Locale locale, boolean fromService) {
