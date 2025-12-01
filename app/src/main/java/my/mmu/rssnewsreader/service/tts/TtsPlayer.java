@@ -363,13 +363,20 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void pauseTts() {
+        pauseTts(true);
+    }
+
+    public void pauseTts(boolean fromUser) {
         if (ttsMediaPlayer != null && ttsMediaPlayer.isPlaying()) {
             ttsMediaPlayer.pause();
         }
         if (tts != null) tts.stop();
-        
-        isPausedManually = true;
-        sharedPreferencesRepository.setIsPausedManually(true);
+
+        if (fromUser) {
+            isPausedManually = true;
+            sharedPreferencesRepository.setIsPausedManually(true);
+        }
+
         setNewState(PlaybackStateCompat.STATE_PAUSED);
         setUiControlPlayback(false);
         if (playbackUiListener != null) {
@@ -427,7 +434,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                         setupTts();
                         if (!isPausedManually) {
                             Log.d(TAG, "TTS ready and not manually paused — auto speaking");
-                            ContextCompat.getMainExecutor(context).execute(() -> speak());
+                            ContextCompat.getMainExecutor(context).execute(() -> play());
                         } else {
                             Log.d(TAG, "TTS ready but paused manually — not speaking");
                         }
@@ -573,7 +580,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
                 if (sentences.size() > 0 && !isPausedManually && !hasSpokenAfterSetup) {
                     hasSpokenAfterSetup = true;
-                    speak();
+                    play();
                     if (webViewCallback != null) {
                         Log.d(TAG, "Hiding fake loading after TTS starts.");
                         webViewCallback.hideFakeLoading();
@@ -663,6 +670,18 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         }
     }
 
+    private void setMediaPlayerAttributes() {
+        if (ttsMediaPlayer != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                android.media.AudioAttributes audioAttributes = new android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                ttsMediaPlayer.setAudioAttributes(audioAttributes);
+            }
+        }
+    }
+
     public void speak() {
         if (isSettingUpNewArticle) {
             Log.d(TAG, "TTS setup in progress, skipping speak()");
@@ -674,7 +693,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             actionNeeded = true;
             return;
         }
-        
+
         // Check if resuming the currently loaded sentence
         if (ttsMediaPlayer != null && sentenceCounter == currentLoadedSentenceIndex && !ttsMediaPlayer.isPlaying() && ttsMediaPlayer.getCurrentPosition() > 0 && !isPausedManually) {
              Log.d(TAG, "Resuming current sentence from position: " + ttsMediaPlayer.getCurrentPosition());
@@ -689,12 +708,12 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             Log.d(TAG, "speak() called but isPausedManually=true, will not speak");
             return;
         }
-        
+
         if (sentences == null || sentences.isEmpty()) {
             Log.d(TAG, "No sentences loaded, cannot play");
             return;
         }
-        
+
         if (sentenceCounter < 0) sentenceCounter = 0;
         if (sentenceCounter >= sentences.size()) return;
 
@@ -711,17 +730,20 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 return;
             } else {
                 Log.d(TAG, "Synthesizing to file [#" + sentenceCounter + "]: " + sentence);
-                
+
                 // Reset player so it doesn't interfere
-                if(ttsMediaPlayer != null) ttsMediaPlayer.reset();
+                if(ttsMediaPlayer != null) {
+                    ttsMediaPlayer.reset();
+                    setMediaPlayerAttributes();
+                }
                 currentLoadedSentenceIndex = sentenceCounter;
-                
+
                 String utteranceId = "utterance_" + currentId + "_" + sentenceCounter;
                 Bundle params = new Bundle();
                 params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC);
-                
+
                 int result = tts.synthesizeToFile(sentence, params, ttsFile, utteranceId);
-                
+
                 if (result == TextToSpeech.ERROR) {
                     Log.e(TAG, "TTS synthesizeToFile failed");
                 }
@@ -730,26 +752,27 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             Log.e(TAG, "Exception in speak(): " + e.getMessage(), e);
         }
     }
-    
+
     private void playTtsFile() {
         try {
             if (ttsMediaPlayer == null) return;
             Log.d(TAG, "Playing generated TTS file: " + ttsFile.getAbsolutePath());
             ttsMediaPlayer.reset();
+            setMediaPlayerAttributes();
             ttsMediaPlayer.setDataSource(ttsFile.getAbsolutePath());
             ttsMediaPlayer.prepare();
             ttsMediaPlayer.start();
-            
+
             setUiControlPlayback(true);
             setNewState(PlaybackStateCompat.STATE_PLAYING);
             if (playbackUiListener != null) playbackUiListener.onPlaybackStarted();
-            
+
             // Highlight
             if (sentenceCounter < sentences.size()) {
                 String sentence = sentences.get(sentenceCounter);
                 if (webViewCallback != null) webViewCallback.highlightText(sentence);
             }
-            
+
         } catch (IOException e) {
             Log.e(TAG, "Error playing TTS file", e);
         }
@@ -845,25 +868,25 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     public void play() {
         Log.d(TAG, "play() called - isInit=" + isInit + ", isPausedManually=" + isPausedManually + ", sentences.size=" + (sentences != null ? sentences.size() : 0));
-        
+
         if (!isInit) {
             Log.w(TAG, "TTS not initialized, cannot play");
             actionNeeded = true;
             return;
         }
-        
+
         if (sentences == null || sentences.isEmpty()) {
             Log.w(TAG, "No sentences loaded, cannot play");
             return;
         }
-        
+
         // Check audio volume
         android.media.AudioManager audioManager = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         if (audioManager != null) {
             int currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
             int maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
             Log.d(TAG, "Current media volume: " + currentVolume + "/" + maxVolume);
-            
+
             if (currentVolume == 0) {
                 Log.w(TAG, "Media volume is MUTED! User may not hear TTS.");
                 if (webViewCallback != null) {
@@ -871,10 +894,16 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 }
             }
         }
-        
+
         isPausedManually = false;
         sharedPreferencesRepository.setIsPausedManually(false);
-        
+
+        super.play();
+    }
+
+    @Override
+    protected void onPlay() {
+        Log.d(TAG, "onPlay called - Focus granted, starting playback");
         if (!isSettingUpNewArticle) {
             speak();
             setNewState(PlaybackStateCompat.STATE_PLAYING);
@@ -885,13 +914,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     @Override
-    protected void onPlay() {
-        play();
-    }
-
-    @Override
     protected void onPause() {
-        pauseTts();
+        pauseTts(false);
     }
 
     @Override
