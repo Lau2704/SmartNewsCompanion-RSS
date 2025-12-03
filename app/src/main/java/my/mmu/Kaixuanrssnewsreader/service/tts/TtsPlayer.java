@@ -19,7 +19,7 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;

@@ -14,9 +14,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
-import my.mmu.rssnewsreader.databinding.FragmentManageFeedBinding;
+import my.mmu.Kaixuanrssnewsreader.databinding.FragmentManageFeedBinding;
 import my.mmu.Kaixuanrssnewsreader.ui.feedsetting.FeedSettingDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;

@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 
 import com.google.android.material.button.MaterialButton;

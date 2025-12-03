@@ -15,7 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 

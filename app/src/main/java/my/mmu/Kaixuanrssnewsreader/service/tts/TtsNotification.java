@@ -16,7 +16,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;
 
 public class TtsNotification extends Notification {

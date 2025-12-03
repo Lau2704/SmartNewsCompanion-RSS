@@ -1,4 +1,4 @@
-package my.mmu.rssnewsreader;
+package my.mmu.Kaixuanrssnewsreader;
 
 import org.junit.Test;
 

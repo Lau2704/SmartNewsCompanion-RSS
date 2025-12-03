@@ -1,4 +1,4 @@
-package my.mmu.rssnewsreader;
+package my.mmu.Kaixuanrssnewsreader;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("my.mmu.rssnewsreader", appContext.getPackageName());
+        assertEquals("my.mmu.Kaixuanrssnewsreader", appContext.getPackageName());
     }
 }

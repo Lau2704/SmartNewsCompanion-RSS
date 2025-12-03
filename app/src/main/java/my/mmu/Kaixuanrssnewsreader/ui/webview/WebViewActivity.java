@@ -34,14 +34,14 @@ import androidx.lifecycle.ViewModelProvider;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsExtractor;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlaylist;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsService;
-import my.mmu.rssnewsreader.databinding.ActivityWebviewBinding;
+import my.mmu.Kaixuanrssnewsreader.databinding.ActivityWebviewBinding;
 import my.mmu.Kaixuanrssnewsreader.service.util.TextUtil;
 import my.mmu.Kaixuanrssnewsreader.ui.feed.ReloadDialog;
 import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;

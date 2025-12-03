@@ -16,8 +16,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
-import my.mmu.rssnewsreader.R;
-import my.mmu.rssnewsreader.databinding.FragmentHelpBinding;
+import my.mmu.Kaixuanrssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.databinding.FragmentHelpBinding;
 import com.google.android.material.button.MaterialButton;
 
 import dagger.hilt.android.AndroidEntryPoint;

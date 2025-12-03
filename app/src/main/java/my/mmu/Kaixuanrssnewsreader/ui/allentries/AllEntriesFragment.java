@@ -35,13 +35,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlaylist;
-import my.mmu.rssnewsreader.databinding.FragmentAllEntriesBinding;
+import my.mmu.Kaixuanrssnewsreader.databinding.FragmentAllEntriesBinding;
 
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import my.mmu.Kaixuanrssnewsreader.service.util.AutoTranslator;

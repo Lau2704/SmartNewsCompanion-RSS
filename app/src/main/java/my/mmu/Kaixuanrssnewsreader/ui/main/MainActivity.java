@@ -9,7 +9,7 @@ import android.util.Xml;
 import android.view.View;
 import android.widget.Toast;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -34,7 +34,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
-import my.mmu.rssnewsreader.databinding.ActivityMainBinding;
+import my.mmu.Kaixuanrssnewsreader.databinding.ActivityMainBinding;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 

@@ -9,7 +9,7 @@ import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 
-import my.mmu.rssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.R;
 
 public class RssNotification {
 

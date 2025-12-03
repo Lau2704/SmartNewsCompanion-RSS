@@ -18,8 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import my.mmu.rssnewsreader.R;
-import my.mmu.rssnewsreader.databinding.FragmentAddFeedBinding;
+import my.mmu.Kaixuanrssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.databinding.FragmentAddFeedBinding;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssFeed;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssItem;
 import my.mmu.Kaixuanrssnewsreader.ui.loginwebview.LoginWebViewActivity;

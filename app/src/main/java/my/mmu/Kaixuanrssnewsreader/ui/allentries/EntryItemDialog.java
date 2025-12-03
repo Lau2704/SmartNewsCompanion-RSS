@@ -21,8 +21,8 @@ import androidx.appcompat.app.AppCompatDialogFragment;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 
-import my.mmu.rssnewsreader.R;
-import my.mmu.rssnewsreader.databinding.DialogEntryitemBinding;
+import my.mmu.Kaixuanrssnewsreader.R;
+import my.mmu.Kaixuanrssnewsreader.databinding.DialogEntryitemBinding;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import com.google.android.material.button.MaterialButton;
 import com.squareup.picasso.Picasso;
