@@ -23,14 +23,16 @@ public class RssWorker extends Worker {
 
     private FeedRepository feedRepository;
     private TtsExtractor ttsExtractor;
+    private TextUtil textUtil;
     private Context context;
 
     @AssistedInject
-    public RssWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParams, FeedRepository feedRepository, TtsExtractor ttsExtractor) {
+    public RssWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParams, FeedRepository feedRepository, TtsExtractor ttsExtractor, TextUtil textUtil) {
         super(context, workerParams);
         this.context = context;
         this.feedRepository = feedRepository;
         this.ttsExtractor = ttsExtractor;
+        this.textUtil = textUtil;
     }
 
     @NonNull
@@ -50,7 +52,7 @@ public class RssWorker extends Worker {
 
             AutoTranslator autoTranslator = new AutoTranslator(
                     feedRepository.getEntryRepository(),
-                    new TextUtil(feedRepository.getSharedPreferencesRepository()),
+                    textUtil,
                     feedRepository.getSharedPreferencesRepository()
             );
             autoTranslator.runAutoTranslation();

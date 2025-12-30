@@ -78,7 +78,10 @@ public class TtsNotification extends Notification {
     }
 
     public Notification getNotification(MediaMetadataCompat metaData, @NonNull PlaybackStateCompat state, MediaSessionCompat.Token token) {
-        MediaDescriptionCompat description = metaData.getDescription();
+        MediaDescriptionCompat description = null;
+        if (metaData != null) {
+            description = metaData.getDescription();
+        }
         return buildNotification(state, token, description);
     }
 
@@ -98,14 +101,24 @@ public class TtsNotification extends Notification {
             }
         }
 
+        String title = "Playing";
+        String subtitle = "Text to Speech";
+        android.graphics.Bitmap icon = null;
+
+        if (description != null) {
+            title = description.getTitle() != null ? description.getTitle().toString() : title;
+            subtitle = description.getSubtitle() != null ? description.getSubtitle().toString() : subtitle;
+            icon = description.getIconBitmap();
+        }
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(ttsService, TTS_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_rss)
                 .setColor(Color.WHITE)
                 .setContentIntent(createContentIntent())
                 .setDeleteIntent(TtsMediaButtonReceiver.buildMediaButtonPendingIntent(ttsService, PlaybackStateCompat.ACTION_STOP))
-                .setContentTitle(description.getTitle())
-                .setContentText(description.getSubtitle())
-                .setLargeIcon(description.getIconBitmap())
+                .setContentTitle(title)
+                .setContentText(subtitle)
+                .setLargeIcon(icon)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
@@ -121,7 +134,7 @@ public class TtsNotification extends Notification {
         // 1
         builder.addAction(rewindAction);
 
-        builder.addAction(state.getState() == PlaybackStateCompat.STATE_PLAYING? pauseAction : playAction);
+        builder.addAction(state.getState() == PlaybackStateCompat.STATE_PLAYING ? pauseAction : playAction);
 
         // 3
         builder.addAction(fastForwardAction);

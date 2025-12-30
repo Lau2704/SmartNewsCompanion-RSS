@@ -223,4 +223,31 @@ public class SharedPreferencesRepository {
     public long getCurrentReadingEntryId() {
         return sharedPreferences.getLong(KEY_CURRENT_READING_ENTRY_ID, -1);
     }
+
+    public String getOpenRouterApiKey() {
+        return sharedPreferences.getString("openRouterApiKey", "");
+    }
+
+    public void setOpenRouterApiKey(String apiKey) {
+        editor.putString("openRouterApiKey", apiKey);
+        editor.apply();
+    }
+
+    public String getOpenRouterModel() {
+        return sharedPreferences.getString("openRouterModel", "");
+    }
+
+    public void setOpenRouterModel(String model) {
+        editor.putString("openRouterModel", model);
+        editor.apply();
+    }
+
+    public void initializeOpenRouterSettingsOnFirst() {
+        if (!sharedPreferences.contains("openRouterModel")) {
+            setOpenRouterModel("openai/gpt-oss-20b:free");
+        }
+        if (!sharedPreferences.contains("openRouterApiKey")) {
+            setOpenRouterApiKey("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");
+        }
+    }
 }

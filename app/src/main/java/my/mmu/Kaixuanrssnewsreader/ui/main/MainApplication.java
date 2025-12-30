@@ -9,6 +9,7 @@ import androidx.work.Configuration;
 import javax.inject.Inject;
 
 import dagger.hilt.android.HiltAndroidApp;
+import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 
 @HiltAndroidApp
 public class MainApplication extends Application implements Configuration.Provider {
@@ -16,9 +17,13 @@ public class MainApplication extends Application implements Configuration.Provid
     @Inject
     HiltWorkerFactory workerFactory;
 
+    @Inject
+    SharedPreferencesRepository sharedPreferencesRepository;
+
     @Override
     public void onCreate() {
         super.onCreate();
+        sharedPreferencesRepository.initializeOpenRouterSettingsOnFirst();
     }
 
     @NonNull

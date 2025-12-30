@@ -375,7 +375,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void extract(long currentId, long feedId, String content, String language) {
-        Log.d(TAG, "Switching to new article: ID=" + currentId);
+        Log.d(TAG, "Switching to new article: ID=" + currentId + ", language=" + language);
 
         // Safety checks
         if (currentId <= 0) {
@@ -394,14 +394,16 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         }
         if (tts != null) tts.stop();
 
-        // Reset state
+        // Reset state more completely
         isPreparing = true;
         isSettingUpNewArticle = true;
+        isArticleFinished = false;
         if (sentences != null) {
             sentences.clear();
         }
-        isArticleFinished = false;
         currentLoadedSentenceIndex = -1;
+        hasSpokenAfterSetup = false;
+        countDownLatch = new CountDownLatch(1);
 
         this.language = language;
         this.currentId = currentId;
@@ -409,9 +411,23 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         hasSpokenAfterSetup = false;
         countDownLatch = new CountDownLatch(1);
 
+        Log.d(TAG, "[extract] Resetting TTS state for NEW article - clearing any previous content");
+        if (sentences != null) {
+            sentences.clear();
+            Log.d(TAG, "[extract] Cleared sentences from previous article");
+        }
+
+        Log.d(TAG, "[extract] isSettingUpNewArticle=" + isSettingUpNewArticle + ", isArticleFinished=" + isArticleFinished);
+        Log.d(TAG, "[extract] New article ID=" + currentId + ", language=" + language);
+
         if (language != null && !language.isEmpty() && ttsExtractor != null) {
             ttsExtractor.setCurrentLanguage(language, true);
-            Log.d(TAG, "[extract] Locked language = " + language);
+            Log.d(TAG, "[extract] Locked language = " + language + " in TtsExtractor");
+        }
+
+        if (language != null && !language.isEmpty() && ttsExtractor != null) {
+            ttsExtractor.setCurrentLanguage(language, true);
+            Log.d(TAG, "[extract] Locked language = " + language + " in TtsExtractor");
         }
 
         if (content != null && !content.trim().isEmpty()) {

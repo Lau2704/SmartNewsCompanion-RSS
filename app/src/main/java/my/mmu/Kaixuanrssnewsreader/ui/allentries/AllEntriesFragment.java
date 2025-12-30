@@ -91,6 +91,8 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
     SharedPreferencesRepository sharedPreferencesRepository;
     @Inject
     EntryRepository entryRepository;
+    @Inject
+    TextUtil textUtil;
 
     private boolean isSelectionMode = false;
     private WebViewViewModel webViewViewModel;
@@ -331,7 +333,6 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         webViewViewModel.updateHtml(finalHtml, entryInfo.getEntryId());
         entryRepository.updateHtml(finalHtml, entryInfo.getEntryId());
 
-        TextUtil textUtil = new TextUtil(sharedPreferencesRepository);
         final String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
 
         webViewViewModel.updateTranslated(translatedContent, entryInfo.getEntryId());
@@ -366,7 +367,6 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         if (html == null) return;
         Log.d(TAG, "translating title: " + entryInfo.getEntryTitle());
         // Identify source language
-        TextUtil textUtil = new TextUtil(sharedPreferencesRepository);
         String content = textUtil.extractHtmlContent(html, "--####--");
         String translationMethod = sharedPreferencesRepository.getTranslationMethod();
         String targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();

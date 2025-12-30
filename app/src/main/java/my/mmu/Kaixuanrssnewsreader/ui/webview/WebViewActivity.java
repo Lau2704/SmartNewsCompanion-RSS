@@ -32,8 +32,10 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
@@ -107,7 +109,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     // Translation
     private String targetLanguage;
     private String translationMethod;
-    private TextUtil textUtil;
+
+    @Inject
+    TextUtil textUtil;
+
     private CompositeDisposable compositeDisposable;
     private LiveData<Entry> liveEntryObserver;
 
@@ -188,46 +193,69 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void doWhenTranslationFinish(EntryInfo entryInfo, String originalHtml, String translatedHtml) {
-        loading.setVisibility(View.INVISIBLE);
+        try {
+            loading.setVisibility(View.INVISIBLE);
 
-        if (webViewViewModel.getOriginalHtmlById(currentId) == null && originalHtml != null) {
-            webViewViewModel.updateOriginalHtml(originalHtml, currentId);
-            entryRepository.updateOriginalHtml(originalHtml, currentId);
-            Log.d(TAG, "Original HTML backed up from method parameter.");
+            if (entryInfo == null) {
+                Log.e(TAG, "EntryInfo is null in doWhenTranslationFinish");
+                loading.setVisibility(View.GONE);
+                makeSnackbar("Error: Entry information not found");
+                return;
+            }
+
+            if (translatedHtml == null || translatedHtml.trim().isEmpty()) {
+                Log.e(TAG, "Translated HTML is null or empty");
+                loading.setVisibility(View.GONE);
+                makeSnackbar("Translation returned empty result");
+                return;
+            }
+
+            Log.d(TAG, "Translated HTML length: " + translatedHtml.length());
+            Log.d(TAG, "Translated HTML (first 500 chars): " + translatedHtml.substring(0, Math.min(500, translatedHtml.length())));
+
+            if (webViewViewModel.getOriginalHtmlById(currentId) == null && originalHtml != null) {
+                webViewViewModel.updateOriginalHtml(originalHtml, currentId);
+                entryRepository.updateOriginalHtml(originalHtml, currentId);
+                Log.d(TAG, "Original HTML backed up from method parameter.");
+            }
+
+            Document doc = Jsoup.parse(translatedHtml);
+            doc.head().append(webViewViewModel.getStyle());
+
+            String finalHtml = doc.html();
+
+            webViewViewModel.updateHtml(finalHtml, currentId);
+            entryRepository.updateHtml(finalHtml, currentId);
+
+            String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
+            webViewViewModel.updateTranslated(translatedContent, currentId);
+            webViewViewModel.updateEntryTranslatedField(currentId, translatedContent);
+            entryRepository.updateTranslatedText(translatedContent, currentId);
+
+            webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
+
+            toggleTranslationButton.setVisible(true);
+            isTranslatedView = true;
+            sharedPreferencesRepository.setIsTranslatedView(currentId, true);
+
+            webViewViewModel.setTranslatedTextReady(currentId, translatedContent);
+
+            Log.d(TAG, "FINAL translatedContent passed to TTS: " + translatedContent);
+            Log.d(TAG, "FINAL currentId: " + currentId + ", isTranslatedView: " + isTranslatedView);
+        } catch (Exception e) {
+            Log.e(TAG, "Error in doWhenTranslationFinish", e);
+            loading.setVisibility(View.GONE);
+            makeSnackbar("Error displaying translated content: " + e.getMessage());
         }
-
-        Document doc = Jsoup.parse(translatedHtml);
-        doc.head().append(webViewViewModel.getStyle());
-        Objects.requireNonNull(doc.selectFirst("body"))
-                .prepend(webViewViewModel.getHtml(
-                        entryInfo.getEntryTitle(),
-                        entryInfo.getFeedTitle(),
-                        entryInfo.getEntryPublishedDate(),
-                        entryInfo.getFeedImageUrl()
-                ));
-        String finalHtml = doc.html();
-
-        webViewViewModel.updateHtml(finalHtml, currentId);
-        entryRepository.updateHtml(finalHtml, currentId);
-
-        String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
-        webViewViewModel.updateTranslated(translatedContent, currentId);
-        webViewViewModel.updateEntryTranslatedField(currentId, translatedContent);
-        entryRepository.updateTranslatedText(translatedContent, currentId);
-
-        webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
-
-        toggleTranslationButton.setVisible(true);
-        isTranslatedView = true;
-        sharedPreferencesRepository.setIsTranslatedView(currentId, true);
-
-        webViewViewModel.setTranslatedTextReady(currentId, translatedContent);
-
-        Log.d(TAG, "FINAL translatedContent passed to TTS: " + translatedContent);
-        Log.d(TAG, "FINAL currentId: " + currentId + ", isTranslatedView: " + isTranslatedView);
     }
 
     private void translate() {
+        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+            return;
+        }
+
         Log.d(TAG, "translate: html\n" + webViewViewModel.getHtmlById(currentId));
         makeSnackbar("Translation in progress");
         loading.setVisibility(View.VISIBLE);
@@ -246,21 +274,55 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         String feedLanguage = entryInfo.getFeedLanguage();
-        String userConfiguredLang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+
+        targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
+        Log.d(TAG, "Target language from SharedPreferences: " + targetLanguage);
+
+        if ("cn".equals(targetLanguage)) {
+            targetLanguage = "zh";
+            Log.d(TAG, "Converted 'cn' to 'zh' for Chinese");
+        }
+
+        if (targetLanguage == null || targetLanguage.isEmpty()) {
+            targetLanguage = getSystemLanguage();
+            Log.d(TAG, "Target language is empty, using system language: " + targetLanguage);
+        }
 
         textUtil.identifyLanguageRx(content).subscribe(
                 identifiedLanguage -> {
-                    String sourceLanguage = (userConfiguredLang != null && !userConfiguredLang.isEmpty())
-                            ? feedLanguage : identifiedLanguage;
+                    String sourceLanguage = identifiedLanguage;
+                    if (sourceLanguage == null || sourceLanguage.equals("und") || sourceLanguage.isEmpty()) {
+                        sourceLanguage = feedLanguage;
+                    }
+                    if (sourceLanguage == null || sourceLanguage.isEmpty()) {
+                        sourceLanguage = "en";
+                    }
 
-                    Log.d(TAG, "Translating from " + sourceLanguage + " to " + targetLanguage);
+                    Log.d(TAG, "Translating from [" + sourceLanguage + "] to [" + targetLanguage + "]");
+                    Log.d(TAG, "Source lang equals target: " + sourceLanguage.equals(targetLanguage));
+
+                    if (sourceLanguage.equals(targetLanguage)) {
+                        loading.setVisibility(View.GONE);
+                        makeSnackbar("Source and target languages are the same");
+                        return;
+                    }
+
                     performTranslation(sourceLanguage, targetLanguage, content, entryInfo.getEntryTitle());
                 },
                 error -> {
-                    Log.e(TAG, "Language identification failed, falling back to feedLanguage");
-                    performTranslation(feedLanguage, targetLanguage, content, entryInfo.getEntryTitle());
+                    Log.e(TAG, "Language identification failed", error);
+                    String sourceLanguage = feedLanguage;
+                    if (sourceLanguage == null || sourceLanguage.isEmpty()) {
+                        sourceLanguage = "en";
+                    }
+                    Log.d(TAG, "Falling back to source lang: " + sourceLanguage + ", target: " + targetLanguage);
+                    performTranslation(sourceLanguage, targetLanguage, content, entryInfo.getEntryTitle());
                 }
         );
+    }
+
+    private String getSystemLanguage() {
+        return java.util.Locale.getDefault().getLanguage();
     }
 
     private void performTranslation(String sourceLang, String targetLang, String html, String title) {
@@ -278,15 +340,21 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         final String originalHtml = html;
 
-        translationFlow.subscribe(
-                translatedHtml -> {
-                    Log.d(TAG, "Translation completed");
-                    doWhenTranslationFinish(webViewViewModel.getLastVisitedEntry(), originalHtml, translatedHtml);
-                },
-                throwable -> {
-                    Log.e(TAG, "Translation failed", throwable);
-                    loading.setVisibility(View.GONE);
-                }
+        translationFlow
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        translatedHtml -> {
+                            Log.d(TAG, "Translation completed");
+                            doWhenTranslationFinish(webViewViewModel.getLastVisitedEntry(), originalHtml, translatedHtml);
+                        },
+                        throwable -> {
+                            Log.e(TAG, "Translation failed", throwable);
+                            loading.setVisibility(View.GONE);
+                            String errorMsg = throwable != null && throwable.getMessage() != null
+                                    ? throwable.getMessage() : "Translation failed. Please check your network connection and API key.";
+                            makeSnackbar(errorMsg);
+                        }
         );
     }
 
@@ -319,8 +387,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
         translationMethod = sharedPreferencesRepository.getTranslationMethod();
-        textUtil = new TextUtil(sharedPreferencesRepository);
         compositeDisposable = new CompositeDisposable();
+
+        Log.d(TAG, "Target language from settings: " + targetLanguage);
+        Log.d(TAG, "Translation method: " + translationMethod);
+        Log.d(TAG, "OpenRouter API key configured: " + (sharedPreferencesRepository.getOpenRouterApiKey() != null && !sharedPreferencesRepository.getOpenRouterApiKey().isEmpty()));
 
         initializeToolbarListeners();
         initializeWebViewSettings();
@@ -441,6 +512,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         currentId = entryInfo.getEntryId();
+        
+        Log.d(TAG, "Loading article: " + currentId + ", stopping any existing TTS playback");
+        
+        if (ttsPlayer.isPlaying()) {
+            ttsPlayer.stop();
+            Log.d(TAG, "TTS stopped before loading new article");
+        }
+        
         Entry entry = entryRepository.getEntryById(currentId);
 
         if (entry == null) {
@@ -467,17 +546,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             toggleTranslationButton.setVisible(false);
         }
 
-        if (!sharedPreferencesRepository.hasTranslationToggle(currentId)) {
-            if (entry.getTranslated() != null && entry.getHtml() != null) {
-                isTranslatedView = true;
-            } else {
-                isTranslatedView = false;
-            }
-        } else {
+        isTranslatedView = false;
+
+        if (entry.getTranslated() != null && entry.getHtml() != null) {
+            isTranslatedView = true;
+            Log.d(TAG, "loadEntryContent: Article has translated HTML available, setting isTranslatedView=true");
+        } else if (sharedPreferencesRepository.hasTranslationToggle(currentId)) {
             isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentId);
+            Log.d(TAG, "loadEntryContent: Using saved preference isTranslatedView=" + isTranslatedView);
+        } else {
+            Log.d(TAG, "loadEntryContent: Article not translated, isTranslatedView=false");
         }
 
-        Log.d(TAG, "loadEntryContent: isTranslatedView = " + isTranslatedView);
+        Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
 
         EntryInfo info = webViewViewModel.getEntryInfoById(currentId);
         if (info == null) {
@@ -505,6 +586,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         Log.d(TAG, "Language to use: " + lang);
         Log.d(TAG, "Text to read: " + contentToRead);
 
+        Log.d(TAG, "Calling setCurrentLanguage with: " + lang + ", lock=true");
         ttsExtractor.setCurrentLanguage(lang, true);
 
         if (html != null && !html.trim().isEmpty()) {
@@ -1157,16 +1239,18 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private String getLanguageForCurrentView(long entryId, boolean isTranslated, String defaultLang) {
         if (isTranslated) {
-            return sharedPreferencesRepository.getDefaultTranslationLanguage();
+            String translationLang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+            Log.d(TAG, "getLanguageForCurrentView: Using TRANSLATED lang=" + translationLang);
+            return translationLang;
         }
 
         EntryInfo info = webViewViewModel.getEntryInfoById(entryId);
-        String lang = (info != null && info.getFeedLanguage() != null && !info.getFeedLanguage().trim().isEmpty())
+        String feedLang = (info != null && info.getFeedLanguage() != null && !info.getFeedLanguage().trim().isEmpty())
                 ? info.getFeedLanguage()
                 : defaultLang;
 
-        Log.d(TAG, "getLanguageForCurrentView: Using lang=" + lang + " for isTranslated=" + isTranslated);
-        return lang;
+        Log.d(TAG, "getLanguageForCurrentView: Using FEED lang=" + feedLang + " (isTranslated=" + isTranslated + ")");
+        return feedLang;
     }
 
     @Override

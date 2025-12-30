@@ -3,22 +3,22 @@ package my.mmu.Kaixuanrssnewsreader.service.util;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Tasks;
-import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.nl.languageid.LanguageIdentification;
 import com.google.mlkit.nl.languageid.LanguageIdentificationOptions;
 import com.google.mlkit.nl.languageid.LanguageIdentifier;
-import com.google.mlkit.nl.translate.Translation;
-import com.google.mlkit.nl.translate.Translator;
-import com.google.mlkit.nl.translate.TranslatorOptions;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
@@ -30,6 +30,11 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class TextUtil {
     public static final String TAG = TextUtil.class.getSimpleName();
@@ -359,32 +364,85 @@ public class TextUtil {
     }
 
     public Single<String> translateText(String sourceLanguage, String targetLanguage, String text) {
-        return Single.create(emitter -> {
+        return Single.<String>create(emitter -> {
             if (text == null || text.isEmpty()) {
                 emitter.onError(new IllegalArgumentException("Invalid content for translation"));
                 return;
             }
 
-            TranslatorOptions options = new TranslatorOptions.Builder()
-                    .setSourceLanguage(sourceLanguage)
-                    .setTargetLanguage(targetLanguage)
+            String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in SharedPreferencesRepository."));
+                return;
+            }
+
+            String model = sharedPreferencesRepository.getOpenRouterModel();
+            String url = "https://openrouter.ai/api/v1/chat/completions";
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
                     .build();
 
-            Translator translator = Translation.getClient(options);
-            DownloadConditions conditions = new DownloadConditions.Builder().build();
+            try {
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("model", model);
 
-            translator.downloadModelIfNeeded(conditions)
-                    .addOnSuccessListener(v -> translator.translate(text)
-                            .addOnSuccessListener(emitter::onSuccess)
-                            .addOnFailureListener(error -> {
-                                Log.e(TAG, "Translation failed", error);
-                                emitter.onError(error);
-                            }))
-                    .addOnFailureListener(error -> {
-                        Log.e(TAG, "Model download failed", error);
-                        emitter.onError(error);
-                    });
-        });
+                JSONArray messages = new JSONArray();
+                JSONObject systemMessage = new JSONObject();
+                systemMessage.put("role", "system");
+                systemMessage.put("content", "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.");
+                messages.put(systemMessage);
+
+                JSONObject userMessage = new JSONObject();
+                userMessage.put("role", "user");
+                userMessage.put("content", text);
+                messages.put(userMessage);
+
+                requestBody.put("messages", messages);
+
+                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("Authorization", "Bearer " + apiKey)
+                        .addHeader("Content-Type", "application/json")
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        String errorBody = response.body() != null ? response.body().string() : "";
+                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
+                        emitter.onError(new Exception("API Error: " + response.code() + ". " + errorBody));
+                        return;
+                    }
+
+                    String responseBody = response.body() != null ? response.body().string() : "";
+                    Log.d(TAG, "Full API Response length: " + responseBody.length());
+                    Log.d(TAG, "API Response (first 500 chars): " + responseBody.substring(0, Math.min(500, responseBody.length())));
+                    JSONObject jsonResponse = new JSONObject(responseBody);
+                    JSONArray choices = jsonResponse.getJSONArray("choices");
+                    if (choices.length() > 0) {
+                        String translatedText = choices.getJSONObject(0)
+                                .getJSONObject("message")
+                                .getString("content");
+                        
+                        Log.d(TAG, "Translated text length: " + translatedText.length());
+                        Log.d(TAG, "Translated text (first 200 chars): " + translatedText.substring(0, Math.min(200, translatedText.length())));
+                        
+                        emitter.onSuccess(translatedText);
+                    } else {
+                        emitter.onError(new Exception("No translation result found in API response"));
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Translation error", e);
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io());
     }
 
     public Single<String> identifyLanguageRx(String sentence) {
