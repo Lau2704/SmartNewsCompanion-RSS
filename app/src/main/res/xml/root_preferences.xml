@@ -14,7 +14,7 @@
             app:title="@string/jobPeriodic_title"
             app:useSimpleSummaryProvider="true" />
 
-        <SeekBarPreference
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="10000"
             app:defaultValue="1000"
             app:icon="@drawable/ic_articles"
@@ -32,6 +32,7 @@
         app:title="@string/interface_header">
 
         <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
             app:icon="@drawable/ic_night_mode"
             app:key="night"
             app:summaryOff="@string/theme_summary_off"
@@ -39,6 +40,7 @@
             app:title="@string/theme_title" />
 
         <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="false"
             app:icon="@drawable/ic_summary"
             app:key="displaySummary"
@@ -47,6 +49,7 @@
             app:title="@string/display_summary_title" />
 
         <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="true"
             app:icon="@drawable/ic_marker"
             app:key="highlightText"
@@ -78,6 +81,7 @@
             app:title="@string/translationMethod_title" />
 
         <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="false"
             app:icon="@drawable/ic_auto_translate"
             app:key="autoTranslate"
@@ -85,7 +89,7 @@
             app:summaryOn="@string/auto_translate_on"
             app:title="@string/auto_translate_title" />
 
-        <SeekBarPreference
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="100"
             app:defaultValue="50"
             app:icon="@drawable/ic_language"
@@ -109,6 +113,7 @@
             app:icon="@drawable/ic_speech" />
 
         <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="false"
             app:icon="@drawable/ic_music"
             app:key="backgroundMusic"
@@ -125,7 +130,7 @@
             app:title="@string/background_music_file"
             app:useSimpleSummaryProvider="true" />
 
-        <SeekBarPreference
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="100"
             app:defaultValue="50"
             app:icon="@drawable/ic_volume"

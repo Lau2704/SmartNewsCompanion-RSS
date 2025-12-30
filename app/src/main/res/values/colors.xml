@@ -8,4 +8,8 @@
     <color name="background">#FAFAFA</color>
     <color name="unread">#E1E1E1</color>
     <color name="unreadText">#515151</color>
+    
+    <!-- Material 3 Colors -->
+    <color name="secondary_container">#FFDAD6</color>
+    <color name="on_secondary_container">#410002</color>
 </resources>

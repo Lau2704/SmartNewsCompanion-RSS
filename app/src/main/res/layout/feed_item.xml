@@ -35,7 +35,7 @@
             app:layout_constraintStart_toEndOf="@id/feedImage"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/updateFeed"
             style="?attr/materialIconButtonStyle"
             android:layout_width="wrap_content"
@@ -45,7 +45,7 @@
             app:layout_constraintEnd_toStartOf="@+id/deleteFeed"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/reExtractFeed"
             style="?attr/materialIconButtonStyle"
             android:layout_width="wrap_content"
@@ -55,7 +55,7 @@
             app:layout_constraintEnd_toStartOf="@+id/updateFeed"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/deleteFeed"
             style="?attr/materialIconButtonStyle"
             android:layout_width="wrap_content"

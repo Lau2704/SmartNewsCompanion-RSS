@@ -12,8 +12,7 @@
 
     <style name="Widget.App.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
         <item name="backgroundTint">@color/background</item>
-        <item name="itemRippleColor">@color/bottom_nav_item_color</item>
-        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <!-- Removed itemIconTint and itemRippleColor to allow M3 styles (active indicator) -->
     </style>
 
     <style name="Widget.App.SmallButton" parent="Widget.Material3.Button.IconButton">

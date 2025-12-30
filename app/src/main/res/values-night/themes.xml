@@ -6,7 +6,12 @@
         <item name="colorOnPrimary">@color/background</item>
         <item name="colorPrimaryContainer">@color/primary_lighter</item>
         <item name="colorOnPrimaryContainer">@color/background</item>
-        <item name="colorSecondaryContainer">@color/background</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        <item name="colorSurface">@color/background</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorOnSurfaceVariant">@color/text</item>
+        <item name="colorSurfaceVariant">@color/stroke</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="color">@color/text</item>
         <item name="fontFamily">@font/open_sans_med</item>
@@ -23,12 +28,16 @@
 
         <!-- Alert dialog -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
 
         <!-- Bottom sheet dialog -->
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.App.BottomSheetDialog</item>
 
         <!-- Floating action button -->
         <item name="floatingActionButtonStyle">@style/Widget.App.FloatingActionButton</item>
+
+        <!-- Switch style -->
+        <item name="switchStyle">@style/Widget.Material3.CompoundButton.MaterialSwitch</item>
 
         <!-- This is for enabling transitions. -->
         <item name="android:windowActivityTransitions">true</item>
