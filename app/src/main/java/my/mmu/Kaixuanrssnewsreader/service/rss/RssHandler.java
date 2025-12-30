@@ -37,9 +37,37 @@ public class RssHandler extends DefaultHandler {
             case "media:thumbnail":
             case "media:content":
             case "image":
-                if (attributes.getValue("url") != null) {
-                    imageUrl = attributes.getValue("url");
+            case "enclosure":
+            case "itunes:image":
+                if (rssItem == null && qName.equals("image")) {
+                    // Feed-level image tag started (standard RSS <image>)
+                    imageUrl = null; 
+                } else {
+                    String url = attributes.getValue("url");
+                    if (url == null) {
+                        url = attributes.getValue("href"); // Handle itunes:image
+                    }
+                    String type = attributes.getValue("type");
+                    String medium = attributes.getValue("medium");
+
+                    if (url != null) {
+                        boolean isImage = true;
+                        // Check if it is explicitly NOT an image
+                        if (type != null && !type.startsWith("image/")) isImage = false;
+                        if (medium != null && !medium.equals("image")) isImage = false;
+
+                        // media:thumbnail and itunes:image are implicitly images
+                        if (qName.equals("media:thumbnail") || qName.equals("image") || qName.equals("itunes:image")) isImage = true;
+
+                        if (isImage) {
+                            imageUrl = url;
+                        }
+                    }
                 }
+                break;
+            case "url":
+                // Handle standard RSS <image><url>...</url></image>
+                // Do nothing here, stringBuilder will capture content
                 break;
         }
     }
@@ -73,6 +101,18 @@ public class RssHandler extends DefaultHandler {
                     case "language":
                         rssFeed.setLanguage(stringBuilder.toString().trim());
                         break;
+                    case "image":
+                    case "itunes:image":
+                        if (imageUrl != null) {
+                            rssFeed.setImageUrl(imageUrl.trim());
+                        }
+                        imageUrl = null;
+                        break;
+                    case "url":
+                        if (imageUrl == null) { // Prefer attributes if already found
+                            imageUrl = stringBuilder.toString().trim();
+                        }
+                        break;
                     default:
                         Log.d("RssHandler", "Unhandled feed tag: " + qName);
                 }
@@ -90,10 +130,14 @@ public class RssHandler extends DefaultHandler {
                     case "media:thumbnail":
                     case "media:content":
                     case "image":
-                        rssItem.setImageUrl(imageUrl != null ? imageUrl.trim() : null);
+                    case "enclosure":
+                    case "itunes:image":
+                        if (imageUrl != null) {
+                            rssItem.setImageUrl(imageUrl.trim());
+                        }
                         imageUrl = null; // Reset after use
                         break;
-                    case "pubDate":
+                    case "url":
                         rssItem.setPubDate(stringBuilder.toString().trim());
                         break;
                     case "category":

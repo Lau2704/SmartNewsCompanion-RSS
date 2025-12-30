@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,8 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
 import com.google.android.material.button.MaterialButton;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomViewTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 public class NavigationFeedItemAdapter extends ListAdapter<Feed, NavigationFeedItemAdapter.FeedItemHolder> {
 
@@ -66,23 +68,26 @@ public class NavigationFeedItemAdapter extends ListAdapter<Feed, NavigationFeedI
         public void bind(Feed feed) {
             navigationButton.setText(feed.getTitle());
             if (!TextUtils.isEmpty(feed.getImageUrl())) {
-                Picasso.get().load(feed.getImageUrl()).into(new Target() {
-                    @Override
-                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                        Drawable drawable = new BitmapDrawable(navigationButton.getContext().getResources(), bitmap);
-                        navigationButton.setIcon(drawable);
-                    }
+                Glide.with(navigationButton.getContext())
+                        .asBitmap()
+                        .load(feed.getImageUrl())
+                        .disallowHardwareConfig()
+                        .into(new CustomViewTarget<MaterialButton, Bitmap>(navigationButton) {
+                            @Override
+                            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                                getView().setIcon(errorDrawable);
+                            }
 
-                    @Override
-                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                getView().setIcon(new BitmapDrawable(getView().getContext().getResources(), resource));
+                            }
 
-                    }
-
-                    @Override
-                    public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                    }
-                });
+                            @Override
+                            protected void onResourceCleared(@Nullable Drawable placeholder) {
+                                getView().setIcon(placeholder);
+                            }
+                        });
             }
             navigationButton.setOnClickListener(new View.OnClickListener() {
                 @Override

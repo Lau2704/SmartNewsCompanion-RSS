@@ -101,7 +101,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     // JavaScript failure detection
     private int pageLoadRetryCount = 0;
     private static final int MAX_RETRY_ATTEMPTS = 3;
-    private boolean isJavaScriptError = false;
     private Handler retryHandler = new Handler(Looper.getMainLooper());
     private String currentLoadingUrl = null;
 
@@ -914,7 +913,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     Log.e(TAG, "JavaScript Error: " + consoleMessage.message() +
                             " at line " + consoleMessage.lineNumber() +
                             " of " + consoleMessage.sourceId());
-                    isJavaScriptError = true;
                 }
                 return super.onConsoleMessage(consoleMessage);
             }
@@ -1312,7 +1310,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             Log.d(TAG, "WebClient: onPageStarted - loadingWebView visible.");
             webViewViewModel.setLoadingState(true);
             currentLoadingUrl = url;
-            isJavaScriptError = false;
+            retryHandler.removeCallbacksAndMessages(null);
             if (clearHistory) {
                 clearHistory = false;
                 webView.clearHistory();
@@ -1375,7 +1373,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             Log.d(TAG, "ReadingWebClient: onPageStarted - loadingWebView visible.");
             webViewViewModel.setLoadingState(true);
             currentLoadingUrl = url;
-            isJavaScriptError = false;
+            retryHandler.removeCallbacksAndMessages(null);
             ttsExtractor.setCallback(WebViewActivity.this);
             if (clearHistory) {
                 clearHistory = false;
@@ -1530,13 +1528,16 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
      * Check if JavaScript executed successfully by injecting a test script
      */
     private void checkJavaScriptExecution() {
+        // Cancel any pending checks or reloads to prevent overlapping logic
+        retryHandler.removeCallbacksAndMessages(null);
+
         retryHandler.postDelayed(() -> {
             webView.evaluateJavascript(
                 "(function() { " +
                 "   try { " +
-                "       return document.readyState === 'complete' && " +
-                "              document.body !== null && " +
-                "              document.body.innerHTML.trim().length > 0; " +
+                "       var ready = document.readyState === 'complete' || document.readyState === 'interactive';" +
+                "       var hasContent = document.body !== null && document.body.innerText.trim().length > 0;" +
+                "       return ready && hasContent; " +
                 "   } catch(e) { " +
                 "       return false; " +
                 "   } " +
@@ -1545,7 +1546,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     boolean isPageHealthy = "true".equals(result);
                     Log.d(TAG, "JavaScript execution check: " + (isPageHealthy ? "SUCCESS" : "FAILED") + ", result=" + result);
 
-                    if (!isPageHealthy || isJavaScriptError) {
+                    if (!isPageHealthy) {
                         handlePageLoadFailure(currentLoadingUrl, "JavaScript execution failed or incomplete page load");
                     } else {
                         // Page loaded successfully, reset retry count
@@ -1600,7 +1601,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 dialog.dismiss();
             })
             .setNegativeButton("Cancel", (dialog, which) -> {
-                pageLoadRetryCount = 0;
+                pageLoadRetryCount = 3;
                 makeSnackbar("Page load cancelled");
                 dialog.dismiss();
             })

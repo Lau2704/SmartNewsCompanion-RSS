@@ -25,7 +25,7 @@ import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.databinding.DialogEntryitemBinding;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import com.google.android.material.button.MaterialButton;
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
 
@@ -86,13 +86,13 @@ public class EntryItemDialog extends AppCompatDialogFragment {
         playingButton = binding.entryDialogPlayingButton;
 
         if (entryInfo.getFeedImageUrl() != null && !entryInfo.getFeedImageUrl().isEmpty()) {
-            Picasso.get().load(entryInfo.getFeedImageUrl()).into(feedImage);
+            Glide.with(this).asBitmap().load(entryInfo.getFeedImageUrl()).disallowHardwareConfig().into(feedImage);
         } else {
             feedImage.setVisibility(View.GONE);
         }
 
         if (entryInfo.getEntryImageUrl() != null && !entryInfo.getEntryImageUrl().isEmpty()) {
-            Picasso.get().load(entryInfo.getEntryImageUrl()).into(entryImage);
+            Glide.with(this).asBitmap().load(entryInfo.getEntryImageUrl()).disallowHardwareConfig().into(entryImage);
         } else {
             entryImage.setVisibility(View.GONE);
         }

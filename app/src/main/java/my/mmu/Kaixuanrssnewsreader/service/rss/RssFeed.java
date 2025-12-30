@@ -8,6 +8,7 @@ public class RssFeed {
     private String link;
     private String description;
     private String language;
+    private String imageUrl;
     private ArrayList<RssItem> rssItems;
 
     public RssFeed() {
@@ -48,6 +49,14 @@ public class RssFeed {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public ArrayList<RssItem> getRssItems() {

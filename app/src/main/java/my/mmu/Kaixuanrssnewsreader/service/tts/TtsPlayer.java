@@ -501,7 +501,13 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 // Update progress based on paragraphs processed
                 currentExtractProgress = Math.min((int) (((double) (i + 1) / totalParagraphs) * 100), 95);
 
-                if (i % 3 == 0 || i == sentenceList.size() - 1) {
+                if (i % 3 == 0) {
+                    ContextCompat.getMainExecutor(context).execute(() -> {
+                        if (webViewCallback != null) {
+                            webViewCallback.updateLoadingProgress(currentExtractProgress);
+                        }
+                    });
+                } else if (i == sentenceList.size() - 1) {
                     ContextCompat.getMainExecutor(context).execute(() -> {
                         if (webViewCallback != null) {
                             webViewCallback.updateLoadingProgress(currentExtractProgress);

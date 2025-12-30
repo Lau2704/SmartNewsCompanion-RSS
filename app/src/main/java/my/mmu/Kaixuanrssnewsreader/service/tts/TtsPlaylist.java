@@ -1,24 +1,30 @@
 package my.mmu.Kaixuanrssnewsreader.service.tts;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 
+import com.bumptech.glide.Glide;
+
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.playlist.PlaylistRepository;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
-import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 @Singleton
 public class TtsPlaylist {
 
+    private final Context context;
     private final EntryRepository entryRepository;
     private final PlaylistRepository playlistRepository;
     private MediaMetadataCompat metadata;
@@ -30,7 +36,8 @@ public class TtsPlaylist {
     private String translated;
 
     @Inject
-    public TtsPlaylist(EntryRepository entryRepository, PlaylistRepository playlistRepository) {
+    public TtsPlaylist(@ApplicationContext Context context, EntryRepository entryRepository, PlaylistRepository playlistRepository) {
+        this.context = context;
         this.entryRepository = entryRepository;
         this.playlistRepository = playlistRepository;
     }
@@ -52,8 +59,13 @@ public class TtsPlaylist {
                 html = entryRepository.getHtmlById(entryInfo.getEntryId());
                 String translated = entryRepository.getTranslatedTextById(entryInfo.getEntryId());
                 try {
-                    feedImage = Picasso.get().load(entryInfo.getFeedImageUrl()).get();
-                } catch (IOException e) {
+                    feedImage = Glide.with(context)
+                            .asBitmap()
+                            .load(entryInfo.getFeedImageUrl())
+                            .disallowHardwareConfig()
+                            .submit()
+                            .get();
+                } catch (ExecutionException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }

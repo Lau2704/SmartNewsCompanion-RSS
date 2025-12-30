@@ -153,7 +153,12 @@ public class FeedRepository {
     }
 
     public void addNewFeed(RssFeed feed) {
-        String imageUrl = "https://www.google.com/s2/favicons?sz=64&domain_url=" + feed.getLink();
+        String imageUrl;
+        if (feed.getImageUrl() != null && !feed.getImageUrl().isEmpty()) {
+            imageUrl = feed.getImageUrl();
+        } else {
+            imageUrl = "https://www.google.com/s2/favicons?sz=64&domain_url=" + feed.getLink();
+        }
         Feed newFeed = new Feed(feed.getTitle(), feed.getLink(), feed.getDescription(), imageUrl, feed.getLanguage());
 
         feedDao.insert(newFeed);
