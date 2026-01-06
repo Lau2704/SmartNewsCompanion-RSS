@@ -137,7 +137,7 @@ public class RssHandler extends DefaultHandler {
                         }
                         imageUrl = null; // Reset after use
                         break;
-                    case "url":
+                    case "pubDate":
                         rssItem.setPubDate(stringBuilder.toString().trim());
                         break;
                     case "category":

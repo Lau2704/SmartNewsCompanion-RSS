@@ -33,6 +33,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -193,60 +194,71 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void doWhenTranslationFinish(EntryInfo entryInfo, String originalHtml, String translatedHtml) {
-        try {
-            loading.setVisibility(View.INVISIBLE);
+        loading.setVisibility(View.INVISIBLE);
 
-            if (entryInfo == null) {
-                Log.e(TAG, "EntryInfo is null in doWhenTranslationFinish");
-                loading.setVisibility(View.GONE);
-                makeSnackbar("Error: Entry information not found");
-                return;
-            }
-
-            if (translatedHtml == null || translatedHtml.trim().isEmpty()) {
-                Log.e(TAG, "Translated HTML is null or empty");
-                loading.setVisibility(View.GONE);
-                makeSnackbar("Translation returned empty result");
-                return;
-            }
-
-            Log.d(TAG, "Translated HTML length: " + translatedHtml.length());
-            Log.d(TAG, "Translated HTML (first 500 chars): " + translatedHtml.substring(0, Math.min(500, translatedHtml.length())));
-
-            if (webViewViewModel.getOriginalHtmlById(currentId) == null && originalHtml != null) {
-                webViewViewModel.updateOriginalHtml(originalHtml, currentId);
-                entryRepository.updateOriginalHtml(originalHtml, currentId);
-                Log.d(TAG, "Original HTML backed up from method parameter.");
-            }
-
-            Document doc = Jsoup.parse(translatedHtml);
-            doc.head().append(webViewViewModel.getStyle());
-
-            String finalHtml = doc.html();
-
-            webViewViewModel.updateHtml(finalHtml, currentId);
-            entryRepository.updateHtml(finalHtml, currentId);
-
-            String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
-            webViewViewModel.updateTranslated(translatedContent, currentId);
-            webViewViewModel.updateEntryTranslatedField(currentId, translatedContent);
-            entryRepository.updateTranslatedText(translatedContent, currentId);
-
-            webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
-
-            toggleTranslationButton.setVisible(true);
-            isTranslatedView = true;
-            sharedPreferencesRepository.setIsTranslatedView(currentId, true);
-
-            webViewViewModel.setTranslatedTextReady(currentId, translatedContent);
-
-            Log.d(TAG, "FINAL translatedContent passed to TTS: " + translatedContent);
-            Log.d(TAG, "FINAL currentId: " + currentId + ", isTranslatedView: " + isTranslatedView);
-        } catch (Exception e) {
-            Log.e(TAG, "Error in doWhenTranslationFinish", e);
+        if (entryInfo == null) {
+            Log.e(TAG, "EntryInfo is null in doWhenTranslationFinish");
             loading.setVisibility(View.GONE);
-            makeSnackbar("Error displaying translated content: " + e.getMessage());
+            makeSnackbar("Error: Entry information not found");
+            return;
         }
+
+        if (translatedHtml == null || translatedHtml.trim().isEmpty()) {
+            Log.e(TAG, "Translated HTML is null or empty");
+            loading.setVisibility(View.GONE);
+            makeSnackbar("Translation returned empty result");
+            return;
+        }
+
+        Log.d(TAG, "Translated HTML length: " + translatedHtml.length());
+        Log.d(TAG, "Translated HTML (first 500 chars): " + translatedHtml.substring(0, Math.min(500, translatedHtml.length())));
+
+        compositeDisposable.add(
+                Single.fromCallable(() -> {
+                    if (webViewViewModel.getOriginalHtmlById(currentId) == null && originalHtml != null) {
+                        webViewViewModel.updateOriginalHtml(originalHtml, currentId);
+                        entryRepository.updateOriginalHtml(originalHtml, currentId);
+                        Log.d(TAG, "Original HTML backed up from method parameter.");
+                    }
+
+                    Document doc = Jsoup.parse(translatedHtml);
+                    doc.head().append(webViewViewModel.getStyle());
+
+                    String finalHtml = doc.html();
+
+                    webViewViewModel.updateHtml(finalHtml, currentId);
+                    entryRepository.updateHtml(finalHtml, currentId);
+
+                    String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
+                    webViewViewModel.updateTranslated(translatedContent, currentId);
+                    webViewViewModel.updateEntryTranslatedField(currentId, translatedContent);
+                    entryRepository.updateTranslatedText(translatedContent, currentId);
+
+                    return finalHtml;
+                })
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                finalHtml -> {
+                                    webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
+
+                                    toggleTranslationButton.setVisible(true);
+                                    isTranslatedView = true;
+                                    sharedPreferencesRepository.setIsTranslatedView(currentId, true);
+
+                                    String translatedContent = textUtil.extractHtmlContent(finalHtml, "--####--");
+                                    webViewViewModel.setTranslatedTextReady(currentId, translatedContent);
+
+                                    Log.d(TAG, "FINAL translatedContent passed to TTS: " + translatedContent);
+                                    Log.d(TAG, "FINAL currentId: " + currentId + ", isTranslatedView: " + isTranslatedView);
+                                },
+                                throwable -> {
+                                    Log.e(TAG, "Error in doWhenTranslationFinish", throwable);
+                                    loading.setVisibility(View.GONE);
+                                    makeSnackbar("Error displaying translated content: " + throwable.getMessage());
+                                }
+                        )
+        );
     }
 
     private void translate() {
@@ -457,30 +469,48 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void loadHtmlIntoWebView(String html) {
-        Document doc = Jsoup.parse(html);
-        doc.head().append(webViewViewModel.getStyle());
-
-        EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
-        if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
-            doc.selectFirst("body").prepend(
-                    webViewViewModel.getHtml(
-                            entryInfo.getEntryTitle(),
-                            entryInfo.getFeedTitle(),
-                            entryInfo.getEntryPublishedDate(),
-                            entryInfo.getFeedImageUrl()
-                    )
-            );
+        if (html == null || html.trim().isEmpty()) {
+            return;
         }
 
-        webView.loadDataWithBaseURL("file///android_res/", doc.html(), "text/html", "UTF-8", null);
+        compositeDisposable.add(
+                Single.fromCallable(() -> {
+                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+                    Document doc = Jsoup.parse(html);
+                    doc.head().append(webViewViewModel.getStyle());
 
-        webView.postDelayed(() -> {
-            int scrollX = sharedPreferencesRepository.getScrollX(currentId);
-            int scrollY = sharedPreferencesRepository.getScrollY(currentId);
-            webView.scrollTo(scrollX, scrollY);
-        }, 300);
+                    if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
+                        doc.selectFirst("body").prepend(
+                                webViewViewModel.getHtml(
+                                        entryInfo.getEntryTitle(),
+                                        entryInfo.getFeedTitle(),
+                                        entryInfo.getEntryPublishedDate(),
+                                        entryInfo.getFeedImageUrl()
+                                )
+                        );
+                    }
 
-        syncLoadingWithTts();
+                    return doc.html();
+                })
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                processedHtml -> {
+                                    webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
+
+                                    webView.postDelayed(() -> {
+                                        int scrollX = sharedPreferencesRepository.getScrollX(currentId);
+                                        int scrollY = sharedPreferencesRepository.getScrollY(currentId);
+                                        webView.scrollTo(scrollX, scrollY);
+                                    }, 300);
+
+                                    syncLoadingWithTts();
+                                },
+                                throwable -> {
+                                    Log.e(TAG, "Error loading HTML into WebView", throwable);
+                                }
+                        )
+        );
     }
 
     private void updateToggleTranslationVisibility() {
@@ -505,35 +535,64 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void loadEntryContent() {
-        EntryInfo entryInfo = webViewViewModel.getLastVisitedEntry();
-        if (entryInfo == null) {
-            makeSnackbar("No article to load.");
-            return;
-        }
+        long intentId = getIntent().getLongExtra("entry_id", -1);
 
-        currentId = entryInfo.getEntryId();
-        
-        Log.d(TAG, "Loading article: " + currentId + ", stopping any existing TTS playback");
-        
+        Log.d(TAG, "Loading article with Intent ID: " + intentId);
+
         if (ttsPlayer.isPlaying()) {
             ttsPlayer.stop();
             Log.d(TAG, "TTS stopped before loading new article");
         }
-        
-        Entry entry = entryRepository.getEntryById(currentId);
 
-        if (entry == null) {
-            makeSnackbar("Failed to load article content.");
-            return;
-        }
+        compositeDisposable.add(
+                Single.fromCallable(() -> {
+                    EntryInfo info = null;
+                    if (intentId != -1) {
+                        info = webViewViewModel.getEntryInfoById(intentId);
+                    }
+                    if (info == null) {
+                        info = webViewViewModel.getLastVisitedEntry();
+                    }
+                    return info;
+                })
+                .flatMap(entryInfo -> {
+                    if (entryInfo == null) {
+                        return Single.error(new Exception("No article found"));
+                    }
+                    // Fetch the full entry content
+                    Entry entry = entryRepository.getEntryById(entryInfo.getEntryId());
+                    return Single.just(new androidx.core.util.Pair<>(entryInfo, entry));
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(pair -> {
+                    EntryInfo entryInfo = pair.first;
+                    Entry entry = pair.second;
 
+                    if (entry == null) {
+                        makeSnackbar("Failed to load article content.");
+                        return;
+                    }
+
+                    currentId = entryInfo.getEntryId();
+                    // Update playlist so metadata calls are correct
+                    ttsPlaylist.updatePlayingId(currentId);
+
+                    loadEntryContentWithData(entry, entryInfo);
+                }, throwable -> {
+                    Log.e(TAG, "Error loading entry", throwable);
+                    makeSnackbar("Failed to load article.");
+                })
+        );
+    }
+
+    private void loadEntryContentWithData(Entry entry, EntryInfo entryInfo) {
         if (sharedPreferencesRepository.getWebViewMode(currentId)) {
             loadFromBrowserMode(entryInfo);
             return;
         }
 
-        Log.d("DEBUG", "Original: " + entry.getOriginalHtml());
-        Log.d("DEBUG", "Translated: " + entry.getTranslated());
+        cachedEntryInfo = entryInfo;
 
         if (entry.getOriginalHtml() != null && entry.getTranslated() != null) {
             toggleTranslationButton.setVisible(true);
@@ -554,25 +613,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         } else if (sharedPreferencesRepository.hasTranslationToggle(currentId)) {
             isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentId);
             Log.d(TAG, "loadEntryContent: Using saved preference isTranslatedView=" + isTranslatedView);
-        } else {
+        }
+ else {
             Log.d(TAG, "loadEntryContent: Article not translated, isTranslatedView=false");
         }
 
         Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
 
-        EntryInfo info = webViewViewModel.getEntryInfoById(currentId);
-        if (info == null) {
-            makeSnackbar("Feed language info not found.");
-            return;
-        }
-
-        Log.d("LoadEntry", "entry.getHtml() = " + (entry.getHtml() != null));
-        Log.d("LoadEntry", "entry.getTranslated() = " + (entry.getTranslated() != null));
-        Log.d("LoadEntry", "isTranslatedView = " + isTranslatedView);
-
-        String html = isTranslatedView
-                ? webViewViewModel.getHtmlById(currentId)
-                : webViewViewModel.getOriginalHtmlById(currentId);
+        String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
 
         Log.d("LoadEntry", "htmlToLoad (translated) = " + (html != null ? html.length() : "null"));
 
@@ -584,21 +632,48 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Log.d(TAG, "loadEntryContent - About to speak " + (isTranslatedView ? "Translated" : "Original"));
         Log.d(TAG, "Language to use: " + lang);
-        Log.d(TAG, "Text to read: " + contentToRead);
+        Log.d(TAG, "Text to read length: " + (contentToRead != null ? contentToRead.length() : 0));
 
         Log.d(TAG, "Calling setCurrentLanguage with: " + lang + ", lock=true");
         ttsExtractor.setCurrentLanguage(lang, true);
 
         if (html != null && !html.trim().isEmpty()) {
             loadHtmlIntoWebView(html);
+
             if (!ttsPlayer.isSameArticleState(entry.getId(), lang)) {
-                ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
+                compositeDisposable.add(
+                        Completable.fromAction(() -> {
+                            ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
+                        })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        () -> {
+                                            syncLoadingWithTts();
+                                        },
+                                        throwable -> {
+                                            Log.e(TAG, "Error extracting TTS", throwable);
+                                            syncLoadingWithTts();
+                                        }
+                                )
+                );
             } else {
                 Log.d(TAG, "TTS is already prepared for this article/language. Skipping re-extraction.");
                 syncLoadingWithTts();
             }
         } else {
             Log.w(TAG, "HTML missing, skipping load.");
+            // If HTML is missing, we might still want to try TTS extract from the raw link?
+            // But usually extractAllEntries handles it.
+            // If we are here, it means DB has entry but no HTML.
+            // Maybe trigger extraction?
+            if (isReadingMode) {
+                 // In reading mode, TtsExtractor callback is set by WebClient.
+                 // But we need to load URL to trigger it.
+                 // If html is null, loadUrl fallback?
+                 Log.d(TAG, "Loading URL directly as HTML is missing.");
+                 webView.loadUrl(entryInfo.getEntryLink());
+            }
         }
 
         sharedPreferencesRepository.setCurrentReadingEntryId(currentId);
@@ -644,9 +719,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         String htmlToLoad = isTranslatedView ? translatedHtml : originalHtml;
 
         Log.d(TAG, "LiveEntry - Current Mode: " + (isTranslatedView ? "Translated" : "Original"));
-        Log.d(TAG, "LiveEntry - Original HTML:\n" + originalHtml);
-        Log.d(TAG, "LiveEntry - Translated HTML:\n" + translatedHtml);
-        Log.d(TAG, "LiveEntry - HTML to Load:\n" + htmlToLoad);
+        Log.d(TAG, "LiveEntry - HTML to Load:\n" + (htmlToLoad != null ? htmlToLoad.length() + " chars" : "null"));
 
         if (htmlToLoad != null && !htmlToLoad.trim().isEmpty()) {
             loadHtmlToWebView(htmlToLoad);
@@ -656,36 +729,51 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void observeAutoTranslation() {
-        LiveData<Entry> observer = webViewViewModel.getEntryEntityById(currentId);
-        Observer<Entry> checkAutoTranslated = new Observer<Entry>() {
+        LiveData<Entry> entryLiveData = webViewViewModel.getEntryEntityById(currentId);
+        final Observer<Entry>[] observerHolder = new Observer[1];
+        observerHolder[0] = new Observer<Entry>() {
             @Override
             public void onChanged(Entry entry) {
                 if (entry != null && entry.getTranslated() != null) {
+                    compositeDisposable.add(
+                            Single.fromCallable(() -> {
+                                String originalHtmlFromDb = entryRepository.getOriginalHtmlById(currentId);
+                                String translatedHtmlFromDb = entry.getHtml();
 
-                    String originalHtmlFromDb = entryRepository.getOriginalHtmlById(currentId);
-                    if (originalHtmlFromDb != null) {
-                        webViewViewModel.updateOriginalHtml(originalHtmlFromDb, currentId);
-                        Log.d(TAG, "Original HTML restored from DB.");
-                    }
+                                if (originalHtmlFromDb != null) {
+                                    webViewViewModel.updateOriginalHtml(originalHtmlFromDb, currentId);
+                                    Log.d(TAG, "Original HTML restored from DB.");
+                                }
 
-                    String translatedHtmlFromDb = entry.getHtml();
-                    if (translatedHtmlFromDb != null) {
-                        webViewViewModel.updateHtml(translatedHtmlFromDb, currentId);
-                        Log.d(TAG, "Translated HTML synced from auto translation.");
-                    }
+                                if (translatedHtmlFromDb != null) {
+                                    webViewViewModel.updateHtml(translatedHtmlFromDb, currentId);
+                                    Log.d(TAG, "Translated HTML synced from auto translation.");
+                                }
 
-                    toggleTranslationButton.setTitle(isTranslatedView ? "Show Original" : "Show Translation");
+                                toggleTranslationButton.setTitle(isTranslatedView ? "Show Original" : "Show Translation");
 
-                    Log.d(TAG, "AutoTranslation - Final Original:\n" + webViewViewModel.getOriginalHtmlById(currentId));
-                    Log.d(TAG, "AutoTranslation - Final Translated:\n" + webViewViewModel.getHtmlById(currentId));
+                                Log.d(TAG, "AutoTranslation - Final Original:\n" + webViewViewModel.getOriginalHtmlById(currentId));
+                                Log.d(TAG, "AutoTranslation - Final Translated:\n" + webViewViewModel.getHtmlById(currentId));
 
-                    webViewViewModel.triggerEntryRefresh(currentId);
-
-                    observer.removeObserver(this);
+                                webViewViewModel.triggerEntryRefresh(currentId);
+                                return null;
+                            })
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(
+                                            result -> {
+                                                entryLiveData.removeObserver(observerHolder[0]);
+                                            },
+                                            throwable -> {
+                                                Log.e(TAG, "Error in observeAutoTranslation", throwable);
+                                                entryLiveData.removeObserver(observerHolder[0]);
+                                            }
+                                    )
+                    );
                 }
             }
         };
-        observer.observeForever(checkAutoTranslated);
+        entryLiveData.observeForever(observerHolder[0]);
     }
 
     private void loadHtmlToWebView(String html) {
@@ -693,22 +781,36 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        Document doc = Jsoup.parse(html);
-        doc.head().append(webViewViewModel.getStyle());
+        compositeDisposable.add(
+                Single.fromCallable(() -> {
+                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+                    Document doc = Jsoup.parse(html);
+                    doc.head().append(webViewViewModel.getStyle());
 
-        EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
-        if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
-            doc.selectFirst("body").prepend(
-                    webViewViewModel.getHtml(
-                            entryInfo.getEntryTitle(),
-                            entryInfo.getFeedTitle(),
-                            entryInfo.getEntryPublishedDate(),
-                            entryInfo.getFeedImageUrl()
-                    )
-            );
-        }
+                    if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
+                        doc.selectFirst("body").prepend(
+                                webViewViewModel.getHtml(
+                                        entryInfo.getEntryTitle(),
+                                        entryInfo.getFeedTitle(),
+                                        entryInfo.getEntryPublishedDate(),
+                                        entryInfo.getFeedImageUrl()
+                                )
+                        );
+                    }
 
-        webView.loadDataWithBaseURL("file///android_res/", doc.html(), "text/html", "UTF-8", null);
+                    return doc.html();
+                })
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                processedHtml -> {
+                                    webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
+                                },
+                                throwable -> {
+                                    Log.e(TAG, "Error loading HTML to WebView", throwable);
+                                }
+                        )
+        );
     }
 
     private boolean handleOtherToolbarItems(int itemId) {
@@ -747,11 +849,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             case R.id.exitBrowser:
                 sharedPreferencesRepository.setWebViewMode(currentId, false);
                 EntryInfo entryInfo = webViewViewModel.getLastVisitedEntry();
-                String rebuiltHtml = rebuildHtml(entryInfo);
-                loadEntryContent();
-                offlineButton.setVisible(false);
-                browserButton.setVisible(true);
-                hideFakeLoading();
+                rebuildHtml(entryInfo, html -> {
+                    loadEntryContent();
+                    offlineButton.setVisible(false);
+                    browserButton.setVisible(true);
+                    hideFakeLoading();
+                });
                 return true;
 
             case R.id.reload:
@@ -829,22 +932,39 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
     }
 
-    private String rebuildHtml(EntryInfo entryInfo) {
-        String html = webViewViewModel.getHtmlById(entryInfo.getEntryId());
+    private void rebuildHtml(EntryInfo entryInfo, WebViewRebuildCallback callback) {
+        compositeDisposable.add(
+                Single.fromCallable(() -> {
+                    String html = webViewViewModel.getHtmlById(entryInfo.getEntryId());
 
-        Document doc = Jsoup.parse(html);
-        doc.head().append(webViewViewModel.getStyle());
+                    Document doc = Jsoup.parse(html);
+                    doc.head().append(webViewViewModel.getStyle());
 
-        Objects.requireNonNull(doc.selectFirst("body")).prepend(
-                webViewViewModel.getHtml(
-                        entryInfo.getEntryTitle(),
-                        entryInfo.getFeedTitle(),
-                        entryInfo.getEntryPublishedDate(),
-                        entryInfo.getFeedImageUrl()
-                )
+                    Objects.requireNonNull(doc.selectFirst("body")).prepend(
+                            webViewViewModel.getHtml(
+                                    entryInfo.getEntryTitle(),
+                                    entryInfo.getFeedTitle(),
+                                    entryInfo.getEntryPublishedDate(),
+                                    entryInfo.getFeedImageUrl()
+                            )
+                    );
+
+                    return doc.html();
+                })
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                callback::onRebuildComplete,
+                                throwable -> {
+                                    Log.e(TAG, "Error rebuilding HTML", throwable);
+                                    makeSnackbar("Error rebuilding content");
+                                }
+                        )
         );
+    }
 
-        return doc.html();
+    private interface WebViewRebuildCallback {
+        void onRebuildComplete(String html);
     }
 
     private void adjustTextZoom(boolean zoomIn) {
@@ -1182,24 +1302,38 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             String feedImageUrl = metadata.getString("feedImageUrl");
 
             isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentId);
-            String htmlToLoad = isTranslatedView
-                    ? webViewViewModel.getHtmlById(currentId)
-                    : webViewViewModel.getOriginalHtmlById(currentId);
 
-            if (htmlToLoad == null) {
-                htmlToLoad = metadata.getString("html");
-            }
+            compositeDisposable.add(
+                    Single.fromCallable(() -> {
+                        String htmlToLoad = isTranslatedView
+                                ? webViewViewModel.getHtmlById(currentId)
+                                : webViewViewModel.getOriginalHtmlById(currentId);
 
-            if (htmlToLoad != null) {
-                loadHtmlIntoWebView(htmlToLoad);
-            }
+                        if (htmlToLoad == null) {
+                            htmlToLoad = metadata.getString("html");
+                        }
+                        return htmlToLoad;
+                    })
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    htmlToLoad -> {
+                                        if (htmlToLoad != null) {
+                                            loadHtmlIntoWebView(htmlToLoad);
+                                        }
 
-            offlineButton.setVisible(false);
-            reloadButton.setVisible(true);
-            bookmarkButton.setVisible(true);
-            translationButton.setVisible(true);
-            browserButton.setVisible(true);
-            highlightTextButton.setVisible(true);
+                                        offlineButton.setVisible(false);
+                                        reloadButton.setVisible(true);
+                                        bookmarkButton.setVisible(true);
+                                        translationButton.setVisible(true);
+                                        browserButton.setVisible(true);
+                                        highlightTextButton.setVisible(true);
+                                    },
+                                    throwable -> {
+                                        Log.e(TAG, "Error in setupReadingWebView", throwable);
+                                    }
+                            )
+            );
         }
     }
 
@@ -1237,6 +1371,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         });
     }
 
+    private EntryInfo cachedEntryInfo = null;
+
     private String getLanguageForCurrentView(long entryId, boolean isTranslated, String defaultLang) {
         if (isTranslated) {
             String translationLang = sharedPreferencesRepository.getDefaultTranslationLanguage();
@@ -1244,9 +1380,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return translationLang;
         }
 
-        EntryInfo info = webViewViewModel.getEntryInfoById(entryId);
-        String feedLang = (info != null && info.getFeedLanguage() != null && !info.getFeedLanguage().trim().isEmpty())
-                ? info.getFeedLanguage()
+        if (cachedEntryInfo == null) {
+            cachedEntryInfo = webViewViewModel.getEntryInfoById(entryId);
+        }
+
+        String feedLang = (cachedEntryInfo != null && cachedEntryInfo.getFeedLanguage() != null && !cachedEntryInfo.getFeedLanguage().trim().isEmpty())
+                ? cachedEntryInfo.getFeedLanguage()
                 : defaultLang;
 
         Log.d(TAG, "getLanguageForCurrentView: Using FEED lang=" + feedLang + " (isTranslated=" + isTranslated + ")");
@@ -1562,14 +1701,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
 
             isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentId);
-            String htmlToLoad = isTranslatedView
-                    ? webViewViewModel.getHtmlById(currentId)
-                    : webViewViewModel.getOriginalHtmlById(currentId);
-
-            if (htmlToLoad == null) {
-                htmlToLoad = metadata.getString("html");
-            }
-
             boolean isWebViewMode = sharedPreferencesRepository.getWebViewMode(currentId);
 
             if (isWebViewMode) {
@@ -1578,23 +1709,45 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 browserButton.setVisible(false);
                 offlineButton.setVisible(true);
                 showOfflineButton = false;
-            } else if (htmlToLoad != null) {
-                loadHtmlIntoWebView(htmlToLoad);
-                browserButton.setVisible(true);
-                offlineButton.setVisible(false);
-                showOfflineButton = false;
             } else {
-                webView.loadUrl(currentLink);
-                Log.d(TAG, "Fallback: loading live URL - " + currentLink);
-                browserButton.setVisible(false);
-                showOfflineButton = true;
+                compositeDisposable.add(
+                        Single.fromCallable(() -> {
+                                    String htmlToLoad = isTranslatedView
+                                            ? webViewViewModel.getHtmlById(currentId)
+                                            : webViewViewModel.getOriginalHtmlById(currentId);
+
+                                    if (htmlToLoad == null) {
+                                        htmlToLoad = metadata.getString("html");
+                                    }
+                                    return htmlToLoad;
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        htmlToLoad -> {
+                                            if (htmlToLoad != null) {
+                                                loadHtmlIntoWebView(htmlToLoad);
+                                                browserButton.setVisible(true);
+                                                offlineButton.setVisible(false);
+                                                showOfflineButton = false;
+                                            } else {
+                                                webView.loadUrl(currentLink);
+                                                Log.d(TAG, "Fallback: loading live URL - " + currentLink);
+                                                browserButton.setVisible(false);
+                                                showOfflineButton = true;
+                                            }
+
+                                            if (ttsPlayer.isWebViewConnected()) {
+                                                ttsPlayer.setUiControlPlayback(true);
+                                            }
+                                        },
+                                        throwable -> {
+                                            Log.e(TAG, "Error loading metadata", throwable);
+                                            loading.setVisibility(View.GONE);
+                                        }
+                                )
+                );
             }
-
-
-            if (ttsPlayer.isWebViewConnected()) {
-                ttsPlayer.setUiControlPlayback(true);
-            }
-
         }
 
         @Override

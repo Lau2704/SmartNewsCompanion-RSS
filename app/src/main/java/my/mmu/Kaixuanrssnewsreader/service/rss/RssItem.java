@@ -55,15 +55,33 @@ public class RssItem {
     }
 
     public void setPubDate(String pubDate) {
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
-            if (pubDate == null || pubDate.isEmpty()) {
-                this.pubDate = new Date();
-            } else {
-                this.pubDate = dateFormat.parse(pubDate);
+        if (pubDate == null || pubDate.isEmpty()) {
+            return;
+        }
+
+        String[] dateFormats = {
+            "EEE, dd MMM yyyy HH:mm:ss Z",
+            "EEE, dd MMM yyyy HH:mm:ss z",
+            "EEE, dd MMM yyyy HH:mm:ss",
+            "dd MMM yyyy HH:mm:ss Z",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd HH:mm:ss Z"
+        };
+
+        for (String format : dateFormats) {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
+                dateFormat.setLenient(false);
+                Date parsedDate = dateFormat.parse(pubDate);
+                if (parsedDate != null) {
+                    this.pubDate = parsedDate;
+                    return;
+                }
+            } catch (ParseException e) {
+                continue;
             }
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
     }
 

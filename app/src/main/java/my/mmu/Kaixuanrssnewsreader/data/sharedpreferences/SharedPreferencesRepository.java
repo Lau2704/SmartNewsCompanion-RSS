@@ -1,5 +1,7 @@
-package my.mmu.Kaixuanrssnewsreader.data.sharedpreferences;
 
+//Need to set Open Router API at line 250
+
+package my.mmu.Kaixuanrssnewsreader.data.sharedpreferences;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -247,7 +249,7 @@ public class SharedPreferencesRepository {
             setOpenRouterModel("openai/gpt-oss-20b:free");
         }
         if (!sharedPreferences.contains("openRouterApiKey")) {
-            setOpenRouterApiKey("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");
+            setOpenRouterApiKey(""); //Need to change API Key to used (Open Router)
         }
     }
 }

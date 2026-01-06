@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "71459980240",
-    "project_id": "rss-news-reader-5480f",
-    "storage_bucket": "rss-news-reader-5480f.appspot.com"
+    "project_number": "117400409648",
+    "project_id": "rssnewsreader-7c599",
+    "storage_bucket": "rssnewsreader-7c599.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:71459980240:android:53703275e190d7217cafd5",
+        "mobilesdk_app_id": "1:117400409648:android:092bcc7528bba66452fff5",
         "android_client_info": {
           "package_name": "my.mmu.Kaixuanrssnewsreader"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "71459980240-gidu7fv46k9n93vgah0c5pisactfi9kb.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbbzDvQcQsLAALjrIqsGg3G7TBYrfn3CY"
+          "current_key": "AIzaSyD4l1cR9fO2hXK5qgWbPB4tkSe67TUyk60"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "71459980240-gidu7fv46k9n93vgah0c5pisactfi9kb.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

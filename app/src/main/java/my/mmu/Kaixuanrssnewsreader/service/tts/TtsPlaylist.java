@@ -54,19 +54,27 @@ public class TtsPlaylist {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                entryInfo = entryRepository.getLastVisitedEntry();
-                content = entryRepository.getContentById(entryInfo.getEntryId());
-                html = entryRepository.getHtmlById(entryInfo.getEntryId());
-                String translated = entryRepository.getTranslatedTextById(entryInfo.getEntryId());
-                try {
-                    feedImage = Glide.with(context)
-                            .asBitmap()
-                            .load(entryInfo.getFeedImageUrl())
-                            .disallowHardwareConfig()
-                            .submit()
-                            .get();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
+                if (playingId != 0) {
+                    entryInfo = entryRepository.getEntryInfoById(playingId);
+                } else {
+                    entryInfo = entryRepository.getLastVisitedEntry();
+                }
+
+                if (entryInfo != null) {
+                    content = entryRepository.getContentById(entryInfo.getEntryId());
+                    html = entryRepository.getHtmlById(entryInfo.getEntryId());
+                    translated = entryRepository.getTranslatedTextById(entryInfo.getEntryId());
+                    try {
+                        feedImage = Glide.with(context)
+                                .asBitmap()
+                                .load(entryInfo.getFeedImageUrl())
+                                .disallowHardwareConfig()
+                                .submit()
+                                .get(2, java.util.concurrent.TimeUnit.SECONDS);
+                    } catch (ExecutionException | InterruptedException | java.util.concurrent.TimeoutException e) {
+                        e.printStackTrace();
+                        feedImage = null;
+                    }
                 }
             }
         });
@@ -75,6 +83,10 @@ public class TtsPlaylist {
             thread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+
+        if (entryInfo == null) {
+            return new MediaMetadataCompat.Builder().build();
         }
 
         metadata = new MediaMetadataCompat.Builder()

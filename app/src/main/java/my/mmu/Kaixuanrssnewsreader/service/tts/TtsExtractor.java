@@ -280,136 +280,146 @@ public class TtsExtractor {
                             @Override
                             public void onReceiveValue(final String value) {
                                 Log.d(TAG, "Receiving value...");
-                                JsonReader reader = new JsonReader(new StringReader(value));
-                                reader.setLenient(true);
-                                boolean stopExtracting = false;
-                                StringBuilder content = new StringBuilder();
-                                try {
-                                    if (reader.peek() == JsonToken.STRING) {
-                                        String html = reader.nextString();
-                                        boolean isTranslated = sharedPreferencesRepository.getIsTranslatedView(currentIdInProgress);
-                                        if (html != null) {
-                                            Readability4JExtended readability4J = new Readability4JExtended(currentLink, html);
-                                            Article article = readability4J.parse();
+                                Single.fromCallable(() -> {
+                                    JsonReader reader = new JsonReader(new StringReader(value));
+                                    reader.setLenient(true);
+                                    boolean stopExtracting = false;
+                                    boolean success = false;
+                                    StringBuilder content = new StringBuilder();
 
-                                            if (currentTitle != null && !currentTitle.isEmpty()) {
-                                                content.append(currentTitle).append(delimiter);
-                                            }
+                                    try {
+                                        if (reader.peek() == JsonToken.STRING) {
+                                            String html = reader.nextString();
+                                            if (html != null) {
+                                                Readability4JExtended readability4J = new Readability4JExtended(currentLink, html);
+                                                Article article = readability4J.parse();
 
-                                            if (article.getContentWithUtf8Encoding() != null) {
-                                                Document doc = Jsoup.parse(article.getContentWithUtf8Encoding());
-                                                doc.select("img").removeAttr("width");
-                                                doc.select("img").removeAttr("height");
-                                                doc.select("img").removeAttr("sizes");
-                                                doc.select("img").removeAttr("srcset");
-                                                doc.select("h1").remove();
-                                                doc.select("img").attr("style", "border-radius: 5px; width: 100%; margin-left:0"); // find all images and set width to 100%
-                                                doc.select("figure").attr("style", "width: 100%; margin-left:0"); // find all images and set width to 100%
-                                                doc.select("iframe").attr("style", "width: 100%; margin-left:0"); // find all images and set width to 100%
+                                                if (currentTitle != null && !currentTitle.isEmpty()) {
+                                                    content.append(currentTitle).append(delimiter);
+                                                }
 
-                                                List<String> tags = Arrays.asList("h2", "h3", "h4", "h5", "h6", "p", "td", "pre", "th", "li", "figcaption", "blockquote", "section");
-                                                for (Element element : doc.getAllElements()) {
-                                                    if (tags.contains(element.tagName())) {
-                                                        boolean sameContent = false;
-                                                        for (Element child : element.children()) {
-                                                            if (tags.contains(child.tagName())) {
-                                                                sameContent = true;
-                                                            }
-                                                        }
-                                                        if (!sameContent) {
-                                                            String text = element.text().trim();
-                                                            if (!text.isEmpty() && text.length() > 1) {
-                                                                if (currentTitle != null && !currentTitle.isEmpty()) {
-                                                                    content.append(delimiter).append(text);
-                                                                } else {
-                                                                    content.append(text);
+                                                if (article.getContentWithUtf8Encoding() != null) {
+                                                    Document doc = Jsoup.parse(article.getContentWithUtf8Encoding());
+                                                    doc.select("img").removeAttr("width");
+                                                    doc.select("img").removeAttr("height");
+                                                    doc.select("img").removeAttr("sizes");
+                                                    doc.select("img").removeAttr("srcset");
+                                                    doc.select("h1").remove();
+                                                    doc.select("img").attr("style", "border-radius: 5px; width: 100%; margin-left:0");
+                                                    doc.select("figure").attr("style", "width: 100%; margin-left:0");
+                                                    doc.select("iframe").attr("style", "width: 100%; margin-left:0");
+
+                                                    List<String> tags = Arrays.asList("h2", "h3", "h4", "h5", "h6", "p", "td", "pre", "th", "li", "figcaption", "blockquote", "section");
+                                                    for (Element element : doc.getAllElements()) {
+                                                        if (tags.contains(element.tagName())) {
+                                                            boolean sameContent = false;
+                                                            for (Element child : element.children()) {
+                                                                if (tags.contains(child.tagName())) {
+                                                                    sameContent = true;
                                                                 }
-                                                            } else {
-                                                                element.remove();
+                                                            }
+                                                            if (!sameContent) {
+                                                                String text = element.text().trim();
+                                                                if (!text.isEmpty() && text.length() > 1) {
+                                                                    if (currentTitle != null && !currentTitle.isEmpty()) {
+                                                                        content.append(delimiter).append(text);
+                                                                    } else {
+                                                                        content.append(text);
+                                                                    }
+                                                                } else {
+                                                                    element.remove();
+                                                                }
                                                             }
                                                         }
                                                     }
-                                                }
 
-                                                entryRepository.updateHtml(doc.html(), currentIdInProgress);
+                                                    entryRepository.updateHtml(doc.html(), currentIdInProgress);
 
-                                                if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
-                                                    entryRepository.updateOriginalHtml(doc.html(), currentIdInProgress);
-                                                    entryRepository.updateContent(content.toString(), currentIdInProgress);
-                                                }
-
-                                                if (sharedPreferencesRepository.getAutoTranslate()) {
-                                                    translateHtml(doc.html(), content.toString(), currentIdInProgress, currentTitle);
-                                                }
-
-                                                if (content.toString().isEmpty()) {
-                                                    stopExtracting = true;
-                                                }
-
-                                                if (currentIdInProgress == ttsPlaylist.getPlayingId()) {
-                                                    if (ttsCallback != null) {
-                                                        String lang = currentLanguage != null ? currentLanguage : "en";
-
-                                                        Entry entry = entryRepository.getEntryById(currentIdInProgress);
-                                                        String contentToRead;
-
-                                                        if (isTranslated && entry != null && entry.getTranslated() != null && !entry.getTranslated().trim().isEmpty()) {
-                                                            contentToRead = entry.getTranslated();
-                                                            Log.d(TAG, "[TtsExtractor] Using translated content for TTS");
-                                                        } else {
-                                                            contentToRead = entry != null ? entry.getContent() : "";
-                                                            Log.d(TAG, "[TtsExtractor] Using original content for TTS");
-                                                        }
-
-                                                        ttsCallback.extractToTts(contentToRead, lang);
-                                                        ttsCallback = null;
+                                                    if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
+                                                        entryRepository.updateOriginalHtml(doc.html(), currentIdInProgress);
+                                                        entryRepository.updateContent(content.toString(), currentIdInProgress);
                                                     }
-                                                } else {
-                                                    Log.d(TAG, "not playing this ID");
+
+                                                    if (sharedPreferencesRepository.getAutoTranslate()) {
+                                                        translateHtml(doc.html(), content.toString(), currentIdInProgress, currentTitle);
+                                                    }
+
+                                                    if (content.toString().isEmpty()) {
+                                                        stopExtracting = true;
+                                                    } else {
+                                                        success = true;
+                                                    }
                                                 }
-                                            } else {
-                                                Log.d(TAG, "Empty content");
                                             }
-                                        } else {
+                                        }
+                                    } catch (Exception e) {
+                                        return new Object[]{false, content.toString(), false, e};
+                                    }
+                                    return new Object[]{stopExtracting, content.toString(), success, null};
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(results -> {
+                                    boolean stopExtracting = (boolean) results[0];
+                                    String contentStr = (String) results[1];
+                                    boolean success = (boolean) results[2];
+                                    Exception error = (Exception) results[3];
+
+                                    if (error != null) {
+                                        Log.e(TAG, "[onReceiveValue] Exception during extraction", error);
+                                        failedIds.add(currentIdInProgress);
+                                    } else if (success) {
+                                        boolean isTranslated = sharedPreferencesRepository.getIsTranslatedView(currentIdInProgress);
+                                        if (currentIdInProgress == ttsPlaylist.getPlayingId()) {
+                                            if (ttsCallback != null) {
+                                                String lang = currentLanguage != null ? currentLanguage : "en";
+                                                Entry entry = entryRepository.getEntryById(currentIdInProgress);
+                                                String contentToRead;
+                                                if (isTranslated && entry != null && entry.getTranslated() != null && !entry.getTranslated().trim().isEmpty()) {
+                                                    contentToRead = entry.getTranslated();
+                                                    Log.d(TAG, "[TtsExtractor] Using translated content for TTS");
+                                                } else {
+                                                    contentToRead = entry != null ? entry.getContent() : "";
+                                                    Log.d(TAG, "[TtsExtractor] Using original content for TTS");
+                                                }
+                                                ttsCallback.extractToTts(contentToRead, lang);
+                                                ttsCallback = null;
+                                            }
+                                        }
+                                    } else {
+                                        if (!stopExtracting) {
                                             if (webViewCallback != null) {
                                                 webViewCallback.makeSnackbar("Failed to retrieve the html");
                                             }
                                             Log.d(TAG, "No html found!");
                                         }
-                                    } else {
-                                        Log.e(TAG, "[onReceiveValue] Unexpected JSON token");
-                                        if (webViewCallback != null) {
-                                            webViewCallback.makeSnackbar("Extraction failed");
-                                        }
-                                        Log.d(TAG, "Error peeking reader!");
                                     }
-                                } catch (Exception e) {
-                                    Log.e(TAG, "[onReceiveValue] Exception during extraction", e);
-                                    failedIds.add(currentIdInProgress);
-                                    Log.d(TAG, e.getMessage());
-                                    e.printStackTrace();
-                                } finally {
-                                    Log.d(TAG, "[onReceiveValue] Finally block: resetting flags for ID = " + currentIdInProgress);
+
+                                    if (stopExtracting || (contentStr.isEmpty() && !success && error == null)) {
+                                        Log.w(TAG, "Extraction failed for ID: " + currentIdInProgress);
+                                        if (!failedIds.contains(currentIdInProgress)) {
+                                            failedIds.add(currentIdInProgress);
+                                        }
+                                    }
+
+                                    if (webViewCallback != null) {
+                                        Log.d(TAG, "Extraction complete. Notifying UI via finishedSetup()");
+                                        webViewCallback.finishedSetup();
+                                        webViewCallback = null;
+                                    }
+
+                                    Log.d(TAG, "[onReceiveValue] Extraction completed for ID: " + currentIdInProgress);
                                     currentIdInProgress = -1;
                                     extractionInProgress = false;
                                     extractAllEntries();
-                                }
 
-                                if (stopExtracting || content.toString().isEmpty()) {
-                                    Log.w(TAG, "Extraction failed for ID: " + currentIdInProgress);
+                                }, throwable -> {
+                                    Log.e(TAG, "RxJava error during extraction", throwable);
                                     failedIds.add(currentIdInProgress);
-                                }
-
-                                if (webViewCallback != null) {
-                                    Log.d(TAG, "Extraction complete. Notifying UI via finishedSetup()");
-                                    webViewCallback.finishedSetup();
-                                    webViewCallback = null;
-                                }
-
-                                Log.d(TAG, "[onReceiveValue] Extraction completed for ID: " + currentIdInProgress);
-                                currentIdInProgress = -1;
-                                extractionInProgress = false;
-                                extractAllEntries();
+                                    currentIdInProgress = -1;
+                                    extractionInProgress = false;
+                                    extractAllEntries();
+                                });
                             }
                         });
                     }
