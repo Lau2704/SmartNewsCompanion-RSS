@@ -23,7 +23,6 @@ public class MainApplication extends Application implements Configuration.Provid
     @Override
     public void onCreate() {
         super.onCreate();
-        sharedPreferencesRepository.initializeOpenRouterSettingsOnFirst();
     }
 
     @NonNull

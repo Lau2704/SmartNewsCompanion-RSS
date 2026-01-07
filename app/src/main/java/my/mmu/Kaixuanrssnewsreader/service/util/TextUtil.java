@@ -40,11 +40,17 @@ public class TextUtil {
     public static final String TAG = TextUtil.class.getSimpleName();
     private final CompositeDisposable compositeDisposable;
     private final SharedPreferencesRepository sharedPreferencesRepository;
+    private final OkHttpClient client;
 
     @Inject
     public TextUtil(SharedPreferencesRepository sharedPreferencesRepository) {
         this.sharedPreferencesRepository = sharedPreferencesRepository;
         compositeDisposable = new CompositeDisposable();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build();
     }
 
     public String extractHtmlContent(String html, String delimiter) {
@@ -260,30 +266,33 @@ public class TextUtil {
                                         Log.d(TAG, "translateHtml: translatedText: " + translatedText);
                                         String[] translatedTexts = translatedText.split("((\\+ *){1,} *(@ *)* *(\\+ *){1,})|((\\+ *)* *(@ *){2,} *(\\+ *)*)");
                                         Log.d(TAG, "translateHtml: totalTextstoTranslate: " + elements.size() + ", totalTranslatedTexts: " + translatedTexts.length);
+                                        
                                         // If total translatedTexts is less or equal than the total elements, replace the text then remove additional elements
                                         if (translatedTexts.length <= elements.size()) {
                                             for (int i = 0; i < translatedTexts.length; i++) {
                                                 Element originalElement = elements.get(i);
-                                                Element newElement = new Element(Tag.valueOf("p"), "");
-                                                newElement.text(translatedTexts[i]);
-                                                originalElement.replaceWith(newElement);
+                                                originalElement.text(translatedTexts[i]);
                                             }
+                                            // Remove extra elements from the DOM
                                             for (int i = translatedTexts.length; i < elements.size(); i++) {
-                                                elements.remove(elements.get(i));
+                                                elements.get(i).remove();
                                             }
                                         }
                                         // If total translatedTexts is more than the total elements, add additional elements
                                         else {
                                             for (int i = 0; i < elements.size(); i++) {
                                                 Element originalElement = elements.get(i);
-                                                Element newElement = new Element(Tag.valueOf("p"), "");
-                                                newElement.text(translatedTexts[i]);
-                                                originalElement.replaceWith(newElement);
+                                                originalElement.text(translatedTexts[i]);
                                             }
+                                            
+                                            Element lastElement = elements.last();
                                             for (int i = elements.size(); i < translatedTexts.length; i++) {
                                                 Element newElement = new Element(Tag.valueOf("p"), "");
                                                 newElement.text(translatedTexts[i]);
-                                                elements.add(newElement);
+                                                if (lastElement != null) {
+                                                    lastElement.after(newElement);
+                                                    lastElement = newElement; // Update reference for next insertion
+                                                }
                                             }
                                         }
                                         return document.outerHtml();
@@ -372,18 +381,17 @@ public class TextUtil {
 
             String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in SharedPreferencesRepository."));
+                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in Settings."));
                 return;
             }
 
             String model = sharedPreferencesRepository.getOpenRouterModel();
-            String url = "https://openrouter.ai/api/v1/chat/completions";
+            if (model == null || model.isEmpty()) {
+                emitter.onError(new IllegalArgumentException("OpenRouter model is not configured. Please set a valid model in Settings."));
+                return;
+            }
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(60, TimeUnit.SECONDS)
-                    .build();
+            String url = "https://openrouter.ai/api/v1/chat/completions";
 
             try {
                 JSONObject requestBody = new JSONObject();
@@ -416,7 +424,27 @@ public class TextUtil {
                     if (!response.isSuccessful()) {
                         String errorBody = response.body() != null ? response.body().string() : "";
                         Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-                        emitter.onError(new Exception("API Error: " + response.code() + ". " + errorBody));
+
+                        String errorMessage = "";
+                        int code = response.code();
+
+                        if (code == 401) {
+                            errorMessage = "Invalid API key. Please check your OpenRouter API key in Settings.";
+                        } else if (code == 404) {
+                            if (errorBody.contains("privacy") || errorBody.contains("data policy")) {
+                                errorMessage = "Privacy policy configuration needed. Please visit https://openrouter.ai/settings/privacy to configure your privacy settings for this model.";
+                            } else {
+                                errorMessage = "Invalid model name. Please check the OpenRouter model in Settings.";
+                            }
+                        } else if (code == 429) {
+                            errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
+                        } else if (code == 500 || code == 502 || code == 503) {
+                            errorMessage = "OpenRouter service error. Please try again later.";
+                        } else {
+                            errorMessage = "API Error: " + code;
+                        }
+
+                        emitter.onError(new Exception(errorMessage + "\n\nDetails: " + errorBody));
                         return;
                     }
 
@@ -429,10 +457,10 @@ public class TextUtil {
                         String translatedText = choices.getJSONObject(0)
                                 .getJSONObject("message")
                                 .getString("content");
-                        
+
                         Log.d(TAG, "Translated text length: " + translatedText.length());
                         Log.d(TAG, "Translated text (first 200 chars): " + translatedText.substring(0, Math.min(200, translatedText.length())));
-                        
+
                         emitter.onSuccess(translatedText);
                     } else {
                         emitter.onError(new Exception("No translation result found in API response"));

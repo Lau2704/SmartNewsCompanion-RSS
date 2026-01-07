@@ -243,13 +243,4 @@ public class SharedPreferencesRepository {
         editor.putString("openRouterModel", model);
         editor.apply();
     }
-
-    public void initializeOpenRouterSettingsOnFirst() {
-        if (!sharedPreferences.contains("openRouterModel")) {
-            setOpenRouterModel("openai/gpt-oss-20b:free");
-        }
-        if (!sharedPreferences.contains("openRouterApiKey")) {
-            setOpenRouterApiKey(""); //Need to change API Key to used (Open Router)
-        }
-    }
 }
