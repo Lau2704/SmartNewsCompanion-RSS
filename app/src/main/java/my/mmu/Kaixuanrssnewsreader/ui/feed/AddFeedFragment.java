@@ -103,6 +103,7 @@ public class AddFeedFragment extends Fragment implements FeedViewModel.AddFeedCa
                     feedViewModel.addNewFeed(feed);
                 })
                 .setPositiveButton(R.string.yes, (dialogInterface, i) -> {
+                    feedViewModel.addNewFeed(feed);
                     if (feed.getRssItems().size() > 0) {
                         RssItem rssItem = feed.getRssItems().get(0);
                         Context context = getContext();
