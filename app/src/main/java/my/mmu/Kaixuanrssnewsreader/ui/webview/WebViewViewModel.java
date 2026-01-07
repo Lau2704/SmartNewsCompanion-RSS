@@ -70,6 +70,14 @@ public class WebViewViewModel extends ViewModel {
         translatedHtmlLiveData.postValue(html);
     }
 
+    public void setHtml(String html) {
+        translatedHtmlLiveData.postValue(html);
+    }
+
+    public void setOriginalHtml(String html) {
+        originalHtmlLiveData.postValue(html);
+    }
+
     public void updateContent(String content, long id) {
         entryRepository.updateContent(content, id);
     }

@@ -17,10 +17,9 @@ import javax.xml.parsers.SAXParserFactory;
 
 public class RssReader {
     private String rssUrl;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     public RssReader(String url) {
-        rssUrl = url.replace("http://", "https://");;
+        rssUrl = url;
     }
 
     public RssFeed getFeed() throws Exception {

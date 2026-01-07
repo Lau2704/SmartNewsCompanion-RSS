@@ -110,11 +110,19 @@ public class TtsPlaylist {
     }
 
     public boolean skipPrevious() {
-        return playlistRepository.updatePlaylistToPrevious();
+        boolean success = playlistRepository.updatePlaylistToPrevious();
+        if (success) {
+            updatePlayingIdToLatest();
+        }
+        return success;
     }
 
     public boolean skipNext() {
-        return playlistRepository.updatePlayListToNext();
+        boolean success = playlistRepository.updatePlayListToNext();
+        if (success) {
+            updatePlayingIdToLatest();
+        }
+        return success;
     }
 
     public void updatePlayingIdToLatest() {
