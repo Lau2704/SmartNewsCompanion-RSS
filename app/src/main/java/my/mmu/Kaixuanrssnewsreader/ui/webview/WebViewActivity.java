@@ -1104,6 +1104,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         webView.getSettings().setDisplayZoomControls(false);
         webView.getSettings().setLoadsImagesAutomatically(true);
         webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
 
         int textZoom = sharedPreferencesRepository.getTextZoom();
         if (textZoom != 0) {
@@ -1469,7 +1470,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             autoTranslationObserver.removeObserver(checkAutoTranslated);
         }
 
-        // Clean up retry handler
         if (retryHandler != null) {
             retryHandler.removeCallbacksAndMessages(null);
         }
@@ -1487,6 +1487,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         highlightTextButton.setVisible(false);
         compositeDisposable.dispose();
         textUtil.onDestroy();
+
+        if (webView != null) {
+            webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+            webView.clearHistory();
+            webView.clearCache(true);
+            webView.destroy();
+            webView = null;
+        }
     }
 
     @Override
@@ -1518,10 +1526,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         ttsPlayer.setWebViewConnected(false);
         ttsPlayer.setUiControlPlayback(false);
 
-        if (webView != null && currentId != 0) {
-            sharedPreferencesRepository.setScrollX(currentId, webView.getScrollX());
-            sharedPreferencesRepository.setScrollY(currentId, webView.getScrollY());
-            sharedPreferencesRepository.setIsTranslatedView(currentId, isTranslatedView);
+        if (webView != null) {
+            webView.onPause();
+            if (currentId != 0) {
+                sharedPreferencesRepository.setScrollX(currentId, webView.getScrollX());
+                sharedPreferencesRepository.setScrollY(currentId, webView.getScrollY());
+                sharedPreferencesRepository.setIsTranslatedView(currentId, isTranslatedView);
+            }
         }
 
         MediaControllerCompat mediaController = mMediaBrowserHelper.getMediaController();
@@ -1536,6 +1547,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     @Override
     protected void onResume() {
         super.onResume();
+        if (webView != null) {
+            webView.onResume();
+        }
         ttsPlayer.setWebViewConnected(true);
 
         updatePlayPauseButtonIcon(ttsPlayer.isSpeaking() && !ttsPlayer.isPausedManually());

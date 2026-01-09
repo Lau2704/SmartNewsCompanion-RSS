@@ -1,6 +1,7 @@
 package my.mmu.Kaixuanrssnewsreader.ui.main;
 
 import android.app.Application;
+import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorkerFactory;
@@ -23,6 +24,10 @@ public class MainApplication extends Application implements Configuration.Provid
     @Override
     public void onCreate() {
         super.onCreate();
+        try {
+            WebView.setWebContentsDebuggingEnabled(false);
+        } catch (Exception e) {
+        }
     }
 
     @NonNull

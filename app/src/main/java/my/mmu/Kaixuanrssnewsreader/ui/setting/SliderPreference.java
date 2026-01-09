@@ -46,26 +46,21 @@ public class SliderPreference extends Preference {
 
     private void init(Context context, AttributeSet attrs) {
         setLayoutResource(R.layout.preference_slider);
-        
+
         if (attrs != null) {
-            // Check standard namespaces first, then fallback to no namespace for simple cases
-            // Usually min/max are auto-parsed by SeekBarPreference but we are custom.
-            // We use simple attribute reading for simplicity or custom styleable if defined.
-            // For now, let's hardcode parsing or use standard android attrs if possible via TypedArray.
-            
-            // To keep it simple and robust without defining new attrs.xml immediately:
-            // We'll read specific attributes manually if needed, but standard Preference doesn't have min/max/seekBarIncrement.
-            // We can read "min", "max", "seekBarIncrement" from the AttributeSet using the resource namespace.
-            
             String androidNs = "http://schemas.android.com/apk/res/android";
             String appNs = "http://schemas.android.com/apk/res-auto";
 
-            mMin = attrs.getAttributeIntValue(appNs, "min", mMin); // Try app namespace first
+            mMin = attrs.getAttributeIntValue(appNs, "min", mMin);
             if (mMin == 0) mMin = attrs.getAttributeIntValue(androidNs, "min", 0);
-            
-            mMax = attrs.getAttributeIntValue(androidNs, "max", 100);
-            
-            // seekBarIncrement is not standard android attr for Preference, usually app attr for SeekBarPreference
+
+            int maxFromAndroid = attrs.getAttributeIntValue(androidNs, "max", 0);
+            if (maxFromAndroid != 0) {
+                mMax = maxFromAndroid;
+            } else {
+                mMax = attrs.getAttributeIntValue(appNs, "max", mMax);
+            }
+
             mStep = attrs.getAttributeIntValue(appNs, "seekBarIncrement", 1);
         }
     }
@@ -73,7 +68,7 @@ public class SliderPreference extends Preference {
     @Override
     public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
-        
+
         mSlider = (Slider) holder.findViewById(R.id.slider);
         mValueTextView = (TextView) holder.findViewById(R.id.slider_value);
 
@@ -81,6 +76,15 @@ public class SliderPreference extends Preference {
             mSlider.setValueFrom(mMin);
             mSlider.setValueTo(mMax);
             mSlider.setStepSize(mStep);
+
+            if (mValue < mMin) {
+                mValue = mMin;
+                persistInt(mValue);
+            } else if (mValue > mMax) {
+                mValue = mMax;
+                persistInt(mValue);
+            }
+
             mSlider.setValue(mValue);
             
             mSlider.addOnChangeListener((slider, value, fromUser) -> {
@@ -119,9 +123,15 @@ public class SliderPreference extends Preference {
     }
 
     public void setValue(int value) {
-        mValue = value;
+        if (value < mMin) {
+            mValue = mMin;
+        } else if (value > mMax) {
+            mValue = mMax;
+        } else {
+            mValue = value;
+        }
         if (mSlider != null) {
-            mSlider.setValue(value);
+            mSlider.setValue(mValue);
         }
         updateValueText();
     }
