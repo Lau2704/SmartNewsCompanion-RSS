@@ -39,8 +39,7 @@ public class RssNotification {
         }
 
         Notification notification = new NotificationCompat.Builder(context, RSS_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_rss)
-                .setColor(Color.WHITE)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("RSS feed is refreshed")
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_MAX)

@@ -46,6 +46,12 @@
     <string name="display_summary_on">Summary page of the article will be shown when an article is clicked</string>
     <string name="display_summary_off">Summary page of the article will not be shown when an article is clicked</string>
 
+    <string name="api_setting_title">OpenRouter API Key</string>
+    <string name="api_setting_summary">Enter your OpenRouter API key</string>
+
+    <string name="openRouterModel_title">OpenRouter Model</string>
+    <string name="openRouterModel_summary">Enter your OpenRouter model.</string>
+
     <string name="highlight_text_title">Highlight text</string>
     <string name="highlight_text_on">Search and highlight the paragraph where text-to-speech is speaking</string>
     <string name="highlight_text_off">Does not highlight the text when text-to-speech is speaking</string>

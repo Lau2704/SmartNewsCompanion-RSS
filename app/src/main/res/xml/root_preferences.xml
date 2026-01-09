@@ -64,16 +64,16 @@
         app:title="@string/translation_header">
 
         <EditTextPreference
-            app:icon="@drawable/ic_gear"
+            app:icon="@drawable/api_settings"
             app:key="openRouterApiKey"
-            app:summary="Enter your OpenRouter API key"
-            app:title="OpenRouter API Key" />
+            app:summary="@string/api_setting_summary"
+            app:title="@string/api_setting_title" />
 
         <EditTextPreference
-            app:icon="@drawable/ic_language"
+            app:icon="@drawable/ai_model"
             app:key="openRouterModel"
-            app:summary="Enter your OpenRouter model"
-            app:title="OpenRouter Model" />
+            app:summary="@string/openRouterModel_summary"
+            app:title="@string/openRouterModel_title" />
 
         <ListPreference
             app:entries="@array/defaultTranslationLanguage"
