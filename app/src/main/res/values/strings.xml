@@ -48,9 +48,22 @@
 
     <string name="api_setting_title">OpenRouter API Key</string>
     <string name="api_setting_summary">Enter your OpenRouter API key</string>
+    <string name="api_setting_dialog_title">OpenRouter API Key</string>
+    <string name="api_setting_dialog_description">Enter your OpenRouter API key. Get it from "https://openrouter.ai/.\n
+    1. Sign in or register for an account.\n
+    2. Press "Get API Key" to get your API key.\n
+    3. Press "Create API Key" and type the name you want then press create.\n
+    4. Copy the API key.\n
+    5. Input in here.</string>
 
     <string name="openRouterModel_title">OpenRouter Model</string>
     <string name="openRouterModel_summary">Enter your OpenRouter model.</string>
+    <string name="openRouterModel_dialog_title">AI Model.</string>
+    <string name="openRouterModel_dialog_description">Enter your OpenRouter model. (e.g. openai/gpt-oss-120b:free, xiaomi/mimo-v2-flash:free, .....\n\n
+        1. At OpenRouter click the "Models".\n
+        2. Search with "free" (if want to use it as free) or any model you like (need to have credit in OpenRouter).\n
+        3. Select the model you want.\n
+        4. Below the title of the model there is a small clipboard icon click it to copy</string>
 
     <string name="highlight_text_title">Highlight text</string>
     <string name="highlight_text_on">Search and highlight the paragraph where text-to-speech is speaking</string>

@@ -67,13 +67,17 @@
             app:icon="@drawable/api_settings"
             app:key="openRouterApiKey"
             app:summary="@string/api_setting_summary"
-            app:title="@string/api_setting_title" />
+            app:title="@string/api_setting_title"
+            android:dialogTitle="@string/api_setting_dialog_title"
+            android:dialogMessage="@string/api_setting_dialog_description"/>
 
         <EditTextPreference
             app:icon="@drawable/ai_model"
             app:key="openRouterModel"
             app:summary="@string/openRouterModel_summary"
-            app:title="@string/openRouterModel_title" />
+            app:title="@string/openRouterModel_title"
+            android:dialogTitle="@string/openRouterModel_dialog_title"
+            android:dialogMessage="@string/openRouterModel_dialog_description" />
 
         <ListPreference
             app:entries="@array/defaultTranslationLanguage"
