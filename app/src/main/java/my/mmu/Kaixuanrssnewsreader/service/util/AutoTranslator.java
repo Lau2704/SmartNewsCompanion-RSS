@@ -6,6 +6,9 @@ import androidx.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -13,6 +16,7 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 
+@Singleton
 public class AutoTranslator {
     private static final String TAG = "AutoTranslator";
 
@@ -113,5 +117,65 @@ public class AutoTranslator {
 
     public void runAutoTranslation() {
         runAutoTranslation(null);
+    }
+
+    public void runAutoTranslationForEntry(long id, String html, String content, String title, Runnable onComplete) {
+        if (!prefs.getAutoTranslate()) {
+            Log.d(TAG, "Auto-translate disabled by user.");
+            if (onComplete != null) {
+                onComplete.run();
+            }
+            return;
+        }
+
+        String targetLang = prefs.getDefaultTranslationLanguage();
+
+        textUtil.identifyLanguageRx(content)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(sourceLang -> {
+                    if (!sourceLang.equalsIgnoreCase(targetLang)) {
+                        String method = prefs.getTranslationMethod();
+                        Single<String> translationSingle;
+
+                        if ("lineByLine".equalsIgnoreCase(method)) {
+                            translationSingle = textUtil.translateHtmlLineByLine(sourceLang, targetLang, html, title, id);
+                        } else if ("paragraphByParagraph".equalsIgnoreCase(method)) {
+                            translationSingle = textUtil.translateHtmlByParagraph(sourceLang, targetLang, html, title, id, progress -> {});
+                        } else {
+                            translationSingle = textUtil.translateHtmlAllAtOnce(sourceLang, targetLang, html, title, id, progress -> {});
+                        }
+
+                        translationSingle.subscribe(translatedHtml -> {
+                            String existingOriginal = entryRepository.getOriginalHtmlById(id);
+                            if ((existingOriginal == null || existingOriginal.trim().isEmpty()) && html != null && !html.trim().isEmpty()) {
+                                entryRepository.updateOriginalHtml(html, id);
+                            }
+                            entryRepository.updateHtml(translatedHtml, id);
+                            String translatedContent = textUtil.extractHtmlContent(translatedHtml, delimiter);
+                            entryRepository.updateTranslatedText(translatedContent, id);
+                            entryRepository.updateTranslated(translatedContent, id);
+                            Log.d(TAG, "Auto-translated article ID: " + id);
+                            if (onComplete != null) {
+                                onComplete.run();
+                            }
+                        }, error -> {
+                            Log.e(TAG, "Failed to auto-translate article ID: " + id, error);
+                            if (onComplete != null) {
+                                onComplete.run();
+                            }
+                        });
+                    } else {
+                        Log.d(TAG, "Article ID " + id + " already in target language");
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
+                    }
+                }, error -> {
+                    Log.e(TAG, "Language detection failed for article ID: " + id, error);
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                });
     }
 }

@@ -84,8 +84,7 @@ dependencies {
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
 
     // Language Identifier
-    implementation 'com.google.mlkit:language-id:17.0.5'
+    implementation 'com.google.mlkit:language-id:17.0.6'
     implementation 'com.google.mlkit:translate:17.0.2'
-
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }

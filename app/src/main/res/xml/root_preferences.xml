@@ -87,15 +87,6 @@
             app:title="@string/translationLanguage_title"
             app:useSimpleSummaryProvider="true" />
 
-        <ListPreference
-            app:defaultValue="allAtOnce"
-            app:entries="@array/translationMethod"
-            app:entryValues="@array/translationMethod_values"
-            app:icon="@drawable/ic_auto_mode"
-            app:key="translationMethod"
-            app:summary="@string/translationMethod_summary"
-            app:title="@string/translationMethod_title" />
-
         <SwitchPreferenceCompat
             app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="false"

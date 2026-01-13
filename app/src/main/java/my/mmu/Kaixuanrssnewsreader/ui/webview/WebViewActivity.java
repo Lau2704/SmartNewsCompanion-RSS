@@ -147,6 +147,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     @Inject
     EntryRepository entryRepository;
 
+    @Inject
+    my.mmu.Kaixuanrssnewsreader.data.playlist.PlaylistRepository playlistRepository;
+
+    @Inject
+    my.mmu.Kaixuanrssnewsreader.service.util.AutoTranslator autoTranslator;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -242,6 +248,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 finalHtml -> {
                                     webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
 
+                                    translationButton.setVisible(false);
                                     toggleTranslationButton.setVisible(true);
                                     isTranslatedView = true;
                                     sharedPreferencesRepository.setIsTranslatedView(currentId, true);
@@ -251,6 +258,22 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
                                     Log.d(TAG, "FINAL translatedContent passed to TTS: " + translatedContent);
                                     Log.d(TAG, "FINAL currentId: " + currentId + ", isTranslatedView: " + isTranslatedView);
+
+                                    if (sharedPreferencesRepository.getAutoTranslate()) {
+                                        Log.d(TAG, "doWhenTranslationFinish: Auto-translate enabled, pre-translating previous and next articles");
+                                        new Thread(() -> {
+                                            List<Long> entryIds = playlistRepository.getPreviousAndNextEntryIds(currentId);
+                                            for (Long id : entryIds) {
+                                                Entry e = entryRepository.getEntryById(id);
+                                                if (e != null) {
+                                                    String entryHtml = e.getHtml() != null ? e.getHtml() : "";
+                                                    if (!entryHtml.contains("translated-title")) {
+                                                        autoTranslator.runAutoTranslationForEntry(id, entryHtml, e.getContent(), e.getTitle(), null);
+                                                    }
+                                                }
+                                            }
+                                        }).start();
+                                    }
                                 },
                                 throwable -> {
                                     Log.e(TAG, "Error in doWhenTranslationFinish", throwable);
@@ -510,13 +533,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         String originalHtml = webViewViewModel.getOriginalHtmlById(currentId);
         String translatedHtml = webViewViewModel.getHtmlById(currentId);
 
-        if (originalHtml != null && translatedHtml != null && !originalHtml.equals(translatedHtml)) {
+        boolean hasTranslation = originalHtml != null && translatedHtml != null && !originalHtml.equals(translatedHtml);
+
+        if (hasTranslation) {
+            translationButton.setVisible(false);
             toggleTranslationButton.setVisible(true);
         } else {
+            translationButton.setVisible(true);
             toggleTranslationButton.setVisible(false);
         }
 
-        Log.d(TAG, "ToggleTranslationButton visibility set to: " + (originalHtml != null && translatedHtml != null && !originalHtml.equals(translatedHtml)));
+        Log.d(TAG, "ToggleTranslationButton visibility set to: " + hasTranslation);
     }
 
     private void initializePlaybackModes() {
@@ -566,11 +593,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         }
 
                         // Fetch the full entry content
-
                         Entry entry = entryRepository.getEntryById(entryInfo.getEntryId());
-
                         return Single.just(new androidx.core.util.Pair<>(entryInfo, entry));
-
                     })
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -580,11 +604,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         Entry entry = pair.second;
 
                         if (entry == null) {
-
                             makeSnackbar("Failed to load article content.");
-
                             return;
-
                         }
 
                         currentId = entryInfo.getEntryId();
@@ -595,9 +616,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         loadEntryContentWithData(entry, entryInfo);
 
                     }, throwable -> {
-
                         Log.e(TAG, "Error loading entry", throwable);
-
                         makeSnackbar("Failed to load article.");
 
                     })
@@ -614,14 +633,20 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         return;
                     }
                     cachedEntryInfo = entryInfo;
-                    if (entry.getOriginalHtml() != null && entry.getTranslated() != null) {
+                    targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
+
+                    boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
+
+                    if (hasTranslation) {
                         toggleTranslationButton.setVisible(true);
+                        translationButton.setVisible(false);
                         webViewViewModel.updateOriginalHtml(entry.getOriginalHtml(), entry.getId());
                         if (entry.getHtml() != null) {
                             webViewViewModel.updateHtml(entry.getHtml(), entry.getId());
                         }
                     } else {
                         toggleTranslationButton.setVisible(false);
+                        translationButton.setVisible(true);
                     }
                     isTranslatedView = false;
 
@@ -635,6 +660,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         Log.d(TAG, "loadEntryContent: Article not translated, isTranslatedView=false");
                     }
                     Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
+
+                    if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                        Log.d(TAG, "loadEntryContent: Auto-translate enabled, triggering translation");
+                        translate();
+                    }
 
                     String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
 
@@ -846,9 +876,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private boolean handleOtherToolbarItems(int itemId) {
         switch (itemId) {
             case R.id.translate:
-                if (targetLanguage == null || targetLanguage.isEmpty()) {
-                    showTranslationLanguageDialog(this);
-                }
                 translate();
                 return true;
 
@@ -992,7 +1019,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         )
         );
     }
-
     private interface WebViewRebuildCallback {
         void onRebuildComplete(String html);
     }
@@ -1047,15 +1073,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         toolbar.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.translate) {
-                View translateView = toolbar.findViewById(itemId);
-                if (translateView != null) {
-                    translateView.setOnLongClickListener(v -> {
-                        showTranslationLanguageDialog(translateView.getContext());
-                        return true;
-                    });
-                }
-            }
 
             if (itemId == R.id.switchPlayMode) {
                 isReadingMode = false;
@@ -1356,9 +1373,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         offlineButton.setVisible(false);
                                         reloadButton.setVisible(true);
                                         bookmarkButton.setVisible(true);
-                                        translationButton.setVisible(true);
                                         browserButton.setVisible(true);
                                         highlightTextButton.setVisible(true);
+                                        updateToggleTranslationVisibility();
                                     },
                                     throwable -> {
                                         Log.e(TAG, "Error in setupReadingWebView", throwable);
@@ -1393,8 +1410,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 }
                 reloadButton.setVisible(true);
                 bookmarkButton.setVisible(true);
-                translationButton.setVisible(true);
                 highlightTextButton.setVisible(true);
+                updateToggleTranslationVisibility();
                 if (showOfflineButton) {
                     offlineButton.setVisible(true);
                 }

@@ -6,9 +6,13 @@ import androidx.room.Room;
 
 import my.mmu.Kaixuanrssnewsreader.data.database.AppDatabase;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryDao;
+import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.feed.FeedDao;
 import my.mmu.Kaixuanrssnewsreader.data.history.HistoryDao;
 import my.mmu.Kaixuanrssnewsreader.data.playlist.PlaylistDao;
+import my.mmu.Kaixuanrssnewsreader.service.util.AutoTranslator;
+import my.mmu.Kaixuanrssnewsreader.service.util.TextUtil;
+import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 
 import javax.inject.Singleton;
 
@@ -49,5 +53,10 @@ public class AppModule {
     @Provides
     public static HistoryDao provideHistoryDao(AppDatabase db) {
         return db.historyDao();
+    }
+
+    @Provides
+    public static AutoTranslator provideAutoTranslator(EntryRepository entryRepository, TextUtil textUtil, SharedPreferencesRepository prefs) {
+        return new AutoTranslator(entryRepository, textUtil, prefs);
     }
 }

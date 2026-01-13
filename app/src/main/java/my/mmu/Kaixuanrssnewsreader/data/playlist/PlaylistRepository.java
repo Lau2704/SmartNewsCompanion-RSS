@@ -101,6 +101,21 @@ public class PlaylistRepository {
         return list;
     }
 
+    public List<Long> getPreviousAndNextEntryIds(long currentId) {
+        List<Long> playlist = stringToLongList(playlistDao.getLatestPlaylist());
+        int index = playlist.indexOf(currentId);
+        List<Long> result = new ArrayList<>();
+
+        if (index > 0) {
+            result.add(playlist.get(index - 1));
+        }
+        if (index < playlist.size() - 1) {
+            result.add(playlist.get(index + 1));
+        }
+
+        return result;
+    }
+
 //    public void updateVisitedDate(int entryId) {
 //        historyDao
 //    }

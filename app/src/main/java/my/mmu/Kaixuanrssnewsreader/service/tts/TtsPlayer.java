@@ -1086,4 +1086,18 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         boolean hasContent = (sentences != null && !sentences.isEmpty());
         return sameId && sameLang && (isSettingUpNewArticle || hasContent);
     }
+
+    public void resetForNewArticle(long entryId, long feedId) {
+        Log.d(TAG, "[resetForNewArticle] Resetting state for new article " + entryId);
+        this.currentId = entryId;
+        this.feedId = feedId;
+        this.language = null;
+        if (sentences != null) {
+            sentences.clear();
+        }
+        isSettingUpNewArticle = true;
+        isArticleFinished = false;
+        sentenceCounter = 0;
+        Log.d(TAG, "[resetForNewArticle] State reset complete");
+    }
 }

@@ -112,7 +112,7 @@ public class TtsNotification extends Notification {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(ttsService, TTS_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_rss)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setColor(Color.WHITE)
                 .setContentIntent(createContentIntent())
                 .setDeleteIntent(TtsMediaButtonReceiver.buildMediaButtonPendingIntent(ttsService, PlaybackStateCompat.ACTION_STOP))
