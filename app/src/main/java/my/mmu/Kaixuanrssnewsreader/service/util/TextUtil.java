@@ -502,6 +502,105 @@ public class TextUtil {
                 .onErrorReturnItem("und");
     }
 
+    public Single<String> summarizeText(String text) {
+        return Single.<String>create(emitter -> {
+            if (text == null || text.isEmpty()) {
+                emitter.onError(new IllegalArgumentException("Invalid content for summarization"));
+                return;
+            }
+
+            String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in Settings."));
+                return;
+            }
+
+            String model = sharedPreferencesRepository.getOpenRouterModel();
+            if (model == null || model.isEmpty()) {
+                emitter.onError(new IllegalArgumentException("OpenRouter model is not configured. Please set a valid model in Settings."));
+                return;
+            }
+
+            String url = "https://openrouter.ai/api/v1/chat/completions";
+
+            try {
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("model", model);
+
+                JSONArray messages = new JSONArray();
+                JSONObject systemMessage = new JSONObject();
+                systemMessage.put("role", "system");
+                systemMessage.put("content", "You are a professional summarizer. Summarize the following article in a concise and informative way. Focus on the key points and main ideas. IMPORTANT: Return ONLY the summary without any explanations or additional text.");
+                messages.put(systemMessage);
+
+                JSONObject userMessage = new JSONObject();
+                userMessage.put("role", "user");
+                String contentToSummarize = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
+                userMessage.put("content", contentToSummarize);
+                messages.put(userMessage);
+
+                requestBody.put("messages", messages);
+
+                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
+
+                Request request = new Request.Builder()
+                        .url(url)
+                        .addHeader("Authorization", "Bearer " + apiKey)
+                        .addHeader("Content-Type", "application/json")
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        String errorBody = response.body() != null ? response.body().string() : "";
+                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
+
+                        String errorMessage = "";
+                        int code = response.code();
+
+                        if (code == 401) {
+                            errorMessage = "Invalid API key. Please check your OpenRouter API key in Settings.";
+                        } else if (code == 404) {
+                            if (errorBody.contains("privacy") || errorBody.contains("data policy")) {
+                                errorMessage = "Privacy policy configuration needed. Please visit https://openrouter.ai/settings/privacy to configure your privacy settings for this model.";
+                            } else {
+                                errorMessage = "Invalid model name. Please check the OpenRouter model in Settings.";
+                            }
+                        } else if (code == 429) {
+                            errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
+                        } else if (code == 500 || code == 502 || code == 503) {
+                            errorMessage = "OpenRouter service error. Please try again later.";
+                        } else {
+                            errorMessage = "API Error: " + code;
+                        }
+
+                        emitter.onError(new Exception(errorMessage + "\n\nDetails: " + errorBody));
+                        return;
+                    }
+
+                    String responseBody = response.body() != null ? response.body().string() : "";
+                    Log.d(TAG, "Summary API Response length: " + responseBody.length());
+                    JSONObject jsonResponse = new JSONObject(responseBody);
+                    JSONArray choices = jsonResponse.getJSONArray("choices");
+                    if (choices.length() > 0) {
+                        String summary = choices.getJSONObject(0)
+                                .getJSONObject("message")
+                                .getString("content");
+
+                        Log.d(TAG, "Summary length: " + summary.length());
+                        emitter.onSuccess(summary);
+                    } else {
+                        emitter.onError(new Exception("No summary found in API response"));
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Summarization error", e);
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
     public void onDestroy() {
         compositeDisposable.dispose();
     }

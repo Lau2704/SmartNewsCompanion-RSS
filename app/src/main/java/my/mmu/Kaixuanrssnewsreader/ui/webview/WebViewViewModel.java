@@ -94,6 +94,10 @@ public class WebViewViewModel extends ViewModel {
         return entryRepository.getHtmlById(id);
     }
 
+    public String getContentById(long id) {
+        return entryRepository.getContentById(id);
+    }
+
     public String getStyle() {
         return "<style>\n" +
                 "    @font-face {\n" +

@@ -22,6 +22,7 @@ public class SharedPreferencesRepository {
     private static final String KEY_SCROLL_Y_PREFIX = "scroll_y_";
     private static final String KEY_WEB_VIEW_MODE = "web_view_mode_";
     private static final String KEY_CURRENT_READING_ENTRY_ID = "current_reading_entry_id";
+    private static final String KEY_SUMMARY_PREFIX = "summary_";
 
     @Inject
     public SharedPreferencesRepository(@ApplicationContext Context context) {
@@ -242,5 +243,24 @@ public class SharedPreferencesRepository {
     public void setOpenRouterModel(String model) {
         editor.putString("openRouterModel", model);
         editor.apply();
+    }
+
+    public String getSummary(long entryId) {
+        return sharedPreferences.getString(KEY_SUMMARY_PREFIX + entryId, "");
+    }
+
+    public void setSummary(long entryId, String summary) {
+        editor.putString(KEY_SUMMARY_PREFIX + entryId, summary);
+        editor.apply();
+    }
+
+    public void setIsSummaryView(long entryId, boolean isSummaryView) {
+        sharedPreferences.edit()
+                .putBoolean(KEY_WEB_VIEW_MODE + "_" + entryId + "_summary", isSummaryView)
+                .apply();
+    }
+
+    public boolean getIsSummaryView(long entryId) {
+        return sharedPreferences.getBoolean(KEY_WEB_VIEW_MODE + "_" + entryId + "_summary", false);
     }
 }

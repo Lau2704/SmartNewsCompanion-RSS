@@ -52,6 +52,7 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -100,6 +101,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private MenuItem toggleTranslationButton;
     private boolean isTranslatedView = true;
     private MaterialToolbar toolbar;
+    private FloatingActionButton autoSummaryButton;
+
+    private String originalHtmlForSummary;
+    private String summaryHtml;
+    private boolean isSummaryView = false;
+    private boolean hasGeneratedSummary = false;
 
     // JavaScript failure detection
     private int pageLoadRetryCount = 0;
@@ -351,6 +358,128 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         return java.util.Locale.getDefault().getLanguage();
     }
 
+    private void performAutoSummary() {
+        if (hasGeneratedSummary) {
+            toggleSummaryView();
+            return;
+        }
+
+        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+            return;
+        }
+
+        String content = webViewViewModel.getContentById(currentId);
+        if (content == null || content.trim().isEmpty()) {
+            makeSnackbar("No content to summarize.");
+            return;
+        }
+
+        if (originalHtmlForSummary == null) {
+            String currentHtml = webViewViewModel.getHtmlById(currentId);
+            originalHtmlForSummary = currentHtml;
+        }
+
+        makeSnackbar("Generating summary...");
+        loading.setVisibility(View.VISIBLE);
+        loading.setProgress(0);
+
+        compositeDisposable.add(
+            textUtil.summarizeText(content)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    summary -> {
+                        loading.setVisibility(View.GONE);
+                        summaryHtml = formatSummaryAsHtml(summary);
+                        hasGeneratedSummary = true;
+                        sharedPreferencesRepository.setSummary(currentId, summary);
+                        switchToSummaryView();
+                    },
+                    error -> {
+                        Log.e(TAG, "Summarization failed", error);
+                        loading.setVisibility(View.GONE);
+                        String errorMsg = error != null && error.getMessage() != null
+                                ? error.getMessage() : "Summarization failed. Please check your network connection and API key.";
+                        makeSnackbar(errorMsg);
+                    }
+                )
+        );
+    }
+
+    private void loadSavedSummaryOrGenerate() {
+        String savedSummary = sharedPreferencesRepository.getSummary(currentId);
+        if (savedSummary != null && !savedSummary.isEmpty()) {
+            Log.d(TAG, "loadSavedSummaryOrGenerate: Found saved summary, restoring view");
+            if (originalHtmlForSummary == null) {
+                String currentHtml = webViewViewModel.getHtmlById(currentId);
+                originalHtmlForSummary = currentHtml;
+            }
+            summaryHtml = formatSummaryAsHtml(savedSummary);
+            hasGeneratedSummary = true;
+            isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
+            if (isSummaryView) {
+                Log.d(TAG, "loadSavedSummaryOrGenerate: Switching to summary view");
+                switchToSummaryView();
+            } else {
+                Log.d(TAG, "loadSavedSummaryOrGenerate: Staying on original view (summary available)");
+            }
+        } else if (sharedPreferencesRepository.getDisplaySummary()) {
+            Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary, auto-generating because displaySummary is enabled");
+            performAutoSummary();
+        } else {
+            Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary and auto-summary disabled, not generating");
+        }
+    }
+
+    private String formatSummaryAsHtml(String summary) {
+        EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+        String htmlHeader = "";
+        if (entryInfo != null) {
+            htmlHeader = webViewViewModel.getHtml(
+                    entryInfo.getEntryTitle(),
+                    entryInfo.getFeedTitle(),
+                    entryInfo.getEntryPublishedDate(),
+                    entryInfo.getFeedImageUrl()
+            );
+        }
+        String style = webViewViewModel.getStyle();
+        return "<html><head>" + style + "</head><body>" + htmlHeader + 
+               "<div class=\"article-summary\">" + 
+               "<h2>Summary</h2>" + 
+               "<p>" + summary.replace("\n", "<br>") + "</p>" + 
+               "</div></body></html>";
+    }
+
+    private void switchToSummaryView() {
+        if (summaryHtml != null) {
+            webView.loadDataWithBaseURL("file///android_res/", summaryHtml, "text/html", "UTF-8", null);
+            isSummaryView = true;
+            sharedPreferencesRepository.setIsSummaryView(currentId, true);
+            autoSummaryButton.setImageResource(R.drawable.auto_summary_no_background);
+            makeSnackbar("Showing summary view");
+        }
+    }
+
+    private void switchToOriginalView() {
+        if (originalHtmlForSummary != null) {
+            webView.loadDataWithBaseURL("file///android_res/", originalHtmlForSummary, "text/html", "UTF-8", null);
+            isSummaryView = false;
+            sharedPreferencesRepository.setIsSummaryView(currentId, false);
+            autoSummaryButton.setImageResource(R.drawable.ic_newspaper);
+            makeSnackbar("Showing original article");
+        }
+    }
+
+    private void toggleSummaryView() {
+        if (isSummaryView) {
+            switchToOriginalView();
+        } else {
+            switchToSummaryView();
+        }
+    }
+
     private void performTranslation(String sourceLang, String targetLang, String html, String title) {
         Single<String> translationFlow;
         switch (translationMethod) {
@@ -482,6 +611,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 ? R.string.highlight_text_turn_off : R.string.highlight_text_turn_on);
         backgroundMusicButton.setTitle(sharedPreferencesRepository.getBackgroundMusic()
                 ? R.string.background_music_turn_off : R.string.background_music_turn_on);
+
+        autoSummaryButton = binding.autoSummaryButton;
+        autoSummaryButton.setOnClickListener(v -> performAutoSummary());
     }
 
     private void loadHtmlIntoWebView(String html) {
@@ -557,6 +689,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         private void loadEntryContent() {
 
             long intentId = getIntent().getLongExtra("entry_id", -1);
+
+            if (intentId != currentId) {
+                originalHtmlForSummary = null;
+                summaryHtml = null;
+                isSummaryView = false;
+                hasGeneratedSummary = false;
+                autoSummaryButton.setImageResource(R.drawable.auto_summary_no_background);
+            }
 
             Log.d(TAG, "Loading article with Intent ID: " + intentId);
 
@@ -666,6 +806,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         translate();
                     }
 
+                    loadSavedSummaryOrGenerate();
+
                     String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
 
         Log.d("LoadEntry", "htmlToLoad (translated) = " + (html != null ? html.length() : "null"));
@@ -683,7 +825,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         Log.d(TAG, "Calling setCurrentLanguage with: " + lang + ", lock=true");
         ttsExtractor.setCurrentLanguage(lang, true);
 
-        if (html != null && !html.trim().isEmpty()) {
+        if (!isSummaryView && html != null && !html.trim().isEmpty()) {
             loadHtmlIntoWebView(html);
 
             if (!ttsPlayer.isSameArticleState(entry.getId(), lang)) {

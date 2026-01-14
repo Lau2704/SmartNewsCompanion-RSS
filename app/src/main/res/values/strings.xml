@@ -42,9 +42,9 @@
     <string name="entries_limit_title">Article limit for each feed</string>
     <string name="entries_limit_summary">Delete oldest unbookmarked articles after refresh (limit excludes bookmarked)</string>
 
-    <string name="display_summary_title">Display summary</string>
-    <string name="display_summary_on">Summary page of the article will be shown when an article is clicked</string>
-    <string name="display_summary_off">Summary page of the article will not be shown when an article is clicked</string>
+    <string name="display_summary_title">Auto-summarize articles</string>
+    <string name="display_summary_on">Automatically generate summary for articles</string>
+    <string name="display_summary_off">Do not automatically generate summary for articles</string>
 
     <string name="api_setting_title">OpenRouter API Key</string>
     <string name="api_setting_summary">Enter your OpenRouter API key</string>
@@ -63,7 +63,10 @@
         1. At OpenRouter click the "Models".\n
         2. Search with "free" (if want to use it as free) or any model you like (need to have credit in OpenRouter).\n
         3. Select the model you want.\n
-        4. Below the title of the model there is a small clipboard icon click it to copy</string>
+        4. Below the title of the model there is a small clipboard icon click it to copy
+
+        note:Some model need for extra permission (Go to the provided link above -> Cursor put at profile picture -> settings -> privacy and Guardrails -> enable Enable free endpoints that may train on inputsand Enable free endpoints that may publish prompts)
+    </string>
 
     <string name="highlight_text_title">Highlight text</string>
     <string name="highlight_text_on">Search and highlight the paragraph where text-to-speech is speaking</string>
@@ -75,7 +78,7 @@
     <string name="confidence_threshold_summary">Higher % will result in better accuracy but will be less likely to change languages</string>
     <string name="languageIdentifier">Use Language Identifier</string>
     <string name="auto_translate_title">Auto-translate articles</string>
-    <string name="auto_translate_on">Automatically translate articles to the default language</string>
+    <string name="auto_translate_on">Automatically translate articles to default language</string>
     <string name="auto_translate_off">Do not automatically translate articles</string>
 
     <string name="share">Share</string>
