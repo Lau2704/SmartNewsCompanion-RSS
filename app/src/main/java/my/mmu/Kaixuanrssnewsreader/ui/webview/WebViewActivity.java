@@ -76,6 +76,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private final static String TAG = "WebViewActivity";
     private LiveData<Entry> autoTranslationObserver;
     private Observer<Entry> checkAutoTranslated;
+    private volatile boolean isDestroyed = false;
     // Share
     private ActivityWebviewBinding binding;
     private WebViewViewModel webViewViewModel;
@@ -642,14 +643,20 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
+                                .subscribe(
                                 processedHtml -> {
+                                    if (webView == null) {
+                                        Log.e(TAG, "WebView is null, cannot load HTML");
+                                        return;
+                                    }
                                     webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
 
                                     webView.postDelayed(() -> {
-                                        int scrollX = sharedPreferencesRepository.getScrollX(currentId);
-                                        int scrollY = sharedPreferencesRepository.getScrollY(currentId);
-                                        webView.scrollTo(scrollX, scrollY);
+                                        if (webView != null) {
+                                            int scrollX = sharedPreferencesRepository.getScrollX(currentId);
+                                            int scrollY = sharedPreferencesRepository.getScrollY(currentId);
+                                            webView.scrollTo(scrollX, scrollY);
+                                        }
                                     }, 300);
 
                                     syncLoadingWithTts();
@@ -1166,21 +1173,39 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void adjustTextZoom(boolean zoomIn) {
-        int currentZoom = webView.getSettings().getTextZoom();
-        int newZoom = zoomIn ? currentZoom + 10 : currentZoom - 10;
-        webView.getSettings().setTextZoom(newZoom);
-        sharedPreferencesRepository.setTextZoom(newZoom);
+        if (webView == null || isDestroyed) {
+            Log.w(TAG, "Cannot adjust text zoom: webView is null or activity destroyed");
+            return;
+        }
+        try {
+            int currentZoom = webView.getSettings().getTextZoom();
+            int newZoom = zoomIn ? currentZoom + 10 : currentZoom - 10;
+            webView.getSettings().setTextZoom(newZoom);
+            if (sharedPreferencesRepository != null) {
+                sharedPreferencesRepository.setTextZoom(newZoom);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error adjusting text zoom", e);
+        }
     }
 
     private void toggleBookmark() {
+        if (bookmarkButton == null || isDestroyed) {
+            Log.w(TAG, "Cannot toggle bookmark: bookmarkButton is null or activity destroyed");
+            return;
+        }
         if (bookmark == null || bookmark.equals("N")) {
             bookmarkButton.setIcon(R.drawable.ic_bookmark_filled);
-            webViewViewModel.updateBookmark("Y", currentId);
+            if (webViewViewModel != null && currentId > 0) {
+                webViewViewModel.updateBookmark("Y", currentId);
+            }
             bookmark = "Y";
             makeSnackbar("Bookmark Complete");
         } else {
             bookmarkButton.setIcon(R.drawable.ic_bookmark_outline);
-            webViewViewModel.updateBookmark("N", currentId);
+            if (webViewViewModel != null && currentId > 0) {
+                webViewViewModel.updateBookmark("N", currentId);
+            }
             bookmark = "N";
             makeSnackbar("Bookmark Removed");
         }
@@ -1211,43 +1236,81 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void initializeToolbarListeners() {
+        if (toolbar == null) {
+            Log.e(TAG, "Toolbar is null, cannot initialize listeners");
+            return;
+        }
         toolbar.setNavigationOnClickListener(view -> onBackPressed());
 
         toolbar.setOnMenuItemClickListener(item -> {
+            if (isDestroyed) return false;
             int itemId = item.getItemId();
 
             if (itemId == R.id.switchPlayMode) {
                 isReadingMode = false;
-                functionButtonsReadingMode.setVisibility(View.INVISIBLE);
-                switchPlayModeButton.setVisible(false);
-                ttsExtractor.setCallback((WebViewListener) null);
+                if (functionButtonsReadingMode != null) {
+                    functionButtonsReadingMode.setVisibility(View.INVISIBLE);
+                }
+                if (switchPlayModeButton != null) {
+                    switchPlayModeButton.setVisible(false);
+                }
+                if (ttsExtractor != null) {
+                    ttsExtractor.setCallback((WebViewListener) null);
+                }
                 switchPlayMode();
-                mMediaBrowserHelper.onStart();
-                functionButtons.setVisibility(View.VISIBLE);
-                functionButtons.setAlpha(1.0f);
+                if (mMediaBrowserHelper != null) {
+                    mMediaBrowserHelper.onStart();
+                }
+                if (functionButtons != null) {
+                    functionButtons.setVisibility(View.VISIBLE);
+                    functionButtons.setAlpha(1.0f);
+                }
                 return true;
 
             } else if (itemId == R.id.switchReadMode) {
                 isReadingMode = true;
-                functionButtons.setVisibility(View.INVISIBLE);
-                switchReadModeButton.setVisible(false);
-                ttsPlayer.setWebViewCallback(null);
-                mMediaBrowserHelper.getTransportControls().stop();
-                mMediaBrowserHelper.onStop();
-                webView.clearMatches();
+                if (functionButtons != null) {
+                    functionButtons.setVisibility(View.INVISIBLE);
+                }
+                if (switchReadModeButton != null) {
+                    switchReadModeButton.setVisible(false);
+                }
+                if (ttsPlayer != null) {
+                    ttsPlayer.setWebViewCallback(null);
+                }
+                if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
+                    mMediaBrowserHelper.getTransportControls().stop();
+                    mMediaBrowserHelper.onStop();
+                }
+                if (webView != null) {
+                    webView.clearMatches();
+                }
                 switchReadMode();
                 return true;
 
             } else if (itemId == R.id.highlightText) {
+                if (sharedPreferencesRepository == null) return false;
                 boolean isHighlight = sharedPreferencesRepository.getHighlightText();
                 sharedPreferencesRepository.setHighlightText(!isHighlight);
                 if (isHighlight) {
-                    webView.clearMatches();
-                    highlightTextButton.setTitle(R.string.highlight_text_turn_on);
-                    Snackbar.make(findViewById(R.id.webView_view), "Highlight is turned off", Snackbar.LENGTH_SHORT).show();
+                    if (webView != null) {
+                        webView.clearMatches();
+                    }
+                    if (highlightTextButton != null) {
+                        highlightTextButton.setTitle(R.string.highlight_text_turn_on);
+                    }
+                    View rootView = findViewById(R.id.webView_view);
+                    if (rootView != null) {
+                        Snackbar.make(rootView, "Highlight is turned off", Snackbar.LENGTH_SHORT).show();
+                    }
                 } else {
-                    highlightTextButton.setTitle(R.string.highlight_text_turn_off);
-                    Snackbar.make(findViewById(R.id.webView_view), "Highlight is turned on", Snackbar.LENGTH_SHORT).show();
+                    if (highlightTextButton != null) {
+                        highlightTextButton.setTitle(R.string.highlight_text_turn_off);
+                    }
+                    View rootView = findViewById(R.id.webView_view);
+                    if (rootView != null) {
+                        Snackbar.make(rootView, "Highlight is turned on", Snackbar.LENGTH_SHORT).show();
+                    }
                 }
                 return true;
             }
@@ -1257,63 +1320,76 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void initializeWebViewSettings() {
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.getSettings().setBuiltInZoomControls(true);
-        webView.getSettings().setDisplayZoomControls(false);
-        webView.getSettings().setLoadsImagesAutomatically(true);
-        webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
-
-        int textZoom = sharedPreferencesRepository.getTextZoom();
-        if (textZoom != 0) {
-            webView.getSettings().setTextZoom(textZoom);
+        if (webView == null) {
+            Log.e(TAG, "WebView is null, cannot initialize settings");
+            return;
         }
+        try {
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.getSettings().setDomStorageEnabled(true);
+            webView.getSettings().setBuiltInZoomControls(true);
+            webView.getSettings().setDisplayZoomControls(false);
+            webView.getSettings().setLoadsImagesAutomatically(true);
+            webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            boolean isNight = sharedPreferencesRepository.getNight();
-            webView.getSettings().setForceDark(isNight
-                    ? WebSettings.FORCE_DARK_ON
-                    : WebSettings.FORCE_DARK_OFF);
-        }
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                super.onProgressChanged(view, newProgress);
-
-                int ttsProgress = ttsPlayer.getCurrentExtractProgress();
-
-                int combinedProgress = Math.min(newProgress, ttsProgress);
-
-                loading.setVisibility(View.VISIBLE);
-                loading.setProgress(combinedProgress);
-                if (combinedProgress >= 95 && (!ttsPlayer.isPreparing() || ttsPlayer.ttsIsNull())) {
-                    loading.setVisibility(View.GONE);
+            if (sharedPreferencesRepository != null) {
+                int textZoom = sharedPreferencesRepository.getTextZoom();
+                if (textZoom != 0) {
+                    webView.getSettings().setTextZoom(textZoom);
                 }
 
-                // Check for JavaScript execution after page loaded
-                if (newProgress == 100 && currentLoadingUrl != null) {
-                    checkJavaScriptExecution();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    boolean isNight = sharedPreferencesRepository.getNight();
+                    webView.getSettings().setForceDark(isNight
+                            ? WebSettings.FORCE_DARK_ON
+                            : WebSettings.FORCE_DARK_OFF);
                 }
             }
 
-            @Override
-            public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
-                // Detect JavaScript errors
-                if (consoleMessage.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
-                    Log.e(TAG, "JavaScript Error: " + consoleMessage.message() +
-                            " at line " + consoleMessage.lineNumber() +
-                            " of " + consoleMessage.sourceId());
+            webView.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public void onProgressChanged(WebView view, int newProgress) {
+                    super.onProgressChanged(view, newProgress);
+
+                    if (isDestroyed) return;
+
+                    int ttsProgress = (ttsPlayer != null) ? ttsPlayer.getCurrentExtractProgress() : 100;
+                    int combinedProgress = Math.min(newProgress, ttsProgress);
+
+                    if (loading != null) {
+                        loading.setVisibility(View.VISIBLE);
+                        loading.setProgress(combinedProgress);
+                        if (combinedProgress >= 95 && (ttsPlayer == null || !ttsPlayer.isPreparing() || ttsPlayer.ttsIsNull())) {
+                            loading.setVisibility(View.GONE);
+                        }
+                    }
+
+                    if (newProgress == 100 && currentLoadingUrl != null) {
+                        checkJavaScriptExecution();
+                    }
                 }
-                return super.onConsoleMessage(consoleMessage);
-            }
-        });
+
+                @Override
+                public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
+                    if (consoleMessage.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                        Log.e(TAG, "JavaScript Error: " + consoleMessage.message() +
+                                " at line " + consoleMessage.lineNumber() +
+                                " of " + consoleMessage.sourceId());
+                    }
+                    return super.onConsoleMessage(consoleMessage);
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing WebView settings", e);
+        }
     }
 
     @Override
     public void showFakeLoading() {
+        if (isDestroyed) return;
         runOnUiThread(() -> {
+            if (isDestroyed || loading == null) return;
             Log.d(TAG, "TTS is preparing, showing fake loading indicator.");
             loading.setProgress(0);
             loading.setVisibility(View.VISIBLE);
@@ -1322,7 +1398,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     public void hideFakeLoading() {
+        if (isDestroyed) return;
         runOnUiThread(() -> {
+            if (isDestroyed || loading == null) return;
             Log.d(TAG, "TTS is ready, hiding fake loading indicator.");
             loading.setVisibility(View.GONE);
         });
@@ -1330,7 +1408,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     public void updateLoadingProgress(int progress) {
+        if (isDestroyed) return;
         runOnUiThread(() -> {
+            if (isDestroyed || loading == null || ttsPlayer == null) return;
             if (loading.getVisibility() != View.VISIBLE) {
                 loading.setVisibility(View.VISIBLE);
             }
@@ -1343,65 +1423,95 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     public void syncLoadingWithTts() {
+        if (isDestroyed) return;
         runOnUiThread(() -> {
-            int ttsProgress = ttsPlayer.getCurrentExtractProgress();
-            int webProgress = webView.getProgress();
+            if (isDestroyed) return;
+            int ttsProgress = (ttsPlayer != null) ? ttsPlayer.getCurrentExtractProgress() : 100;
+            int webProgress = (webView != null) ? webView.getProgress() : 100;
             int combinedProgress = Math.min(ttsProgress, webProgress);
 
-            if (combinedProgress >= 100 && !ttsPlayer.isPreparing()) {
-                loading.setProgress(100);
-                loading.setVisibility(View.GONE);
-                Log.d(TAG, "[syncLoadingWithTts] Forcibly hid loading.");
-            } else {
-                loading.setProgress(combinedProgress);
-                loading.setVisibility(View.VISIBLE);
-                Log.d(TAG, "[syncLoadingWithTts] Still loading... progress = " + combinedProgress);
+            if (loading != null) {
+                if (combinedProgress >= 100 && (ttsPlayer == null || !ttsPlayer.isPreparing())) {
+                    loading.setProgress(100);
+                    loading.setVisibility(View.GONE);
+                    Log.d(TAG, "[syncLoadingWithTts] Forcibly hid loading.");
+                } else {
+                    loading.setProgress(combinedProgress);
+                    loading.setVisibility(View.VISIBLE);
+                    Log.d(TAG, "[syncLoadingWithTts] Still loading... progress = " + combinedProgress);
+                }
             }
         });
     }
 
     private void switchReadMode() {
-        functionButtonsReadingMode.setVisibility(View.VISIBLE);
+        if (isDestroyed) return;
+        if (functionButtonsReadingMode != null) {
+            functionButtonsReadingMode.setVisibility(View.VISIBLE);
+        }
 
-        webView.setWebViewClient(new ReadingWebClient());
+        if (webView != null) {
+            webView.setWebViewClient(new ReadingWebClient());
+        }
 
-        binding.nextArticleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (ttsPlaylist.skipNext()) {
-                    setupReadingWebView();
-                } else {
-                    Snackbar.make(findViewById(R.id.webView_view), "This is the last article", Snackbar.LENGTH_SHORT).show();
+        if (binding != null && binding.nextArticleButton != null) {
+            binding.nextArticleButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (ttsPlaylist != null && ttsPlaylist.skipNext()) {
+                        setupReadingWebView();
+                    } else {
+                        View rootView = findViewById(R.id.webView_view);
+                        if (rootView != null) {
+                            Snackbar.make(rootView, "This is the last article", Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        binding.previousArticleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (ttsPlaylist.skipPrevious()) {
-                    setupReadingWebView();
-                } else {
-                    Snackbar.make(findViewById(R.id.webView_view), "This is the first article", Snackbar.LENGTH_SHORT).show();
+        if (binding != null && binding.previousArticleButton != null) {
+            binding.previousArticleButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (ttsPlaylist != null && ttsPlaylist.skipPrevious()) {
+                        setupReadingWebView();
+                    } else {
+                        View rootView = findViewById(R.id.webView_view);
+                        if (rootView != null) {
+                            Snackbar.make(rootView, "This is the first article", Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         setupReadingWebView();
 
-        ttsPlayer.setupMediaPlayer(false);
+        if (ttsPlayer != null) {
+            ttsPlayer.setupMediaPlayer(false);
+        }
 
-        switchPlayModeButton.setVisible(true);
+        if (switchPlayModeButton != null) {
+            switchPlayModeButton.setVisible(true);
+        }
     }
 
     private void switchPlayMode() {
-        webView.setWebViewClient(new WebClient());
+        if (isDestroyed) return;
+        if (webView != null) {
+            webView.setWebViewClient(new WebClient());
+        }
         setupMediaPlaybackButtons();
 
         mMediaBrowserHelper = new MediaBrowserConnection(this);
-        mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
+        if (mMediaBrowserHelper != null) {
+            mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
+        }
 
-        switchReadModeButton.setVisible(true);
+        if (switchReadModeButton != null) {
+            switchReadModeButton.setVisible(true);
+        }
     }
 
     private void setupMediaPlaybackButtons() {
@@ -1529,6 +1639,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     public void highlightText(String searchText) {
+        if (isDestroyed || webView == null || webViewViewModel == null || sharedPreferencesRepository == null) {
+            return;
+        }
         if (!isReadingMode && sharedPreferencesRepository.getHighlightText()) {
             String text = searchText.trim();
             if (webViewViewModel.endsWithBreak(text)) {
@@ -1536,25 +1649,41 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
             Log.d(TAG, "Highlighted text: " + text);
             String finalText = text.trim();
-            ContextCompat.getMainExecutor(getApplicationContext()).execute(() -> webView.findAllAsync(finalText));
+            ContextCompat.getMainExecutor(getApplicationContext()).execute(() -> {
+                if (webView != null && !isDestroyed) {
+                    webView.findAllAsync(finalText);
+                }
+            });
         }
     }
 
     @Override
     public void finishedSetup() {
+        if (isDestroyed) return;
         ContextCompat.getMainExecutor(getApplicationContext()).execute(new Runnable() {
             @Override
             public void run() {
+                if (isDestroyed) return;
                 if (!isReadingMode) {
-                    loading.setVisibility(View.INVISIBLE);
-                    functionButtons.setVisibility(View.VISIBLE);
-                    functionButtons.setAlpha(1.0f);
+                    if (loading != null) {
+                        loading.setVisibility(View.INVISIBLE);
+                    }
+                    if (functionButtons != null) {
+                        functionButtons.setVisibility(View.VISIBLE);
+                        functionButtons.setAlpha(1.0f);
+                    }
                 }
-                reloadButton.setVisible(true);
-                bookmarkButton.setVisible(true);
-                highlightTextButton.setVisible(true);
+                if (reloadButton != null) {
+                    reloadButton.setVisible(true);
+                }
+                if (bookmarkButton != null) {
+                    bookmarkButton.setVisible(true);
+                }
+                if (highlightTextButton != null) {
+                    highlightTextButton.setVisible(true);
+                }
                 updateToggleTranslationVisibility();
-                if (showOfflineButton) {
+                if (showOfflineButton && offlineButton != null) {
                     offlineButton.setVisible(true);
                 }
             }
@@ -1584,7 +1713,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     public void makeSnackbar(String message) {
-        Snackbar.make(findViewById(R.id.webView_view), message, Snackbar.LENGTH_SHORT).show();
+        if (isDestroyed) return;
+        View rootView = findViewById(R.id.webView_view);
+        if (rootView != null && message != null) {
+            Snackbar.make(rootView, message, Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -1623,6 +1756,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     protected void onDestroy() {
+        isDestroyed = true;
         super.onDestroy();
 
         if (autoTranslationObserver != null && checkAutoTranslated != null) {
@@ -1634,25 +1768,50 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         if (isReadingMode) {
-            switchPlayModeButton.setVisible(false);
-            functionButtonsReadingMode.setVisibility(View.INVISIBLE);
+            if (switchPlayModeButton != null) {
+                switchPlayModeButton.setVisible(false);
+            }
+            if (functionButtonsReadingMode != null) {
+                functionButtonsReadingMode.setVisibility(View.INVISIBLE);
+            }
         } else {
-            functionButtons.setVisibility(View.INVISIBLE);
-            switchReadModeButton.setVisible(false);
+            if (functionButtons != null) {
+                functionButtons.setVisibility(View.INVISIBLE);
+            }
+            if (switchReadModeButton != null) {
+                switchReadModeButton.setVisible(false);
+            }
         }
-        reloadButton.setVisible(false);
-        bookmarkButton.setVisible(false);
-        translationButton.setVisible(false);
-        highlightTextButton.setVisible(false);
-        compositeDisposable.dispose();
-        textUtil.onDestroy();
+        if (reloadButton != null) {
+            reloadButton.setVisible(false);
+        }
+        if (bookmarkButton != null) {
+            bookmarkButton.setVisible(false);
+        }
+        if (translationButton != null) {
+            translationButton.setVisible(false);
+        }
+        if (highlightTextButton != null) {
+            highlightTextButton.setVisible(false);
+        }
+        if (compositeDisposable != null) {
+            compositeDisposable.dispose();
+        }
+        if (textUtil != null) {
+            textUtil.onDestroy();
+        }
 
         if (webView != null) {
-            webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
-            webView.clearHistory();
-            webView.clearCache(true);
-            webView.destroy();
-            webView = null;
+            try {
+                webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+                webView.clearHistory();
+                webView.clearCache(true);
+                webView.destroy();
+            } catch (Exception e) {
+                Log.e(TAG, "Error destroying WebView", e);
+            } finally {
+                webView = null;
+            }
         }
     }
 
@@ -1682,10 +1841,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     @Override
     protected void onPause() {
-        ttsPlayer.setWebViewConnected(false);
-        ttsPlayer.setUiControlPlayback(false);
+        if (ttsPlayer != null) {
+            ttsPlayer.setWebViewConnected(false);
+            ttsPlayer.setUiControlPlayback(false);
+        }
 
-        if (webView != null) {
+        if (webView != null && sharedPreferencesRepository != null) {
             webView.onPause();
             if (currentId != 0) {
                 sharedPreferencesRepository.setScrollX(currentId, webView.getScrollX());
@@ -1694,10 +1855,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
         }
 
-        MediaControllerCompat mediaController = mMediaBrowserHelper.getMediaController();
-        if (mediaController != null) {
-            mediaController.unregisterCallback(mediaControllerCallback);
-            Log.d(TAG, "MediaController callback unregistered");
+        if (mMediaBrowserHelper != null) {
+            MediaControllerCompat mediaController = mMediaBrowserHelper.getMediaController();
+            if (mediaController != null && mediaControllerCallback != null) {
+                mediaController.unregisterCallback(mediaControllerCallback);
+                Log.d(TAG, "MediaController callback unregistered");
+            }
         }
 
         super.onPause();
@@ -1709,20 +1872,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         if (webView != null) {
             webView.onResume();
         }
-        ttsPlayer.setWebViewConnected(true);
+        if (ttsPlayer != null) {
+            ttsPlayer.setWebViewConnected(true);
+            updatePlayPauseButtonIcon(ttsPlayer.isSpeaking() && !ttsPlayer.isPausedManually());
+            Log.d(TAG, "onResume: isSpeaking=" + ttsPlayer.isSpeaking() + ", isPausedManually=" + ttsPlayer.isPausedManually());
+        }
 
-        updatePlayPauseButtonIcon(ttsPlayer.isSpeaking() && !ttsPlayer.isPausedManually());
-
-        Log.d(TAG, "onResume: isSpeaking=" + ttsPlayer.isSpeaking() + ", isPausedManually=" + ttsPlayer.isPausedManually());
-
-        if (!isReadingMode) {
+        if (!isReadingMode && mMediaBrowserHelper != null) {
             mMediaBrowserHelper.onStart();
             MediaControllerCompat mediaController = mMediaBrowserHelper.getMediaController();
-            if (mediaController != null) {
+            if (mediaController != null && mediaControllerCallback != null) {
                 mediaController.registerCallback(mediaControllerCallback);
             }
         }
-
     }
 
     @Override
@@ -1962,19 +2124,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
     }
 
-    private void updatePlayPauseButtonIcon(boolean playing) {
-        int iconRes = playing ? R.drawable.ic_pause : R.drawable.ic_play;
-        playPauseButton.setIcon(ContextCompat.getDrawable(this, iconRes));
-    }
-
     /**
      * Check if JavaScript executed successfully by injecting a test script
      */
     private void checkJavaScriptExecution() {
-        // Cancel any pending checks or reloads to prevent overlapping logic
+        if (isDestroyed || webView == null || retryHandler == null) {
+            return;
+        }
         retryHandler.removeCallbacksAndMessages(null);
 
         retryHandler.postDelayed(() -> {
+            if (isDestroyed || webView == null) {
+                return;
+            }
             webView.evaluateJavascript(
                 "(function() { " +
                 "   try { " +
@@ -1986,30 +2148,36 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 "   } " +
                 "})();",
                 result -> {
+                    if (isDestroyed) return;
                     boolean isPageHealthy = "true".equals(result);
                     Log.d(TAG, "JavaScript execution check: " + (isPageHealthy ? "SUCCESS" : "FAILED") + ", result=" + result);
 
                     if (!isPageHealthy) {
                         handlePageLoadFailure(currentLoadingUrl, "JavaScript execution failed or incomplete page load");
                     } else {
-                        // Page loaded successfully, reset retry count
                         pageLoadRetryCount = 0;
                     }
                 }
             );
-        }, 1000); // Wait 1 second after page finish to check
+        }, 1000);
     }
 
     /**
      * Handle page load failures with automatic retry or user prompt
      */
     private void handlePageLoadFailure(String failedUrl, String errorMessage) {
+        if (isDestroyed) {
+            return;
+        }
         if (failedUrl == null || !failedUrl.equals(currentLoadingUrl)) {
-            return; // Ignore errors from sub-resources
+            return;
         }
 
         runOnUiThread(() -> {
-            loading.setVisibility(View.GONE);
+            if (isDestroyed) return;
+            if (loading != null) {
+                loading.setVisibility(View.GONE);
+            }
 
             if (pageLoadRetryCount < MAX_RETRY_ATTEMPTS) {
                 pageLoadRetryCount++;
@@ -2017,12 +2185,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
                 makeSnackbar("Page failed to load. Retrying (" + pageLoadRetryCount + "/" + MAX_RETRY_ATTEMPTS + ")...");
 
-                // Retry after a delay
-                retryHandler.postDelayed(() -> {
-                    webView.reload();
-                }, 2000);
+                if (retryHandler != null && webView != null) {
+                    retryHandler.postDelayed(() -> {
+                        if (!isDestroyed && webView != null) {
+                            webView.reload();
+                        }
+                    }, 2000);
+                }
             } else {
-                // Max retries reached, prompt user
                 Log.e(TAG, "Max retry attempts reached for URL: " + failedUrl);
                 showRetryDialog(failedUrl, errorMessage);
             }
@@ -2033,14 +2203,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
      * Show dialog to prompt user to retry or cancel
      */
     private void showRetryDialog(String url, String errorMessage) {
+        if (isDestroyed || webView == null) {
+            return;
+        }
         new AlertDialog.Builder(this)
             .setTitle("Page Load Failed")
             .setMessage("The page failed to load correctly after " + MAX_RETRY_ATTEMPTS + " attempts.\n\n" +
                        "Error: " + errorMessage + "\n\n" +
                        "Would you like to retry loading the page?")
             .setPositiveButton("Retry", (dialog, which) -> {
-                pageLoadRetryCount = 0;
-                webView.reload();
+                if (!isDestroyed && webView != null) {
+                    pageLoadRetryCount = 0;
+                    webView.reload();
+                }
                 dialog.dismiss();
             })
             .setNegativeButton("Cancel", (dialog, which) -> {
@@ -2057,5 +2232,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             })
             .setCancelable(false)
             .show();
+    }
+
+    private void updatePlayPauseButtonIcon(boolean playing) {
+        if (playPauseButton == null || isDestroyed) {
+            return;
+        }
+        int iconRes = playing ? R.drawable.ic_pause : R.drawable.ic_play;
+        try {
+            playPauseButton.setIcon(ContextCompat.getDrawable(this, iconRes));
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating play/pause button icon", e);
+        }
     }
 }
