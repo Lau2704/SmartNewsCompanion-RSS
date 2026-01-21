@@ -11,8 +11,8 @@ android {
         applicationId "my.mmu.Kaixuanrssnewsreader"
         minSdk 26
         targetSdk 33
-        versionCode 1
-        versionName "0.2 - beta version"
+        versionCode 6
+        versionName "0.4 - beta version"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
