@@ -108,6 +108,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private String summaryHtml;
     private boolean isSummaryView = false;
     private boolean hasGeneratedSummary = false;
+    private boolean isWaitingForArticleContent = false;
 
     // JavaScript failure detection
     private int pageLoadRetryCount = 0;
@@ -235,10 +236,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         Log.d(TAG, "Original HTML backed up from method parameter.");
                     }
 
+                    if (translatedHtml == null || translatedHtml.trim().isEmpty()) {
+                        throw new Exception("Translated HTML is null or empty");
+                    }
+
                     Document doc = Jsoup.parse(translatedHtml);
-                    doc.head().append(webViewViewModel.getStyle());
+                    if (doc.head() != null) {
+                        doc.head().append(webViewViewModel.getStyle());
+                    }
 
                     String finalHtml = doc.html();
+                    if (finalHtml == null) {
+                        throw new Exception("Failed to generate final HTML from parsed document");
+                    }
 
                     webViewViewModel.updateHtml(finalHtml, currentId);
                     entryRepository.updateHtml(finalHtml, currentId);
@@ -252,6 +262,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
+                        .doFinally(() -> {
+                            loading.setVisibility(View.GONE);
+                        })
                         .subscribe(
                                 finalHtml -> {
                                     webView.loadDataWithBaseURL("file///android_res/", finalHtml, "text/html", "UTF-8", null);
@@ -321,7 +334,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         compositeDisposable.add(
-            Single.fromCallable(() -> textUtil.extractHtmlContent(html, " "))
+            Single.fromCallable(() -> {
+                String content = textUtil.extractHtmlContent(html, " ");
+                if (content == null || content.trim().isEmpty()) {
+                    throw new Exception("No content to translate");
+                }
+                return content;
+            })
                 .subscribeOn(Schedulers.io())
                 .flatMap(plainText -> {
                     String sample = plainText.length() > 1000 ? plainText.substring(0, 1000) : plainText;
@@ -390,6 +409,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             textUtil.summarizeText(content)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(() -> {
+                    loading.setVisibility(View.GONE);
+                })
                 .subscribe(
                     summary -> {
                         loading.setVisibility(View.GONE);
@@ -500,6 +522,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             translationFlow
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(() -> {
+                    loading.setVisibility(View.GONE);
+                })
                 .subscribe(
                         translatedHtml -> {
                             Log.d(TAG, "Translation completed");
@@ -507,7 +532,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         },
                         throwable -> {
                             Log.e(TAG, "Translation failed", throwable);
-                            loading.setVisibility(View.GONE);
                             String errorMsg = throwable != null && throwable.getMessage() != null
                                     ? throwable.getMessage() : "Translation failed. Please check your network connection and API key.";
                             makeSnackbar(errorMsg);
@@ -713,8 +737,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
             }
 
-    
-
             compositeDisposable.add(
 
                     Single.fromCallable(() -> {
@@ -722,23 +744,20 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         if (intentId != -1) {
                             info = webViewViewModel.getEntryInfoById(intentId);
                         }
-
                         if (info == null) {
                             info = webViewViewModel.getLastVisitedEntry();
                         }
-
+                        if (info == null) {
+                            throw new Exception("No article found");
+                        }
                         return info;
 
                     })
 
                     .flatMap(entryInfo -> {
-
                         if (entryInfo == null) {
-
                             return Single.error(new Exception("No article found"));
-
                         }
-
                         // Fetch the full entry content
                         Entry entry = entryRepository.getEntryById(entryInfo.getEntryId());
                         return Single.just(new androidx.core.util.Pair<>(entryInfo, entry));
@@ -771,9 +790,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             );
 
         }
-
-    
-
                 private void loadEntryContentWithData(Entry entry, EntryInfo entryInfo) {
                     if (sharedPreferencesRepository.getWebViewMode(currentId)) {
                         loadFromBrowserMode(entryInfo);
@@ -781,6 +797,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     }
                     cachedEntryInfo = entryInfo;
                     targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
+                    makeSnackbar("Please wait, loading article...");
 
                     boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
 
@@ -808,14 +825,23 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     }
                     Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
 
-                    if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
-                        Log.d(TAG, "loadEntryContent: Auto-translate enabled, triggering translation");
-                        translate();
-                    }
-
-                    loadSavedSummaryOrGenerate();
-
                     String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
+                    boolean isHtmlAvailable = html != null && !html.trim().isEmpty();
+
+                    if (!isHtmlAvailable) {
+                        isWaitingForArticleContent = true;
+                        makeSnackbar("Please wait, loading article...");
+                        Log.d(TAG, "loadEntryContent: Article content not available yet, waiting for fetch");
+                    } else {
+                        isWaitingForArticleContent = false;
+
+                        if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                            Log.d(TAG, "loadEntryContent: Auto-translate enabled, triggering translation");
+                            translate();
+                        }
+
+                        loadSavedSummaryOrGenerate();
+                    }
 
         Log.d("LoadEntry", "htmlToLoad (translated) = " + (html != null ? html.length() : "null"));
 
@@ -905,6 +931,23 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     if (dbHtml != null && !dbHtml.equals(vmHtml)) {
                         webViewViewModel.setHtml(dbHtml);
                     }
+
+                    if (isWaitingForArticleContent) {
+                        String html = isTranslatedView ? dbHtml : dbOriginal;
+                        if (html != null && !html.trim().isEmpty()) {
+                            isWaitingForArticleContent = false;
+                            makeSnackbar("Article loaded successfully");
+
+                            boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
+
+                            if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                                Log.d(TAG, "observeLiveEntry: Article content now available, triggering auto-translate");
+                                translate();
+                            }
+
+                            loadSavedSummaryOrGenerate();
+                        }
+                    }
                 });
 
                 webViewViewModel.getOriginalHtmlLiveData().observe(this, originalHtml -> {
@@ -945,7 +988,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             public void onChanged(Entry entry) {
                 if (entry != null && entry.getTranslated() != null) {
                     compositeDisposable.add(
-                            Single.fromCallable(() -> {
+                            Completable.fromAction(() -> {
                                 String originalHtmlFromDb = entryRepository.getOriginalHtmlById(currentId);
                                 String translatedHtmlFromDb = entry.getHtml();
 
@@ -965,12 +1008,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 Log.d(TAG, "AutoTranslation - Final Translated:\n" + webViewViewModel.getHtmlById(currentId));
 
                                 webViewViewModel.triggerEntryRefresh(currentId);
-                                return null;
                             })
                                     .subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(
-                                            result -> {
+                                            () -> {
                                                 entryLiveData.removeObserver(observerHolder[0]);
                                             },
                                             throwable -> {
@@ -1612,6 +1654,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         if (htmlToLoad == null) {
                             htmlToLoad = metadata.getString("html");
                         }
+                        if (htmlToLoad == null) {
+                            throw new Exception("No HTML content available");
+                        }
                         return htmlToLoad;
                     })
                             .subscribeOn(Schedulers.io())
@@ -1620,6 +1665,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     htmlToLoad -> {
                                         if (htmlToLoad != null) {
                                             loadHtmlIntoWebView(htmlToLoad);
+                                        } else {
+                                            isWaitingForArticleContent = true;
+                                            makeSnackbar("Please wait, loading article...");
                                         }
 
                                         offlineButton.setVisible(false);
@@ -2087,6 +2135,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     if (htmlToLoad == null) {
                                         htmlToLoad = metadata.getString("html");
                                     }
+                                    if (htmlToLoad == null) {
+                                        throw new Exception("No HTML content available");
+                                    }
                                     return htmlToLoad;
                                 })
                                 .subscribeOn(Schedulers.io())
@@ -2098,7 +2149,21 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                                 browserButton.setVisible(true);
                                                 offlineButton.setVisible(false);
                                                 showOfflineButton = false;
+
+                                                Entry entry = webViewViewModel.getEntryById(currentId);
+                                                if (entry != null) {
+                                                    boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
+
+                                                    if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                                                        Log.d(TAG, "onMetadataChanged: Auto-translate enabled, triggering translation");
+                                                        translate();
+                                                    }
+
+                                                    loadSavedSummaryOrGenerate();
+                                                }
                                             } else {
+                                                isWaitingForArticleContent = true;
+                                                makeSnackbar("Please wait, loading article...");
                                                 webView.loadUrl(currentLink);
                                                 Log.d(TAG, "Fallback: loading live URL - " + currentLink);
                                                 browserButton.setVisible(false);
