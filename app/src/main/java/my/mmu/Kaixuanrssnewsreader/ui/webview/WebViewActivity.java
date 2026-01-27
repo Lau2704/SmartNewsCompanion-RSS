@@ -919,42 +919,55 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         makeSnackbar("This article is missing.");
                         return;
                     }
-                    String dbOriginal = entry.getOriginalHtml();
-                    String dbHtml = entry.getHtml();
-                    String vmOriginal = webViewViewModel.getOriginalHtmlLiveData().getValue();
-                    String vmHtml = webViewViewModel.getTranslatedHtmlLiveData().getValue();
 
-                    if (dbOriginal != null && !dbOriginal.equals(vmOriginal)) {
-                        webViewViewModel.setOriginalHtml(dbOriginal);
+                    try {
+                        String dbOriginal = entry.getOriginalHtml();
+                        String dbHtml = entry.getHtml();
+                        String vmOriginal = webViewViewModel.getOriginalHtmlLiveData().getValue();
+                        String vmHtml = webViewViewModel.getTranslatedHtmlLiveData().getValue();
 
-                    }
-                    if (dbHtml != null && !dbHtml.equals(vmHtml)) {
-                        webViewViewModel.setHtml(dbHtml);
-                    }
+                        if (dbOriginal != null && !dbOriginal.equals(vmOriginal)) {
+                            webViewViewModel.setOriginalHtml(dbOriginal);
 
-                    if (isWaitingForArticleContent) {
-                        String html = isTranslatedView ? dbHtml : dbOriginal;
-                        if (html != null && !html.trim().isEmpty()) {
-                            isWaitingForArticleContent = false;
-                            makeSnackbar("Article loaded successfully");
-
-                            boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
-
-                            if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
-                                Log.d(TAG, "observeLiveEntry: Article content now available, triggering auto-translate");
-                                translate();
-                            }
-
-                            loadSavedSummaryOrGenerate();
                         }
+                        if (dbHtml != null && !dbHtml.equals(vmHtml)) {
+                            webViewViewModel.setHtml(dbHtml);
+                        }
+
+                        if (isWaitingForArticleContent) {
+                            String html = isTranslatedView ? dbHtml : dbOriginal;
+                            if (html != null && !html.trim().isEmpty()) {
+                                isWaitingForArticleContent = false;
+                                makeSnackbar("Article loaded successfully");
+
+                                boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
+
+                                if (!hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                                    Log.d(TAG, "observeLiveEntry: Article content now available, triggering auto-translate");
+                                    translate();
+                                }
+
+                                loadSavedSummaryOrGenerate();
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error accessing entry data, entry may have been deleted", e);
                     }
                 });
 
                 webViewViewModel.getOriginalHtmlLiveData().observe(this, originalHtml -> {
-                    updateToggleStateAndWebView(originalHtml, webViewViewModel.getTranslatedHtmlLiveData().getValue());
+                    try {
+                        updateToggleStateAndWebView(originalHtml, webViewViewModel.getTranslatedHtmlLiveData().getValue());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error updating toggle state", e);
+                    }
                 });
                 webViewViewModel.getTranslatedHtmlLiveData().observe(this, translatedHtml -> {
-                    updateToggleStateAndWebView(webViewViewModel.getOriginalHtmlLiveData().getValue(), translatedHtml);
+                    try {
+                        updateToggleStateAndWebView(webViewViewModel.getOriginalHtmlLiveData().getValue(), translatedHtml);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error updating toggle state", e);
+                    }
                 });
 
     
@@ -989,8 +1002,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 if (entry != null && entry.getTranslated() != null) {
                     compositeDisposable.add(
                             Completable.fromAction(() -> {
-                                String originalHtmlFromDb = entryRepository.getOriginalHtmlById(currentId);
-                                String translatedHtmlFromDb = entry.getHtml();
+                                String originalHtmlFromDb = null;
+                                String translatedHtmlFromDb = null;
+
+                                try {
+                                    originalHtmlFromDb = entryRepository.getOriginalHtmlById(currentId);
+                                    translatedHtmlFromDb = entry.getHtml();
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Entry may have been deleted", e);
+                                }
 
                                 if (originalHtmlFromDb != null) {
                                     webViewViewModel.updateOriginalHtml(originalHtmlFromDb, currentId);
