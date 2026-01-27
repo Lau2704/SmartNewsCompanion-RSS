@@ -49,6 +49,7 @@ import my.mmu.Kaixuanrssnewsreader.service.util.TextUtil;
 import my.mmu.Kaixuanrssnewsreader.ui.feed.ReloadDialog;
 import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
+import my.mmu.Kaixuanrssnewsreader.ui.setupguide.SetupGuideActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -306,9 +307,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void translate() {
-        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
-        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+        if (isApiKeyOrModelMissing()) {
+            showSetupGuide();
             return;
         }
 
@@ -384,9 +384,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
-        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+        if (isApiKeyOrModelMissing()) {
+            showSetupGuide();
             return;
         }
 
@@ -448,11 +447,27 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             } else {
                 Log.d(TAG, "loadSavedSummaryOrGenerate: Staying on original view (summary available)");
             }
-        } else if (sharedPreferencesRepository.getDisplaySummary()) {
-            Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary, auto-generating because displaySummary is enabled");
-            performAutoSummary();
         } else {
-            Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary and auto-summary disabled, not generating");
+            boolean autoTranslateEnabled = sharedPreferencesRepository.getAutoTranslate();
+            boolean autoSummaryEnabled = sharedPreferencesRepository.getDisplaySummary();
+
+            if ((autoTranslateEnabled || autoSummaryEnabled) && isApiKeyOrModelMissing()) {
+                makeSnackbar("Translation API key or model not configured. Please setup to use auto features.");
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        showSetupGuide();
+                    }
+                }, 1500);
+                return;
+            }
+
+            if (autoSummaryEnabled) {
+                Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary, auto-generating because displaySummary is enabled");
+                performAutoSummary();
+            } else {
+                Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary and auto-summary disabled, not generating");
+            }
         }
     }
 
@@ -1786,6 +1801,18 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         if (rootView != null && message != null) {
             Snackbar.make(rootView, message, Snackbar.LENGTH_SHORT).show();
         }
+    }
+
+    private void showSetupGuide() {
+        Intent intent = new Intent(this, SetupGuideActivity.class);
+        startActivity(intent);
+    }
+
+    private boolean isApiKeyOrModelMissing() {
+        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+        String model = sharedPreferencesRepository.getOpenRouterModel();
+        return (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) ||
+                (model == null || model.isEmpty());
     }
 
     @Override

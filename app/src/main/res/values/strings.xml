@@ -49,24 +49,11 @@
     <string name="api_setting_title">OpenRouter API Key</string>
     <string name="api_setting_summary">Enter your OpenRouter API key</string>
     <string name="api_setting_dialog_title">OpenRouter API Key</string>
-    <string name="api_setting_dialog_description">Enter your OpenRouter API key. Get it from "https://openrouter.ai/.\n
-    1. Sign in or register for an account.\n
-    2. Press "Get API Key" to get your API key.\n
-    3. Press "Create API Key" and type the name you want then press create.\n
-    4. Copy the API key.\n
-    5. Input in here.</string>
 
     <string name="openRouterModel_title">OpenRouter Model</string>
     <string name="openRouterModel_summary">Enter your OpenRouter model.</string>
     <string name="openRouterModel_dialog_title">AI Model.</string>
-    <string name="openRouterModel_dialog_description">Enter your OpenRouter model. (e.g. openai/gpt-oss-120b:free, xiaomi/mimo-v2-flash:free, .....\n\n
-        1. At OpenRouter click the "Models".\n
-        2. Search with "free" (if want to use it as free) or any model you like (need to have credit in OpenRouter).\n
-        3. Select the model you want.\n
-        4. Below the title of the model there is a small clipboard icon click it to copy
-
-        note:Some model need for extra permission (Go to the provided link above -> Cursor put at profile picture -> settings -> privacy and Guardrails -> enable Enable free endpoints that may train on inputsand Enable free endpoints that may publish prompts)
-    </string>
+    <string name="openRouterModel_dialog_description">Enter your OpenRouter model. (e.g. openai/gpt-oss-120b:free, xiaomi/mimo-v2-flash:free, .....\n\n </string>
 
     <string name="highlight_text_title">Highlight text</string>
     <string name="highlight_text_on">Search and highlight the paragraph where text-to-speech is speaking</string>
@@ -182,5 +169,22 @@
     <!-- Reload Feed Dialog -->
     <string name="add_delay">Add delay (sec)</string>
     <string name="translate">Translate</string>
+
+    <!-- Setup Guide -->
+    <string name="setup_guide_title">API Key Setup Guide</string>
+    <string name="setup_guide_main_title">Setup Your OpenRouter API Key</string>
+    <string name="setup_guide_step1_title">Step 1: Get Your API Key</string>
+    <string name="setup_guide_step1_desc">Visit openrouter.ai, create an account, and generate your API key in the dashboard.</string>
+    <string name="setup_guide_step2_title">Step 2: Choose a Model</string>
+    <string name="setup_guide_step2_desc">Select a model from the OpenRouter marketplace. Popular choices include free models like Google/Gemma-2-9B.</string>
+    <string name="setup_guide_step3_title">Step 3: Enter in Settings</string>
+    <string name="setup_guide_step3_desc">Open the app settings, navigate to Translation section, and enter your API key and model name.</string>
+    <string name="setup_guide_video_title">Watch the Setup Video</string>
+    <string name="setup_guide_get_api_key">Get API Key</string>
+    <string name="setup_guide_get_model">Get Model</string>
+    <string name="setup_guide_solve_privacy">Solve privacy issue</string>
+    <string name="setup_guide_go_to_settings">Go to Settings</string>
+    <string name="setup_guide_preference_title">How to Setup API Key</string>
+    <string name="setup_guide_preference_summary">Learn how to get your OpenRouter API key and choose a model</string>
 
 </resources>

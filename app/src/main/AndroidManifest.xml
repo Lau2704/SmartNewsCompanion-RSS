@@ -41,6 +41,10 @@
             android:parentActivityName="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
             android:exported="false" />
         <activity
+            android:name="my.mmu.Kaixuanrssnewsreader.ui.setupguide.SetupGuideActivity"
+            android:parentActivityName="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
+            android:exported="false" />
+        <activity
             android:name="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustPan"
