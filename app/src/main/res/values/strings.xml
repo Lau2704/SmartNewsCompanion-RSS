@@ -155,36 +155,19 @@
     <string name="help_import_music_desc">You can import an audio file on the Settings page under \'Upload background music\'. Please note that only audio files are supported, and video files are not supported. It is recommended to use the OGG format to avoid any distortion when looping.</string>
     <string name="help_buttons">Icon button functionalities</string>
     <string name="help_buttons_desc">To learn about the functionalities of the icon buttons, simply long-press the button to view the description.</string>
-
+ 
     <!-- Feed -->
     <string name="rss_search_link">Search RSS feeds by keywords using this link:\nhttps://rssfinder.app/</string>
     <string name="empty_feed">No feed found</string>
     <string name="delete_feed_message">Delete feed?</string>
     <string name="delete_feed_confirmation">Are you sure to delete this feed? All the articles under this feed will be deleted too.</string>
-
+ 
     <!-- Entry -->
     <string name="empty_entry">No entry found</string>
     <string name="go_to_add_feed">Go to Add Feed</string>
-
+ 
     <!-- Reload Feed Dialog -->
     <string name="add_delay">Add delay (sec)</string>
     <string name="translate">Translate</string>
-
-    <!-- Setup Guide -->
-    <string name="setup_guide_title">API Key Setup Guide</string>
-    <string name="setup_guide_main_title">Setup Your OpenRouter API Key</string>
-    <string name="setup_guide_step1_title">Step 1: Get Your API Key</string>
-    <string name="setup_guide_step1_desc">Visit openrouter.ai, create an account, and generate your API key in the dashboard.</string>
-    <string name="setup_guide_step2_title">Step 2: Choose a Model</string>
-    <string name="setup_guide_step2_desc">Select a model from the OpenRouter marketplace. Popular choices include free models like Google/Gemma-2-9B.</string>
-    <string name="setup_guide_step3_title">Step 3: Enter in Settings</string>
-    <string name="setup_guide_step3_desc">Open the app settings, navigate to Translation section, and enter your API key and model name.</string>
-    <string name="setup_guide_video_title">Watch the Setup Video</string>
-    <string name="setup_guide_get_api_key">Get API Key</string>
-    <string name="setup_guide_get_model">Get Model</string>
-    <string name="setup_guide_solve_privacy">Solve privacy issue</string>
-    <string name="setup_guide_go_to_settings">Go to Settings</string>
-    <string name="setup_guide_preference_title">How to Setup API Key</string>
-    <string name="setup_guide_preference_summary">Learn how to get your OpenRouter API key and choose a model</string>
 
 </resources>

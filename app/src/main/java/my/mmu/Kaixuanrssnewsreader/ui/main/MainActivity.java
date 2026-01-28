@@ -318,10 +318,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.bottomNavigation, navController);
 
-        if (getIntent().getBooleanExtra("navigateToSettings", false)) {
-            navController.navigate(R.id.settingsFragment);
-        }
-
         RecyclerView recyclerView = binding.navigationFeedsRecycler;
         recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
         adapter = new NavigationFeedItemAdapter(new NavigationFeedItemAdapter.FeedItemClickInterface() {

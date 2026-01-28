@@ -23,7 +23,6 @@ import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepos
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
-import my.mmu.Kaixuanrssnewsreader.ui.setupguide.SetupGuideActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -130,18 +129,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
                     Intent intent = new Intent("com.android.settings.TTS_SETTINGS");
-                    startActivity(intent);
-                    return true;
-                }
-            });
-        }
-
-        Preference setupGuidePreference = findPreference("setupGuide");
-        if (setupGuidePreference != null) {
-            setupGuidePreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(@NonNull Preference preference) {
-                    Intent intent = new Intent(requireContext(), SetupGuideActivity.class);
                     startActivity(intent);
                     return true;
                 }

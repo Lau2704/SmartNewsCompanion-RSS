@@ -63,12 +63,6 @@
         android:layout="@layout/text_preference_category"
         app:title="@string/translation_header">
 
-        <Preference
-            android:key="setupGuide"
-            app:icon="@drawable/ic_help"
-            app:summary="@string/setup_guide_preference_summary"
-            app:title="@string/setup_guide_preference_title" />
-
         <EditTextPreference
             app:icon="@drawable/api_settings"
             app:key="openRouterApiKey"
