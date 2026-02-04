@@ -23,6 +23,7 @@ import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepos
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
+import my.mmu.Kaixuanrssnewsreader.ui.setupwebview.SetupWebViewActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -121,6 +122,38 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         } else {
             backgroundMusicFilePreference.setEntries(defaultMusicEntries);
             backgroundMusicFilePreference.setEntryValues(defaultMusicValues);
+        }
+
+        Preference apiKeySetupPreference = findPreference("openrouter_api_key_setup");
+        if (apiKeySetupPreference != null) {
+            apiKeySetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
+                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/keys");
+                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.openrouter_api_key_setup_title));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.api_key_instruction));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "api_key");
+                    startActivity(intent);
+                    return true;
+                }
+            });
+        }
+
+        Preference privacySetupPreference = findPreference("openrouter_privacy_setup");
+        if (privacySetupPreference != null) {
+            privacySetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
+                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/privacy");
+                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.openrouter_privacy_setup_title));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.privacy_instruction));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "privacy");
+                    startActivity(intent);
+                    return true;
+                }
+            });
         }
 
         Preference ttsSettingsPreference = findPreference("key_text_to_speech_settings");

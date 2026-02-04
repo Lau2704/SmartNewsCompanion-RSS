@@ -63,6 +63,20 @@
         android:layout="@layout/text_preference_category"
         app:title="@string/translation_header">
 
+        <Preference
+            app:key="openrouter_api_key_setup"
+            app:summary="@string/openrouter_api_key_setup_summary"
+            app:title="@string/openrouter_api_key_setup_title"
+            app:icon="@drawable/api_settings"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="openrouter_privacy_setup"
+            app:summary="@string/openrouter_privacy_setup_summary"
+            app:title="@string/openrouter_privacy_setup_title"
+            app:icon="@drawable/ic_privacy"
+            app:iconSpaceReserved="false" />
+
         <EditTextPreference
             app:icon="@drawable/api_settings"
             app:key="openRouterApiKey"

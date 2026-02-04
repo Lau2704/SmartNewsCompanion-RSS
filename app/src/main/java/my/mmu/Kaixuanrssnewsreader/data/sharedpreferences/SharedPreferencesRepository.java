@@ -14,6 +14,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class SharedPreferencesRepository {
 
     private static final String TAG = "SharedPreferencesRepository";
+    private static final String DEFAULT_MODEL = "openai/gpt-oss-20b-free";
+    private static final String KEY_ONBOARDING_COMPLETED = "onboarding_completed";
+    private static final String KEY_API_KEY_SETUP_COMPLETED = "api_key_setup_completed";
+    private static final String KEY_PRIVACY_SETUP_COMPLETED = "privacy_setup_completed";
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private final Context context;
@@ -262,5 +266,49 @@ public class SharedPreferencesRepository {
 
     public boolean getIsSummaryView(long entryId) {
         return sharedPreferences.getBoolean(KEY_WEB_VIEW_MODE + "_" + entryId + "_summary", false);
+    }
+
+    public boolean hasOpenRouterApiKey() {
+        String apiKey = sharedPreferences.getString("openRouterApiKey", "");
+        return apiKey != null && !apiKey.isEmpty();
+    }
+
+    public boolean hasOpenRouterModel() {
+        String model = sharedPreferences.getString("openRouterModel", "");
+        return model != null && !model.isEmpty();
+    }
+
+    public void initializeDefaultModelOnFirst() {
+        if (!sharedPreferences.contains("openRouterModel")) {
+            editor.putString("openRouterModel", DEFAULT_MODEL);
+            editor.apply();
+        }
+    }
+
+    public boolean hasCompletedOnboarding() {
+        return sharedPreferences.getBoolean(KEY_ONBOARDING_COMPLETED, false);
+    }
+
+    public void setOnboardingCompleted(boolean completed) {
+        editor.putBoolean(KEY_ONBOARDING_COMPLETED, completed);
+        editor.apply();
+    }
+
+    public boolean hasCompletedApiKeySetup() {
+        return sharedPreferences.getBoolean(KEY_API_KEY_SETUP_COMPLETED, false);
+    }
+
+    public void setApiKeySetupCompleted(boolean completed) {
+        editor.putBoolean(KEY_API_KEY_SETUP_COMPLETED, completed);
+        editor.apply();
+    }
+
+    public boolean hasCompletedPrivacySetup() {
+        return sharedPreferences.getBoolean(KEY_PRIVACY_SETUP_COMPLETED, false);
+    }
+
+    public void setPrivacySetupCompleted(boolean completed) {
+        editor.putBoolean(KEY_PRIVACY_SETUP_COMPLETED, completed);
+        editor.apply();
     }
 }

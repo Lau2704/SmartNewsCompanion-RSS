@@ -52,6 +52,7 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
@@ -305,11 +306,29 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         );
     }
 
+    private void showSetupRequiredDialog(String title, String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.go_to_settings, (dialog, which) -> {
+                    Intent intent = new Intent(this, my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.putExtra("navigate_to_settings", true);
+                    startActivity(intent);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private void translate() {
         String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+            showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
+        }
+
+        if (!sharedPreferencesRepository.hasOpenRouterModel()) {
+            sharedPreferencesRepository.setOpenRouterModel("openai/gpt-oss-20b:free");
         }
 
         String html = webViewViewModel.getHtmlById(currentId);
@@ -386,7 +405,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-            makeSnackbar("Translation API key not configured. Please set a valid OpenRouter API key.");
+            showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
         }
 
@@ -1088,6 +1107,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         switch (itemId) {
             case R.id.translate:
                 translate();
+                return true;
+
+            case R.id.reExtract:
+                reExtractArticle();
                 return true;
 
             case R.id.zoomIn:
@@ -1809,6 +1832,36 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Intent intent = getIntent();
         intent.putExtra("entry_id", currentId);
+
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
+
+    private void reExtractArticle() {
+        if (currentId <= 0) {
+            Log.w(TAG, "reExtractArticle() aborted: invalid currentId");
+            makeSnackbar("Cannot re-extract: Invalid article");
+            return;
+        }
+
+        Log.d(TAG, "Re-extract triggered for entryId: " + currentId);
+        makeSnackbar("Re-extracting article...");
+
+        webViewViewModel.resetEntry(currentId);
+        webViewViewModel.clearLiveEntryCache(currentId);
+
+        isTranslatedView = false;
+        sharedPreferencesRepository.setIsTranslatedView(currentId, false);
+
+        if (!isReadingMode) {
+            mMediaBrowserHelper.getTransportControls().stop();
+        }
+
+        Intent intent = getIntent();
+        intent.putExtra("entry_id", currentId);
+        intent.putExtra("forceOriginal", true);
 
         finish();
         overridePendingTransition(0, 0);

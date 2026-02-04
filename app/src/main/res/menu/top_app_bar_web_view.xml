@@ -9,6 +9,13 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/reExtract"
+        android:icon="@drawable/ic_reload"
+        android:title="@string/reload"
+        android:contentDescription="Re-extract article"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/toggleTranslation"
         android:icon="@drawable/ic_letter_switch"
         android:title="Show Original"

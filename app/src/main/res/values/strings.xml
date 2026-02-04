@@ -50,10 +50,16 @@
     <string name="api_setting_summary">Enter your OpenRouter API key</string>
     <string name="api_setting_dialog_title">OpenRouter API Key</string>
 
+    <string name="openrouter_api_key_setup_title">Get API Key</string>
+    <string name="openrouter_api_key_setup_summary">Create or manage your OpenRouter API key</string>
+
+    <string name="openrouter_privacy_setup_title">Solve Privacy Issue</string>
+    <string name="openrouter_privacy_setup_summary">Configure privacy options for AI features</string>
+
     <string name="openRouterModel_title">OpenRouter Model</string>
     <string name="openRouterModel_summary">Enter your OpenRouter model.</string>
     <string name="openRouterModel_dialog_title">AI Model.</string>
-    <string name="openRouterModel_dialog_description">Enter your OpenRouter model. (e.g. openai/gpt-oss-120b:free, xiaomi/mimo-v2-flash:free, .....\n\n </string>
+    <string name="openRouterModel_dialog_description">Enter your OpenRouter model. (e.g. openai/gpt-oss-120b:free, xiaomi/mimo-v2-flash:free, ..... </string>
 
     <string name="highlight_text_title">Highlight text</string>
     <string name="highlight_text_on">Search and highlight the paragraph where text-to-speech is speaking</string>
@@ -82,6 +88,46 @@
     <string name="open_in_browser">Open in browser</string>
     <string name="exit_browser">Offline mode</string>
     <string name="reload">Re-extract article</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to SmartNews Companion</string>
+    <string name="onboarding_description">Unlock AI-powered translation and summarization features</string>
+    <string name="onboarding_features_title">With OpenRouter, you can:</string>
+    <string name="onboarding_feature_translation">Translate articles to your preferred language</string>
+    <string name="onboarding_feature_summarization">Generate AI summaries of articles</string>
+    <string name="onboarding_setup_button">Setup OpenRouter</string>
+    <string name="onboarding_skip_button">Skip for Now</string>
+
+    <!-- Setup WebView -->
+    <string name="setup_title">Setup</string>
+    <string name="setup_instructions">Instructions</string>
+    <string name="setup_done_button">I\'ve Completed This</string>
+    <string name="google_login_warning">Note: Google login may not work on some devices. If you cannot sign in with Google, please use email login instead.</string>
+    <string name="api_key_instruction">1. Sign in to your OpenRouter account\n2. Go to Settings → API Keys\n3. Click "Create Key"\n4. Copy and save your API key securely</string>
+
+    <string name="privacy_instruction">1. Go to Settings → Privacy\n2. Enable the first 3 privacy options:\n   • Allow tracking (optional)\n   • Enable analytics (optional)\n   • Save conversation history (optional)\n\nThese settings help improve AI response quality.</string>
+
+    <string name="enter_api_key_title">Enter Your API Key</string>
+    <string name="enter_api_key_subtitle">Get your API key from openrouter.ai</string>
+    <string name="api_key_hint">API Key</string>
+
+    <string name="privacy_settings_title">Privacy Settings</string>
+    <string name="privacy_options_title">Configure Privacy Options</string>
+    <string name="privacy_options_subtitle">These settings are optional but help improve AI response quality</string>
+    <string name="privacy_option_tracking">Allow tracking for better results</string>
+    <string name="privacy_option_analytics">Enable analytics</string>
+    <string name="privacy_option_history">Save conversation history</string>
+
+    <string name="skip_button">Skip</string>
+    <string name="continue_button">Continue</string>
+    <string name="complete_button">Complete Setup</string>
+    <string name="save_button">Save</string>
+
+    <!-- Setup Required Dialog -->
+    <string name="setup_required_title">Setup Required</string>
+    <string name="setup_required_api_key_message">Please setup your OpenRouter API key in Settings to use translation features.</string>
+    <string name="setup_required_privacy_message">Please configure your privacy settings in Settings to enable all AI features.</string>
+    <string name="go_to_settings">Go to Settings</string>
     <string name="reading_mode">Switch to reading mode</string>
     <string name="playing_mode">Switch to playing mode</string>
     <string name="highlight_text_turn_on">Turn on highlight text</string>

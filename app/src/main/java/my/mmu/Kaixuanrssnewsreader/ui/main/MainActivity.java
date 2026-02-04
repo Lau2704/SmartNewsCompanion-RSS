@@ -35,6 +35,7 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.databinding.ActivityMainBinding;
+import my.mmu.Kaixuanrssnewsreader.ui.onboarding.OnboardingActivity;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 
@@ -292,6 +293,14 @@ public class MainActivity extends AppCompatActivity {
         mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
 
         sharedPreferencesRepository.initializeDefaultTranslationLanguageOnFirst();
+        sharedPreferencesRepository.initializeDefaultModelOnFirst();
+
+        if (!sharedPreferencesRepository.hasCompletedOnboarding()) {
+            Intent intent = new Intent(this, my.mmu.Kaixuanrssnewsreader.ui.onboarding.OnboardingActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
         themeSwitch = binding.themeSwitch;
 
@@ -436,6 +445,13 @@ public class MainActivity extends AppCompatActivity {
                 switchTheme();
             }
         });
+
+        if (getIntent() != null && getIntent().getBooleanExtra("navigate_to_settings", false)) {
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setPopUpTo(R.id.allEntriesFragment, false)
+                    .build();
+            navController.navigate(R.id.settingsFragment, null, navOptions);
+        }
 
         mainActivityViewModel.getAllFeeds().observe(this, new Observer<List<Feed>>() {
             @Override
