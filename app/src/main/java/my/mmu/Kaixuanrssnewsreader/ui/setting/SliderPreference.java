@@ -65,6 +65,17 @@ public class SliderPreference extends Preference {
         }
     }
 
+    private int roundToStep(int value, int min, int step) {
+        if (step <= 0) return value;
+        int remainder = (value - min) % step;
+        if (remainder == 0) return value;
+        if (remainder <= step / 2) {
+            return value - remainder;
+        } else {
+            return value + (step - remainder);
+        }
+    }
+
     @Override
     public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
@@ -82,6 +93,9 @@ public class SliderPreference extends Preference {
                 persistInt(mValue);
             } else if (mValue > mMax) {
                 mValue = mMax;
+                persistInt(mValue);
+            } else {
+                mValue = roundToStep(mValue, mMin, mStep);
                 persistInt(mValue);
             }
 
@@ -128,7 +142,7 @@ public class SliderPreference extends Preference {
         } else if (value > mMax) {
             mValue = mMax;
         } else {
-            mValue = value;
+            mValue = roundToStep(value, mMin, mStep);
         }
         if (mSlider != null) {
             mSlider.setValue(mValue);

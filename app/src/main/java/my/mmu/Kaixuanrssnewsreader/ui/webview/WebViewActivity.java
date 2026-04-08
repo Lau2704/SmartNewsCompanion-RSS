@@ -463,9 +463,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
             if (isSummaryView) {
                 Log.d(TAG, "loadSavedSummaryOrGenerate: Switching to summary view");
+                // Ensure button state is correct
+                autoSummaryButton.setImageResource(R.drawable.auto_summary_no_background);
                 switchToSummaryView();
             } else {
                 Log.d(TAG, "loadSavedSummaryOrGenerate: Staying on original view (summary available)");
+                // Ensure button state is correct for non-summary view
+                autoSummaryButton.setImageResource(R.drawable.ic_newspaper);
             }
         } else if (sharedPreferencesRepository.getDisplaySummary()) {
             Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary, auto-generating because displaySummary is enabled");
@@ -501,16 +505,45 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             sharedPreferencesRepository.setIsSummaryView(currentId, true);
             autoSummaryButton.setImageResource(R.drawable.auto_summary_no_background);
             makeSnackbar("Showing summary view");
+
+            // Reset TTS sentence counter to start from beginning
+            entryRepository.updateSentCount(0, currentId);
+
+            // Re-extract TTS with summary content (include title)
+            String summaryText = sharedPreferencesRepository.getSummary(currentId);
+            if (summaryText != null && !summaryText.isEmpty()) {
+                EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+                String entryTitle = entryInfo != null ? entryInfo.getEntryTitle() : null;
+                String contentWithTitle = (entryTitle != null ? entryTitle + ". " : "") + summaryText;
+                String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+                Log.d(TAG, "switchToSummaryView: Re-extracting TTS with summary content and title: " + entryTitle);
+                ttsPlayer.extract(currentId, feedId, contentWithTitle, lang);
+            }
         }
     }
 
     private void switchToOriginalView() {
         if (originalHtmlForSummary != null) {
-            webView.loadDataWithBaseURL("file///android_res/", originalHtmlForSummary, "text/html", "UTF-8", null);
+            // Use loadHtmlIntoWebView to include the title header
+            loadHtmlIntoWebView(originalHtmlForSummary);
             isSummaryView = false;
             sharedPreferencesRepository.setIsSummaryView(currentId, false);
             autoSummaryButton.setImageResource(R.drawable.ic_newspaper);
             makeSnackbar("Showing original article");
+
+            // Reset TTS sentence counter to start from beginning
+            entryRepository.updateSentCount(0, currentId);
+
+            // Re-extract TTS with original content
+            Entry entry = webViewViewModel.getEntryById(currentId);
+            if (entry != null) {
+                String contentToRead = isTranslatedView ? entry.getTranslated() : entry.getContent();
+                if (contentToRead != null && !contentToRead.isEmpty()) {
+                    String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+                    Log.d(TAG, "switchToOriginalView: Re-extracting TTS with original content");
+                    ttsPlayer.extract(currentId, feedId, contentToRead, lang);
+                }
+            }
         }
     }
 
@@ -665,9 +698,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
+        final long targetEntryId = currentId;
         compositeDisposable.add(
                 Single.fromCallable(() -> {
-                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(targetEntryId);
                     Document doc = Jsoup.parse(html);
                     doc.head().append(webViewViewModel.getStyle());
 
@@ -692,12 +726,24 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         Log.e(TAG, "WebView is null, cannot load HTML");
                                         return;
                                     }
+                                    if (targetEntryId != currentId) {
+                                        Log.d(TAG, "Skipping HTML load for stale article. targetEntryId=" + targetEntryId + ", currentId=" + currentId);
+                                        return;
+                                    }
+                                    String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
+                                    boolean shouldKeepSummaryView = sharedPreferencesRepository.getIsSummaryView(targetEntryId)
+                                            && savedSummary != null
+                                            && !savedSummary.isEmpty();
+                                    if (shouldKeepSummaryView) {
+                                        Log.d(TAG, "Skipping normal HTML load because summary view is active for entryId=" + targetEntryId);
+                                        return;
+                                    }
                                     webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
 
                                     webView.postDelayed(() -> {
                                         if (webView != null) {
-                                            int scrollX = sharedPreferencesRepository.getScrollX(currentId);
-                                            int scrollY = sharedPreferencesRepository.getScrollY(currentId);
+                                            int scrollX = sharedPreferencesRepository.getScrollX(targetEntryId);
+                                            int scrollY = sharedPreferencesRepository.getScrollY(targetEntryId);
                                             webView.scrollTo(scrollX, scrollY);
                                         }
                                     }, 300);
@@ -743,7 +789,6 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             if (intentId != currentId) {
                 originalHtmlForSummary = null;
                 summaryHtml = null;
-                isSummaryView = false;
                 hasGeneratedSummary = false;
                 autoSummaryButton.setImageResource(R.drawable.auto_summary_no_background);
             }
@@ -864,21 +909,62 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Log.d("LoadEntry", "htmlToLoad (translated) = " + (html != null ? html.length() : "null"));
 
-        String contentToRead = isTranslatedView
-                ? entry.getTranslated()
-                : entry.getContent();
+        // Get the summary - check saved state first, then get summary text
+        isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
+        String savedSummary = sharedPreferencesRepository.getSummary(currentId);
+        boolean hasSummary = savedSummary != null && !savedSummary.isEmpty();
+
+        // Ensure summaryHtml is restored if isSummaryView is true but summaryHtml is null
+        if (isSummaryView && hasSummary && summaryHtml == null) {
+            summaryHtml = formatSummaryAsHtml(savedSummary);
+            hasGeneratedSummary = true;
+            Log.d(TAG, "Restored summaryHtml for current article");
+        }
+
+        // Get the summary text for TTS based on restored isSummaryView
+        String summaryText = isSummaryView && hasSummary ? savedSummary : null;
+
+        String contentToRead;
+        if (isSummaryView && summaryText != null && !summaryText.isEmpty()) {
+            // Use summary for TTS when in summary view, prepend title
+            String entryTitle = entry.getTitle();
+            contentToRead = (entryTitle != null ? entryTitle + ". " : "") + summaryText;
+            Log.d(TAG, "Using summary for TTS with title: " + entryTitle);
+        } else {
+            contentToRead = isTranslatedView
+                    ? entry.getTranslated()
+                    : entry.getContent();
+        }
 
         String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
 
-        Log.d(TAG, "loadEntryContent - About to speak " + (isTranslatedView ? "Translated" : "Original"));
+        String contentType = isSummaryView ? "Summary" : (isTranslatedView ? "Translated" : "Original");
+        Log.d(TAG, "loadEntryContent - About to speak " + contentType);
         Log.d(TAG, "Language to use: " + lang);
         Log.d(TAG, "Text to read length: " + (contentToRead != null ? contentToRead.length() : 0));
 
         Log.d(TAG, "Calling setCurrentLanguage with: " + lang + ", lock=true");
         ttsExtractor.setCurrentLanguage(lang, true);
 
-        if (!isSummaryView && html != null && !html.trim().isEmpty()) {
-            loadHtmlIntoWebView(html);
+        // Check if we can proceed with TTS: either normal view with html, or summary view with summary text
+        boolean canExtractTts = (!isSummaryView && html != null && !html.trim().isEmpty())
+                || (isSummaryView && contentToRead != null && !contentToRead.trim().isEmpty());
+
+        // Ensure summaryHtml is restored if isSummaryView is true but summaryHtml is null
+        if (isSummaryView && summaryHtml == null && savedSummary != null) {
+            Log.d(TAG, "Restoring summaryHtml from savedSummary");
+            summaryHtml = formatSummaryAsHtml(savedSummary);
+        }
+
+        if (canExtractTts) {
+            if (isSummaryView && summaryHtml != null) {
+                // Load summary view into WebView
+                Log.d(TAG, "Loading summary view into WebView");
+                webView.loadDataWithBaseURL("file///android_res/", summaryHtml, "text/html", "UTF-8", null);
+            } else {
+                Log.d(TAG, "Loading normal view into WebView, isSummaryView=" + isSummaryView + ", summaryHtml=" + (summaryHtml != null ? "not null" : "null"));
+                loadHtmlIntoWebView(html);
+            }
 
             if (!ttsPlayer.isSameArticleState(entry.getId(), lang)) {
                 compositeDisposable.add(
@@ -994,6 +1080,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
 
     private void updateToggleStateAndWebView(String originalHtml, String translatedHtml) {
+        // Don't update WebView if we're in summary view - preserve summary display
+        if (isSummaryView) {
+            Log.d(TAG, "updateToggleStateAndWebView: Skipping WebView update in summary view");
+            return;
+        }
+
         boolean hasOriginal = originalHtml != null && !originalHtml.trim().isEmpty();
         boolean hasTranslated = translatedHtml != null && !translatedHtml.trim().isEmpty();
 
@@ -1071,9 +1163,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
+        final long targetEntryId = currentId;
         compositeDisposable.add(
                 Single.fromCallable(() -> {
-                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
+                    EntryInfo entryInfo = webViewViewModel.getEntryInfoById(targetEntryId);
                     Document doc = Jsoup.parse(html);
                     doc.head().append(webViewViewModel.getStyle());
 
@@ -1094,6 +1187,18 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 processedHtml -> {
+                                    if (targetEntryId != currentId) {
+                                        Log.d(TAG, "Skipping HTML load for stale article. targetEntryId=" + targetEntryId + ", currentId=" + currentId);
+                                        return;
+                                    }
+                                    String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
+                                    boolean shouldKeepSummaryView = sharedPreferencesRepository.getIsSummaryView(targetEntryId)
+                                            && savedSummary != null
+                                            && !savedSummary.isEmpty();
+                                    if (shouldKeepSummaryView) {
+                                        Log.d(TAG, "Skipping normal HTML load because summary view is active for entryId=" + targetEntryId);
+                                        return;
+                                    }
                                     webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
                                 },
                                 throwable -> {
