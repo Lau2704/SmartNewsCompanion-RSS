@@ -1,5 +1,5 @@
 
-//Need to set Open Router API at line 250
+//Need to set Groq API at line 250
 
 package my.mmu.Kaixuanrssnewsreader.data.sharedpreferences;
 import android.content.Context;
@@ -14,10 +14,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class SharedPreferencesRepository {
 
     private static final String TAG = "SharedPreferencesRepository";
-    private static final String DEFAULT_MODEL = "openai/gpt-oss-20b-free";
+    private static final String DEFAULT_MODEL = "llama-3.3-70b-versatile";
     private static final String KEY_ONBOARDING_COMPLETED = "onboarding_completed";
     private static final String KEY_API_KEY_SETUP_COMPLETED = "api_key_setup_completed";
-    private static final String KEY_PRIVACY_SETUP_COMPLETED = "privacy_setup_completed";
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private final Context context;
@@ -231,21 +230,21 @@ public class SharedPreferencesRepository {
         return sharedPreferences.getLong(KEY_CURRENT_READING_ENTRY_ID, -1);
     }
 
-    public String getOpenRouterApiKey() {
-        return sharedPreferences.getString("openRouterApiKey", "");
+    public String getGroqApiKey() {
+        return sharedPreferences.getString("groqApiKey", "");
     }
 
-    public void setOpenRouterApiKey(String apiKey) {
-        editor.putString("openRouterApiKey", apiKey);
+    public void setGroqApiKey(String apiKey) {
+        editor.putString("groqApiKey", apiKey);
         editor.apply();
     }
 
-    public String getOpenRouterModel() {
-        return sharedPreferences.getString("openRouterModel", "");
+    public String getGroqModel() {
+        return sharedPreferences.getString("groqModel", "");
     }
 
-    public void setOpenRouterModel(String model) {
-        editor.putString("openRouterModel", model);
+    public void setGroqModel(String model) {
+        editor.putString("groqModel", model);
         editor.apply();
     }
 
@@ -268,19 +267,19 @@ public class SharedPreferencesRepository {
         return sharedPreferences.getBoolean(KEY_WEB_VIEW_MODE + "_" + entryId + "_summary", false);
     }
 
-    public boolean hasOpenRouterApiKey() {
-        String apiKey = sharedPreferences.getString("openRouterApiKey", "");
+    public boolean hasGroqApiKey() {
+        String apiKey = sharedPreferences.getString("groqApiKey", "");
         return apiKey != null && !apiKey.isEmpty();
     }
 
-    public boolean hasOpenRouterModel() {
-        String model = sharedPreferences.getString("openRouterModel", "");
+    public boolean hasGroqModel() {
+        String model = sharedPreferences.getString("groqModel", "");
         return model != null && !model.isEmpty();
     }
 
     public void initializeDefaultModelOnFirst() {
-        if (!sharedPreferences.contains("openRouterModel")) {
-            editor.putString("openRouterModel", DEFAULT_MODEL);
+        if (!sharedPreferences.contains("groqModel")) {
+            editor.putString("groqModel", DEFAULT_MODEL);
             editor.apply();
         }
     }
@@ -300,15 +299,6 @@ public class SharedPreferencesRepository {
 
     public void setApiKeySetupCompleted(boolean completed) {
         editor.putBoolean(KEY_API_KEY_SETUP_COMPLETED, completed);
-        editor.apply();
-    }
-
-    public boolean hasCompletedPrivacySetup() {
-        return sharedPreferences.getBoolean(KEY_PRIVACY_SETUP_COMPLETED, false);
-    }
-
-    public void setPrivacySetupCompleted(boolean completed) {
-        editor.putBoolean(KEY_PRIVACY_SETUP_COMPLETED, completed);
         editor.apply();
     }
 }

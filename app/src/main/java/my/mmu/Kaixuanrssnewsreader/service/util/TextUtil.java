@@ -379,19 +379,19 @@ public class TextUtil {
                 return;
             }
 
-            String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+            String apiKey = sharedPreferencesRepository.getGroqApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in Settings."));
+                emitter.onError(new IllegalArgumentException("Groq API key is not configured. Please set a valid API key in Settings."));
                 return;
             }
 
-            String model = sharedPreferencesRepository.getOpenRouterModel();
+            String model = sharedPreferencesRepository.getGroqModel();
             if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("OpenRouter model is not configured. Please set a valid model in Settings."));
+                emitter.onError(new IllegalArgumentException("Groq model is not configured. Please set a valid model in Settings."));
                 return;
             }
 
-            String url = "https://openrouter.ai/api/v1/chat/completions";
+            String url = "https://api.groq.com/openai/v1/chat/completions";
 
             try {
                 JSONObject requestBody = new JSONObject();
@@ -429,17 +429,13 @@ public class TextUtil {
                         int code = response.code();
 
                         if (code == 401) {
-                            errorMessage = "Invalid API key. Please check your OpenRouter API key in Settings.";
+                            errorMessage = "Invalid API key. Please check your Groq API key in Settings.";
                         } else if (code == 404) {
-                            if (errorBody.contains("privacy") || errorBody.contains("data policy")) {
-                                errorMessage = "Privacy policy configuration needed. Please visit https://openrouter.ai/settings/privacy to configure your privacy settings for this model.";
-                            } else {
-                                errorMessage = "Invalid model name. Please check the OpenRouter model in Settings.";
-                            }
+                            errorMessage = "Invalid model name. Please check the Groq model in Settings.";
                         } else if (code == 429) {
                             errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
                         } else if (code == 500 || code == 502 || code == 503) {
-                            errorMessage = "OpenRouter service error. Please try again later.";
+                            errorMessage = "Groq service error. Please try again later.";
                         } else {
                             errorMessage = "API Error: " + code;
                         }
@@ -509,19 +505,19 @@ public class TextUtil {
                 return;
             }
 
-            String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+            String apiKey = sharedPreferencesRepository.getGroqApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("OpenRouter API key is not configured. Please set a valid API key in Settings."));
+                emitter.onError(new IllegalArgumentException("Groq API key is not configured. Please set a valid API key in Settings."));
                 return;
             }
 
-            String model = sharedPreferencesRepository.getOpenRouterModel();
+            String model = sharedPreferencesRepository.getGroqModel();
             if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("OpenRouter model is not configured. Please set a valid model in Settings."));
+                emitter.onError(new IllegalArgumentException("Groq model is not configured. Please set a valid model in Settings."));
                 return;
             }
 
-            String url = "https://openrouter.ai/api/v1/chat/completions";
+            String url = "https://api.groq.com/openai/v1/chat/completions";
 
             try {
                 JSONObject requestBody = new JSONObject();
@@ -560,17 +556,13 @@ public class TextUtil {
                         int code = response.code();
 
                         if (code == 401) {
-                            errorMessage = "Invalid API key. Please check your OpenRouter API key in Settings.";
+                            errorMessage = "Invalid API key. Please check your Groq API key in Settings.";
                         } else if (code == 404) {
-                            if (errorBody.contains("privacy") || errorBody.contains("data policy")) {
-                                errorMessage = "Privacy policy configuration needed. Please visit https://openrouter.ai/settings/privacy to configure your privacy settings for this model.";
-                            } else {
-                                errorMessage = "Invalid model name. Please check the OpenRouter model in Settings.";
-                            }
+                            errorMessage = "Invalid model name. Please check the Groq model in Settings.";
                         } else if (code == 429) {
                             errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
                         } else if (code == 500 || code == 502 || code == 503) {
-                            errorMessage = "OpenRouter service error. Please try again later.";
+                            errorMessage = "Groq service error. Please try again later.";
                         } else {
                             errorMessage = "API Error: " + code;
                         }

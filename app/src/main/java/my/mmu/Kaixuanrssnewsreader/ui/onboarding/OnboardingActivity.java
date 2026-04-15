@@ -50,9 +50,9 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void startApiKeySetup() {
         Intent intent = new Intent(this, SetupWebViewActivity.class);
-        intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/keys");
+        intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://console.groq.com/keys");
         intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, "API Key Setup");
-        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(my.mmu.Kaixuanrssnewsreader.R.string.api_key_instruction));
+        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(my.mmu.Kaixuanrssnewsreader.R.string.groq_api_key_instruction));
         intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "api_key");
         startActivityForResult(intent, 100);
     }
@@ -61,20 +61,9 @@ public class OnboardingActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == RESULT_OK) {
-            startPrivacySetup();
-        } else if (requestCode == 101 && resultCode == RESULT_OK) {
             sharedPreferencesRepository.setOnboardingCompleted(true);
             navigateToMain();
         }
-    }
-
-    private void startPrivacySetup() {
-        Intent intent = new Intent(this, SetupWebViewActivity.class);
-        intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/privacy");
-        intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, "Privacy Settings");
-        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(my.mmu.Kaixuanrssnewsreader.R.string.privacy_instruction));
-        intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "privacy");
-        startActivityForResult(intent, 101);
     }
 
     private void navigateToMain() {

@@ -85,7 +85,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
-                        tools:text="1. Sign in to OpenRouter\n2. Create API key\n3. Copy it" />
+                        tools:text="1. Sign in to Groq\n2. Create API key\n3. Copy it" />
 
                     <TextView
                         android:layout_width="match_parent"

@@ -124,32 +124,16 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             backgroundMusicFilePreference.setEntryValues(defaultMusicValues);
         }
 
-        Preference apiKeySetupPreference = findPreference("openrouter_api_key_setup");
+        Preference apiKeySetupPreference = findPreference("groq_api_key_setup");
         if (apiKeySetupPreference != null) {
             apiKeySetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
                     Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
-                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/keys");
-                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.openrouter_api_key_setup_title));
-                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.api_key_instruction));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://console.groq.com/keys");
+                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.groq_api_key_setup_title));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.groq_api_key_instruction));
                     intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "api_key");
-                    startActivity(intent);
-                    return true;
-                }
-            });
-        }
-
-        Preference privacySetupPreference = findPreference("openrouter_privacy_setup");
-        if (privacySetupPreference != null) {
-            privacySetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(@NonNull Preference preference) {
-                    Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
-                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://openrouter.ai/settings/privacy");
-                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.openrouter_privacy_setup_title));
-                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.privacy_instruction));
-                    intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "privacy");
                     startActivity(intent);
                     return true;
                 }

@@ -64,33 +64,26 @@
         app:title="@string/translation_header">
 
         <Preference
-            app:key="openrouter_api_key_setup"
-            app:summary="@string/openrouter_api_key_setup_summary"
-            app:title="@string/openrouter_api_key_setup_title"
+            app:key="groq_api_key_setup"
+            app:summary="@string/groq_api_key_setup_summary"
+            app:title="@string/groq_api_key_setup_title"
             app:icon="@drawable/api_settings"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            app:key="openrouter_privacy_setup"
-            app:summary="@string/openrouter_privacy_setup_summary"
-            app:title="@string/openrouter_privacy_setup_title"
-            app:icon="@drawable/ic_privacy"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference
             app:icon="@drawable/api_settings"
-            app:key="openRouterApiKey"
-            app:summary="@string/api_setting_summary"
-            app:title="@string/api_setting_title"
-            android:dialogTitle="@string/api_setting_dialog_title" />
+            app:key="groqApiKey"
+            app:summary="@string/groq_api_setting_summary"
+            app:title="@string/groq_api_setting_title"
+            android:dialogTitle="@string/groq_api_setting_dialog_title" />
 
         <EditTextPreference
             app:icon="@drawable/ai_model"
-            app:key="openRouterModel"
-            app:summary="@string/openRouterModel_summary"
-            app:title="@string/openRouterModel_title"
-            android:dialogTitle="@string/openRouterModel_dialog_title"
-            android:dialogMessage="@string/openRouterModel_dialog_description" />
+            app:key="groqModel"
+            app:summary="@string/groqModel_summary"
+            app:title="@string/groqModel_title"
+            android:dialogTitle="@string/groqModel_dialog_title"
+            android:dialogMessage="@string/groqModel_dialog_description" />
 
         <ListPreference
             app:entries="@array/defaultTranslationLanguage"

@@ -138,8 +138,6 @@ public class SetupWebViewActivity extends AppCompatActivity {
     private void markSetupComplete() {
         if ("api_key".equals(step)) {
             sharedPreferencesRepository.setApiKeySetupCompleted(true);
-        } else if ("privacy".equals(step)) {
-            sharedPreferencesRepository.setPrivacySetupCompleted(true);
         }
         setResult(RESULT_OK);
         finish();

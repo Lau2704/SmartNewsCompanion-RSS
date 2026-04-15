@@ -321,14 +321,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void translate() {
-        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+        String apiKey = sharedPreferencesRepository.getGroqApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
         }
 
-        if (!sharedPreferencesRepository.hasOpenRouterModel()) {
-            sharedPreferencesRepository.setOpenRouterModel("openai/gpt-oss-20b:free");
+        if (!sharedPreferencesRepository.hasGroqModel()) {
+            sharedPreferencesRepository.setGroqModel("llama-3.3-70b-versatile");
         }
 
         String html = webViewViewModel.getHtmlById(currentId);
@@ -403,7 +403,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        String apiKey = sharedPreferencesRepository.getOpenRouterApiKey();
+        String apiKey = sharedPreferencesRepository.getGroqApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
@@ -625,7 +625,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Log.d(TAG, "Target language from settings: " + targetLanguage);
         Log.d(TAG, "Translation method: " + translationMethod);
-        Log.d(TAG, "OpenRouter API key configured: " + (sharedPreferencesRepository.getOpenRouterApiKey() != null && !sharedPreferencesRepository.getOpenRouterApiKey().isEmpty()));
+        Log.d(TAG, "Groq API key configured: " + (sharedPreferencesRepository.getGroqApiKey() != null && !sharedPreferencesRepository.getGroqApiKey().isEmpty()));
 
         initializeToolbarListeners();
         initializeWebViewSettings();
