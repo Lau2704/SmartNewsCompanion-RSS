@@ -93,6 +93,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private String currentLink;
     private long currentId;
     private long feedId;
+    private String feedLanguage;
     private String html;
     private String content;
     private String bookmark;
@@ -331,8 +332,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             sharedPreferencesRepository.setGroqModel("llama-3.3-70b-versatile");
         }
 
-        String html = webViewViewModel.getHtmlById(currentId);
-        if (html == null) {
+        String contentToTranslate;
+        if (isSummaryView) {
+            String summaryText = sharedPreferencesRepository.getSummary(currentId);
+            if (summaryText == null || summaryText.isEmpty()) {
+                makeSnackbar("No summary to translate.");
+                return;
+            }
+            contentToTranslate = summaryText;
+        } else {
+            contentToTranslate = webViewViewModel.getHtmlById(currentId);
+        }
+
+        if (contentToTranslate == null) {
             makeSnackbar("No content to translate.");
             return;
         }
@@ -354,7 +366,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         compositeDisposable.add(
             Single.fromCallable(() -> {
-                String content = textUtil.extractHtmlContent(html, " ");
+                String content = textUtil.extractHtmlContent(contentToTranslate, " ");
                 if (content == null || content.trim().isEmpty()) {
                     throw new Exception("No content to translate");
                 }
@@ -382,12 +394,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                             makeSnackbar("Source and target languages are the same");
                             return;
                         }
-                        performTranslation(sourceLanguage, targetLanguage, html, title);
+                        performTranslation(sourceLanguage, targetLanguage, contentToTranslate, title);
                     },
                     error -> {
                         Log.e(TAG, "Language identification failed", error);
                         String sourceLanguage = feedLanguage != null ? feedLanguage : "en";
-                        performTranslation(sourceLanguage, targetLanguage, html, title);
+                        performTranslation(sourceLanguage, targetLanguage, contentToTranslate, title);
                     }
                 )
         );
@@ -409,8 +421,16 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        String content = webViewViewModel.getContentById(currentId);
-        if (content == null || content.trim().isEmpty()) {
+        String contentToSummarize;
+        Entry entry = webViewViewModel.getEntryEntityById(currentId).getValue();
+
+        if (isTranslatedView && entry.getTranslated() != null && !entry.getTranslated().isEmpty()) {
+            contentToSummarize = entry.getTranslated();
+        } else {
+            contentToSummarize = webViewViewModel.getContentById(currentId);
+        }
+
+        if (contentToSummarize == null || contentToSummarize.trim().isEmpty()) {
             makeSnackbar("No content to summarize.");
             return;
         }
@@ -420,12 +440,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             originalHtmlForSummary = currentHtml;
         }
 
+        String langToSummarize = isTranslatedView ? sharedPreferencesRepository.getDefaultTranslationLanguage() : feedLanguage;
+
         makeSnackbar("Generating summary...");
         loading.setVisibility(View.VISIBLE);
         loading.setProgress(0);
 
         compositeDisposable.add(
-            textUtil.summarizeText(content)
+            textUtil.summarizeText(contentToSummarize)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> {
@@ -436,7 +458,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         loading.setVisibility(View.GONE);
                         summaryHtml = formatSummaryAsHtml(summary);
                         hasGeneratedSummary = true;
-                        sharedPreferencesRepository.setSummary(currentId, summary);
+                        sharedPreferencesRepository.setSummary(currentId, summary, langToSummarize);
                         switchToSummaryView();
                     },
                     error -> {
@@ -515,8 +537,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
                 String entryTitle = entryInfo != null ? entryInfo.getEntryTitle() : null;
                 String contentWithTitle = (entryTitle != null ? entryTitle + ". " : "") + summaryText;
-                String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
-                Log.d(TAG, "switchToSummaryView: Re-extracting TTS with summary content and title: " + entryTitle);
+                String summaryLang = sharedPreferencesRepository.getSummaryLanguage(currentId);
+                String lang = (summaryLang != null) ? summaryLang : getLanguageForCurrentView(currentId, isTranslatedView, "en");
+                Log.d(TAG, "switchToSummaryView: Re-extracting TTS with summary content and title: " + entryTitle + ", language: " + lang);
                 ttsPlayer.extract(currentId, feedId, contentWithTitle, lang);
             }
         }
@@ -936,7 +959,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     : entry.getContent();
         }
 
-        String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+        String summaryLang = sharedPreferencesRepository.getSummaryLanguage(currentId);
+        String lang;
+        if (isSummaryView && summaryLang != null) {
+            lang = summaryLang;
+        } else {
+            lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+        }
 
         String contentType = isSummaryView ? "Summary" : (isTranslatedView ? "Translated" : "Original");
         Log.d(TAG, "loadEntryContent - About to speak " + contentType);

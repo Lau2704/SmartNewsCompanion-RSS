@@ -130,10 +130,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
                     Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
-                    intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://console.groq.com/keys");
                     intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.groq_api_key_setup_title));
                     intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.groq_api_key_instruction));
-                    intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "api_key");
                     startActivity(intent);
                     return true;
                 }

@@ -15,6 +15,8 @@ import my.mmu.Kaixuanrssnewsreader.service.tts.TtsExtractor;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 
+import android.util.Log;
+
 import java.util.Date;
 import java.util.List;
 
@@ -32,6 +34,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltViewModel
 public class AllEntriesViewModel extends ViewModel {
+
+    private static final String TAG = "AllEntriesViewModel";
 
     private Disposable disposableEntries;
     private Disposable disposableCount;
@@ -88,6 +92,11 @@ public class AllEntriesViewModel extends ViewModel {
                     public void accept(List<EntryInfo> entriesInfo) throws Throwable {
                         allEntries.postValue(entriesInfo);
                     }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Throwable {
+                        Log.e(TAG, "Error loading entries", throwable);
+                    }
                 });
 
         disposableCount = entryRepository.getUnreadCount(id, filter)
@@ -97,6 +106,11 @@ public class AllEntriesViewModel extends ViewModel {
                     @Override
                     public void accept(Integer integer) throws Throwable {
                         unreadCount.postValue(integer);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Throwable {
+                        Log.e(TAG, "Error loading unread count", throwable);
                     }
                 });
     }

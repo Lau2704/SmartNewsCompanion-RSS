@@ -25,12 +25,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="2dp">
 
@@ -87,47 +87,57 @@
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         tools:text="1. Sign in to Groq\n2. Create API key\n3. Copy it" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/google_login_warning"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="@android:color/holo_orange_dark" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/setupDoneButton"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/setup_done_button" />
-
                 </LinearLayout>
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <FrameLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/setupOpenConsoleButton"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/setup_open_console_button"
+            app:icon="@drawable/api_settings" />
 
-            <WebView
-                android:id="@+id/setupWebView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/setupApiKeyInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="@string/enter_api_key_title"
+            app:endIconMode="password_toggle">
 
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/setupLoading"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/setupApiKeyInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:indeterminate="true"
-                android:visibility="invisible" />
+                android:inputType="textPassword"
+                android:singleLine="true" />
 
-        </FrameLayout>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/setupCompleteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/complete_button"
+            android:enabled="false" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/setupSkipButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/skip_button" />
 
     </LinearLayout>
 

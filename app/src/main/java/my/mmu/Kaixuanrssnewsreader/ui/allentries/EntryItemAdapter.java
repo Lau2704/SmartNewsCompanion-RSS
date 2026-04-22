@@ -61,8 +61,8 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
             boolean oldTranslated = hasTranslation(oldE);
             boolean newTranslated = hasTranslation(newE);
 
-            boolean oldExtracted = !TextUtils.isEmpty(oldE.getContent());
-            boolean newExtracted = !TextUtils.isEmpty(newE.getContent());
+            boolean oldExtracted = oldE.isHasContent();
+            boolean newExtracted = newE.isHasContent();
 
             boolean sameBookmark = Objects.equals(oldE.getBookmark(), newE.getBookmark());
             boolean sameVisited  = Objects.equals(oldE.getVisitedDate(), newE.getVisitedDate());
@@ -73,9 +73,7 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
         }
 
         private boolean hasTranslation(EntryInfo e) {
-            String orig  = e.getOriginalHtml();
-            String trans = e.getHtml();
-            return trans != null && orig != null && !trans.equals(orig);
+            return e.isHasHtml() && e.isHasOriginalHtml();
         }
     };
 
@@ -239,12 +237,12 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
                 }
             });
 
-            String content = entryInfo.getContent();
+            boolean hasContent = entryInfo.isHasContent();
             int priority = entryInfo.getPriority();
-            boolean hasOriginalHtml   = !TextUtils.isEmpty(entryInfo.getOriginalHtml());
-            boolean hasTranslatedHtml = !TextUtils.isEmpty(entryInfo.getHtml())
-                    && (entryInfo.getOriginalHtml() == null ||
-                    !entryInfo.getHtml().equals(entryInfo.getOriginalHtml()));
+            boolean hasOriginalHtml   = entryInfo.isHasOriginalHtml();
+            boolean hasTranslatedHtml = entryInfo.isHasHtml()
+                    && (!entryInfo.isHasOriginalHtml() ||
+                    entryInfo.isHasTranslated());
 
             statusView.setText("");
 
@@ -252,7 +250,7 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
                 if (hasOriginalHtml && hasTranslatedHtml) {
                     statusView.setBackgroundResource(R.drawable.status_dot_green);
                     statusView.setVisibility(View.VISIBLE);
-                } else if ((!TextUtils.isEmpty(content)) || priority > 0) {
+                } else if (hasContent || priority > 0) {
                     statusView.setBackgroundResource(R.drawable.status_dot_yellow);
                     statusView.setVisibility(View.VISIBLE);
                 }else {
@@ -260,7 +258,7 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
                     statusView.setVisibility(View.VISIBLE);
                 }
             } else {
-                if (content != null && !content.isEmpty()) {
+                if (hasContent) {
                     statusView.setBackgroundResource(R.drawable.status_dot_green);
                     statusView.setVisibility(View.VISIBLE);
                 } else if (priority > 0) {

@@ -3,8 +3,10 @@ package my.mmu.Kaixuanrssnewsreader.ui.onboarding;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.databinding.ActivityOnboardingBinding;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
@@ -18,6 +20,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class OnboardingActivity extends AppCompatActivity {
+
+    private static final int REQUEST_SETUP = 100;
 
     private ActivityOnboardingBinding binding;
 
@@ -50,18 +54,16 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void startApiKeySetup() {
         Intent intent = new Intent(this, SetupWebViewActivity.class);
-        intent.putExtra(SetupWebViewActivity.EXTRA_URL, "https://console.groq.com/keys");
-        intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, "API Key Setup");
-        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(my.mmu.Kaixuanrssnewsreader.R.string.groq_api_key_instruction));
-        intent.putExtra(SetupWebViewActivity.EXTRA_STEP, "api_key");
-        startActivityForResult(intent, 100);
+        intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.groq_api_key_setup_title));
+        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.groq_api_key_instruction));
+        intent.putExtra(SetupWebViewActivity.EXTRA_FROM_ONBOARDING, true);
+        startActivityForResult(intent, REQUEST_SETUP);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == RESULT_OK) {
-            sharedPreferencesRepository.setOnboardingCompleted(true);
+        if (requestCode == REQUEST_SETUP && resultCode == RESULT_OK) {
             navigateToMain();
         }
     }

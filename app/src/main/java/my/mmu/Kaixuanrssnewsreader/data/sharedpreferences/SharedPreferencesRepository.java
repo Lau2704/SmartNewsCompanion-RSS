@@ -26,6 +26,7 @@ public class SharedPreferencesRepository {
     private static final String KEY_WEB_VIEW_MODE = "web_view_mode_";
     private static final String KEY_CURRENT_READING_ENTRY_ID = "current_reading_entry_id";
     private static final String KEY_SUMMARY_PREFIX = "summary_";
+    private static final String KEY_SUMMARY_LANG_PREFIX = "summary_lang_";
 
     @Inject
     public SharedPreferencesRepository(@ApplicationContext Context context) {
@@ -248,13 +249,23 @@ public class SharedPreferencesRepository {
         editor.apply();
     }
 
+    public void setSummary(long entryId, String summary) {
+        editor.putString(KEY_SUMMARY_PREFIX + entryId, summary);
+        editor.apply();
+    }
+
+    public void setSummary(long entryId, String summary, String language) {
+        editor.putString(KEY_SUMMARY_PREFIX + entryId, summary);
+        editor.putString(KEY_SUMMARY_LANG_PREFIX + entryId, language);
+        editor.apply();
+    }
+
     public String getSummary(long entryId) {
         return sharedPreferences.getString(KEY_SUMMARY_PREFIX + entryId, "");
     }
 
-    public void setSummary(long entryId, String summary) {
-        editor.putString(KEY_SUMMARY_PREFIX + entryId, summary);
-        editor.apply();
+    public String getSummaryLanguage(long entryId) {
+        return sharedPreferences.getString(KEY_SUMMARY_LANG_PREFIX + entryId, null);
     }
 
     public void setIsSummaryView(long entryId, boolean isSummaryView) {

@@ -105,7 +105,7 @@
     <string name="setup_title">Setup</string>
     <string name="setup_instructions">Instructions</string>
     <string name="setup_done_button">I\'ve Completed This</string>
-    <string name="google_login_warning">Note: Google login may not work on some devices. If you cannot sign in with Google, please use email login instead.</string>
+    <string name="setup_open_console_button">Open Groq Console</string>
 
     <string name="enter_api_key_title">Enter Your API Key</string>
     <string name="enter_api_key_subtitle">Get your API key from console.groq.com</string>

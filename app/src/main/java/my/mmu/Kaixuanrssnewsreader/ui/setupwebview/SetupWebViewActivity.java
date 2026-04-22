@@ -1,19 +1,16 @@
 package my.mmu.Kaixuanrssnewsreader.ui.setupwebview;
 
-import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.View;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabsIntent;
 
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
@@ -21,7 +18,7 @@ import my.mmu.Kaixuanrssnewsreader.databinding.ActivitySetupWebviewBinding;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputEditText;
 
 import javax.inject.Inject;
 
@@ -31,18 +28,13 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class SetupWebViewActivity extends AppCompatActivity {
 
     private static final String TAG = "SetupWebViewActivity";
-    public static final String EXTRA_URL = "url";
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_INSTRUCTION = "instruction";
-    public static final String EXTRA_STEP = "step";
+    public static final String EXTRA_FROM_ONBOARDING = "from_onboarding";
 
     private ActivitySetupWebviewBinding binding;
-    private WebView webView;
-    private String url;
-    private String title;
-    private String instruction;
-    private String step;
     private boolean isInstructionExpanded = true;
+    private boolean isFromOnboarding = false;
 
     @Inject
     SharedPreferencesRepository sharedPreferencesRepository;
@@ -51,51 +43,44 @@ public class SetupWebViewActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        url = getIntent().getStringExtra(EXTRA_URL);
-        title = getIntent().getStringExtra(EXTRA_TITLE);
-        instruction = getIntent().getStringExtra(EXTRA_INSTRUCTION);
-        step = getIntent().getStringExtra(EXTRA_STEP);
-
-        if (url == null || url.isEmpty()) {
-            Log.e(TAG, "URL is null or empty");
-            finish();
-            return;
-        }
+        String title = getIntent().getStringExtra(EXTRA_TITLE);
+        String instruction = getIntent().getStringExtra(EXTRA_INSTRUCTION);
+        isFromOnboarding = getIntent().getBooleanExtra(EXTRA_FROM_ONBOARDING, false);
 
         binding = ActivitySetupWebviewBinding.inflate(getLayoutInflater());
-
-        setupToolbar();
-        setupInstructionPanel();
-        setupWebView();
-        setupButtons();
-
-        binding.setupInstructionText.setText(instruction);
-
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                setResult(RESULT_OK);
-                finish();
-            }
-        });
-
-        webView.loadUrl(url);
-
         setContentView(binding.getRoot());
+
+        setupToolbar(title);
+        setupInstructionPanel(instruction);
+        setupOpenConsoleButton();
+        setupApiKeyInput();
+        setupCompleteButton();
+        setupSkipButton();
+
+        String existingKey = sharedPreferencesRepository.getGroqApiKey();
+        if (existingKey != null && !existingKey.isEmpty()) {
+            binding.setupApiKeyInput.setText(existingKey);
+        }
     }
 
-    private void setupToolbar() {
+    private void setupToolbar(String title) {
         MaterialToolbar toolbar = binding.setupToolbar;
         if (title != null && !title.isEmpty()) {
             toolbar.setTitle(title);
         }
         toolbar.setNavigationOnClickListener(v -> {
-            setResult(RESULT_OK);
+            setResult(RESULT_CANCELED);
             finish();
         });
     }
 
-    private void setupInstructionPanel() {
+    private void setupInstructionPanel(String instruction) {
+        if (instruction != null && !instruction.isEmpty()) {
+            binding.setupInstructionText.setText(instruction);
+        } else {
+            binding.setupInstructionText.setText(R.string.groq_api_key_instruction);
+        }
+
         binding.setupInstructionExpand.setOnClickListener(v -> {
             isInstructionExpanded = !isInstructionExpanded;
             binding.setupInstructionContent.setVisibility(isInstructionExpanded ? View.VISIBLE : View.GONE);
@@ -105,62 +90,67 @@ public class SetupWebViewActivity extends AppCompatActivity {
         });
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private void setupWebView() {
-        webView = binding.setupWebView;
-        webView.setWebViewClient(new SetupWebViewClient());
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.getSettings().setAllowFileAccess(true);
-        webView.getSettings().setAllowContentAccess(true);
-
-        int textZoom = sharedPreferencesRepository.getTextZoom();
-        if (textZoom != 0) {
-            webView.getSettings().setTextZoom(textZoom);
-        }
-
-        if (sharedPreferencesRepository.getNight()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                webView.getSettings().setForceDark(WebSettings.FORCE_DARK_ON);
-            }
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                webView.getSettings().setForceDark(WebSettings.FORCE_DARK_OFF);
-            }
-        }
+    private void setupOpenConsoleButton() {
+        MaterialButton openConsoleButton = binding.setupOpenConsoleButton;
+        openConsoleButton.setOnClickListener(v -> {
+            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                    .setShowTitle(true)
+                    .build();
+            customTabsIntent.launchUrl(this, Uri.parse("https://console.groq.com/keys"));
+        });
     }
 
-    private void setupButtons() {
-        MaterialButton doneButton = binding.setupDoneButton;
-        doneButton.setOnClickListener(v -> markSetupComplete());
+    private void setupApiKeyInput() {
+        TextInputEditText apiKeyInput = binding.setupApiKeyInput;
+        apiKeyInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String apiKey = s != null ? s.toString().trim() : "";
+                binding.setupCompleteButton.setEnabled(!apiKey.isEmpty());
+            }
+        });
     }
 
-    private void markSetupComplete() {
-        if ("api_key".equals(step)) {
+    private void setupCompleteButton() {
+        MaterialButton completeButton = binding.setupCompleteButton;
+        completeButton.setOnClickListener(v -> {
+            String apiKey = binding.setupApiKeyInput.getText() != null
+                    ? binding.setupApiKeyInput.getText().toString().trim() : "";
+
+            if (TextUtils.isEmpty(apiKey)) {
+                Toast.makeText(this, getString(R.string.enter_api_key_title), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            sharedPreferencesRepository.setGroqApiKey(apiKey);
             sharedPreferencesRepository.setApiKeySetupCompleted(true);
-        }
-        setResult(RESULT_OK);
-        finish();
+
+            if (isFromOnboarding) {
+                sharedPreferencesRepository.setOnboardingCompleted(true);
+            }
+
+            setResult(RESULT_OK);
+            finish();
+        });
     }
 
-    private class SetupWebViewClient extends WebViewClient {
-
-        @Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            super.onPageStarted(view, url, favicon);
-            binding.setupLoading.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            view.loadUrl(url);
-            return true;
-        }
-
-        @Override
-        public void onPageCommitVisible(WebView view, String url) {
-            super.onPageCommitVisible(view, url);
-            binding.setupLoading.setVisibility(View.INVISIBLE);
+    private void setupSkipButton() {
+        MaterialButton skipButton = binding.setupSkipButton;
+        if (isFromOnboarding) {
+            skipButton.setVisibility(View.VISIBLE);
+            skipButton.setOnClickListener(v -> {
+                sharedPreferencesRepository.setOnboardingCompleted(true);
+                setResult(RESULT_OK);
+                finish();
+            });
+        } else {
+            skipButton.setVisibility(View.GONE);
         }
     }
 }

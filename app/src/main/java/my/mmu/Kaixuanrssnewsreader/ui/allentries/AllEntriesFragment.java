@@ -381,6 +381,8 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                     );
                 }).subscribe(translatedHtml -> {
                     doWhenTranslationFinish(entryInfo, translatedHtml, targetLanguage);
+                }, error -> {
+                    Log.e(TAG, "Translation failed for lineByLine mode", error);
                 });
             } else if (translationMethod.equals("paragraphByParagraph")) {
                 translateDisposable = textUtil.translateHtmlByParagraph(languageCode, targetLanguage, html, entryInfo.getEntryTitle(), entryInfo.getEntryId(), progress -> {
@@ -400,6 +402,8 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                     );
                 }).subscribe(translatedHtml -> {
                     doWhenTranslationFinish(entryInfo, translatedHtml, targetLanguage);
+                }, error -> {
+                    Log.e(TAG, "Translation failed for allAtOnce mode", error);
                 });
             }
             compositeDisposable.add(translateDisposable);

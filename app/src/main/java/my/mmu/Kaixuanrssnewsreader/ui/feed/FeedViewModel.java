@@ -33,6 +33,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @HiltViewModel
 public class FeedViewModel extends ViewModel {
 
+    private static final String TAG = "FeedViewModel";
+
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private FeedRepository feedRepository;
@@ -60,6 +62,11 @@ public class FeedViewModel extends ViewModel {
                     @Override
                     public void accept(List<Feed> feeds) throws Throwable {
                         allFeeds.postValue(feeds);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Throwable {
+                        Log.e(TAG, "Error loading feeds", throwable);
                     }
                 });
 

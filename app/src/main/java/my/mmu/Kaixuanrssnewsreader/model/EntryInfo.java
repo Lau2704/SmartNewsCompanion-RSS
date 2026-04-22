@@ -18,10 +18,11 @@ public class EntryInfo {
     private Date entryPublishedDate;
     private Date visitedDate;
     private String bookmark;
-    private String content;
+    private boolean hasContent;
     private int priority;
-    private String originalHtml;
-    private String html;
+    private boolean hasOriginalHtml;
+    private boolean hasHtml;
+    private boolean hasTranslated;
 
     // Feed
     private long feedId;
@@ -202,7 +203,10 @@ public class EntryInfo {
         EntryInfo entryInfo = (EntryInfo) o;
         return entryId == entryInfo.entryId &&
                 priority == entryInfo.priority &&
-                Objects.equals(content, entryInfo.content) &&
+                hasContent == entryInfo.hasContent &&
+                hasOriginalHtml == entryInfo.hasOriginalHtml &&
+                hasHtml == entryInfo.hasHtml &&
+                hasTranslated == entryInfo.hasTranslated &&
                 Objects.equals(entryTitle, entryInfo.entryTitle) &&
                 Objects.equals(entryLink, entryInfo.entryLink) &&
                 Objects.equals(entryDescription, entryInfo.entryDescription) &&
@@ -229,12 +233,12 @@ public class EntryInfo {
         }
     }
 
-    public String getContent() {
-        return content;
+    public boolean isHasContent() {
+        return hasContent;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setHasContent(boolean hasContent) {
+        this.hasContent = hasContent;
     }
 
     public int getPriority() {
@@ -245,18 +249,27 @@ public class EntryInfo {
         this.priority = priority;
     }
 
-    public String getOriginalHtml() {
-        return originalHtml;
-    }
-    public void   setOriginalHtml(String originalHtml) {
-        this.originalHtml = originalHtml;
+    public boolean isHasOriginalHtml() {
+        return hasOriginalHtml;
     }
 
-    public String getHtml() {
-        return html;
+    public void setHasOriginalHtml(boolean hasOriginalHtml) {
+        this.hasOriginalHtml = hasOriginalHtml;
     }
 
-    public void   setHtml(String html) {
-        this.html = html;
+    public boolean isHasHtml() {
+        return hasHtml;
+    }
+
+    public void setHasHtml(boolean hasHtml) {
+        this.hasHtml = hasHtml;
+    }
+
+    public boolean isHasTranslated() {
+        return hasTranslated;
+    }
+
+    public void setHasTranslated(boolean hasTranslated) {
+        this.hasTranslated = hasTranslated;
     }
 }
