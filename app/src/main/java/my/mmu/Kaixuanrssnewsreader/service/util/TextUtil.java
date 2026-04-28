@@ -498,7 +498,7 @@ public class TextUtil {
                 .onErrorReturnItem("und");
     }
 
-    public Single<String> summarizeText(String text) {
+    public Single<String> summarizeText(String text, int targetWords) {
         return Single.<String>create(emitter -> {
             if (text == null || text.isEmpty()) {
                 emitter.onError(new IllegalArgumentException("Invalid content for summarization"));
@@ -526,7 +526,21 @@ public class TextUtil {
                 JSONArray messages = new JSONArray();
                 JSONObject systemMessage = new JSONObject();
                 systemMessage.put("role", "system");
-                systemMessage.put("content", "You are a professional summarizer. Summarize the following article in a concise and informative way. Focus on the key points and main ideas. IMPORTANT: Return ONLY the summary without any explanations or additional text.");
+                systemMessage.put("content", String.format(
+                    "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
+                    + "Requirements:\n"
+                    + "- Write in proper article form with a clear, informative headline on the first line\n"
+                    + "- Use flowing prose organized into 2-3 short paragraphs\n"
+                    + "- Open with the most important information (who, what, when, where, why)\n"
+                    + "- Follow with supporting details, context, and key quotes or data\n"
+                    + "- Close with any significant implications or outcomes\n"
+                    + "- Write in a neutral, journalistic tone\n"
+                    + "- Preserve all specific names, numbers, dates, and locations from the original\n"
+                    + "- Do NOT add any information not present in the original article\n"
+                    + "- Write in the SAME LANGUAGE as the original article\n\n"
+                    + "IMPORTANT: Return ONLY the summary article. No labels, prefixes, explanations, or meta-commentary.",
+                    targetWords
+                ));
                 messages.put(systemMessage);
 
                 JSONObject userMessage = new JSONObject();

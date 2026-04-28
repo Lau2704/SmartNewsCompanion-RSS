@@ -288,6 +288,10 @@ public class SharedPreferencesRepository {
         return model != null && !model.isEmpty();
     }
 
+    public int getSummaryLength() {
+        return sharedPreferences.getInt("summaryLength", 150);
+    }
+
     public void initializeDefaultModelOnFirst() {
         if (!sharedPreferences.contains("groqModel")) {
             editor.putString("groqModel", DEFAULT_MODEL);

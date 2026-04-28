@@ -448,8 +448,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         loading.setVisibility(View.VISIBLE);
         loading.setProgress(0);
 
+        int summaryLength = sharedPreferencesRepository.getSummaryLength();
+
         compositeDisposable.add(
-            textUtil.summarizeText(contentToSummarize)
+            textUtil.summarizeText(contentToSummarize, summaryLength)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> {

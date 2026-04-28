@@ -62,6 +62,9 @@
     <string name="groqModel_dialog_title">Groq Model</string>
     <string name="groqModel_dialog_description">Enter your Groq model. (e.g. llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768, ..... </string>
 
+    <string name="summary_length_title">Summary Length</string>
+    <string name="summary_length_summary">Target word count for AI-generated summaries</string>
+
     <string name="groq_api_key_instruction">1. Sign in to your Groq account\n2. Go to API Keys\n3. Click "Create Key"\n4. Copy and save your API key securely</string>
 
     <string name="highlight_text_title">Highlight text</string>

@@ -85,6 +85,17 @@
             android:dialogTitle="@string/groqModel_dialog_title"
             android:dialogMessage="@string/groqModel_dialog_description" />
 
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
+            android:max="500"
+            app:defaultValue="150"
+            app:icon="@drawable/ic_summary"
+            app:key="summaryLength"
+            app:min="50"
+            app:seekBarIncrement="25"
+            app:showSeekBarValue="true"
+            app:summary="@string/summary_length_summary"
+            app:title="@string/summary_length_title" />
+
         <ListPreference
             app:entries="@array/defaultTranslationLanguage"
             app:entryValues="@array/defaultTranslationLanguage_values"
