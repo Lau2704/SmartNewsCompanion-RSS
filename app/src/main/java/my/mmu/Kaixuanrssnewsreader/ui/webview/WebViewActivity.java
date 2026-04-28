@@ -355,7 +355,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
         String title = (entryInfo != null) ? entryInfo.getEntryTitle() : "";
-        String feedLanguage = (entryInfo != null) ? entryInfo.getFeedLanguage() : null;
+        if (entryInfo != null && entryInfo.getFeedLanguage() != null) {
+            feedLanguage = entryInfo.getFeedLanguage();
+        }
 
         if (targetLanguage == null || targetLanguage.isEmpty()) {
             targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
@@ -440,7 +442,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             originalHtmlForSummary = currentHtml;
         }
 
-        String langToSummarize = isTranslatedView ? sharedPreferencesRepository.getDefaultTranslationLanguage() : feedLanguage;
+        String langToSummarize = isTranslatedView ? sharedPreferencesRepository.getDefaultTranslationLanguage() : (feedLanguage != null ? feedLanguage : "en");
 
         makeSnackbar("Generating summary...");
         loading.setVisibility(View.VISIBLE);
@@ -883,6 +885,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         return;
                     }
                     cachedEntryInfo = entryInfo;
+                    feedLanguage = (entryInfo != null && entryInfo.getFeedLanguage() != null) ? entryInfo.getFeedLanguage() : "en";
                     targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
                     makeSnackbar("Please wait, loading article...");
 
