@@ -322,14 +322,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void translate() {
-        String apiKey = sharedPreferencesRepository.getGroqApiKey();
+        String apiKey = sharedPreferencesRepository.getApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
         }
 
-        if (!sharedPreferencesRepository.hasGroqModel()) {
-            sharedPreferencesRepository.setGroqModel("llama-3.3-70b-versatile");
+        if (!sharedPreferencesRepository.hasModel()) {
+            sharedPreferencesRepository.setModel(sharedPreferencesRepository.getApiProvider().getDefaultModel());
         }
 
         String contentToTranslate;
@@ -417,7 +417,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        String apiKey = sharedPreferencesRepository.getGroqApiKey();
+        String apiKey = sharedPreferencesRepository.getApiKey();
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
@@ -652,7 +652,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Log.d(TAG, "Target language from settings: " + targetLanguage);
         Log.d(TAG, "Translation method: " + translationMethod);
-        Log.d(TAG, "Groq API key configured: " + (sharedPreferencesRepository.getGroqApiKey() != null && !sharedPreferencesRepository.getGroqApiKey().isEmpty()));
+        Log.d(TAG, "API key configured: " + sharedPreferencesRepository.hasApiKey());
 
         initializeToolbarListeners();
         initializeWebViewSettings();

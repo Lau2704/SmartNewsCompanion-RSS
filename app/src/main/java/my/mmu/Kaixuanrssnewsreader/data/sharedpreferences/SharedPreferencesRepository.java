@@ -1,11 +1,12 @@
 
-//Need to set Groq API at line 250
-
 package my.mmu.Kaixuanrssnewsreader.data.sharedpreferences;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
+
+import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 
 import javax.inject.Inject;
 
@@ -14,7 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class SharedPreferencesRepository {
 
     private static final String TAG = "SharedPreferencesRepository";
-    private static final String DEFAULT_MODEL = "llama-3.3-70b-versatile";
+    private static final String KEY_API_PROVIDER = "apiProvider";
     private static final String KEY_ONBOARDING_COMPLETED = "onboarding_completed";
     private static final String KEY_API_KEY_SETUP_COMPLETED = "api_key_setup_completed";
     private SharedPreferences sharedPreferences;
@@ -249,6 +250,48 @@ public class SharedPreferencesRepository {
         editor.apply();
     }
 
+    public ApiProvider getApiProvider() {
+        String key = sharedPreferences.getString(KEY_API_PROVIDER, "groq");
+        return ApiProvider.fromKey(key);
+    }
+
+    public void setApiProvider(ApiProvider provider) {
+        editor.putString(KEY_API_PROVIDER, provider.getKey());
+        editor.apply();
+    }
+
+    public String getApiKey() {
+        ApiProvider provider = getApiProvider();
+        return sharedPreferences.getString(provider.getApiKeyPreferenceKey(), "");
+    }
+
+    public void setApiKey(String apiKey) {
+        ApiProvider provider = getApiProvider();
+        editor.putString(provider.getApiKeyPreferenceKey(), apiKey);
+        editor.apply();
+    }
+
+    public String getModel() {
+        ApiProvider provider = getApiProvider();
+        return sharedPreferences.getString(provider.getModelPreferenceKey(), "");
+    }
+
+    public void setModel(String model) {
+        ApiProvider provider = getApiProvider();
+        editor.putString(provider.getModelPreferenceKey(), model);
+        editor.apply();
+    }
+
+    public boolean hasApiKey() {
+        String apiKey = getApiKey();
+        return apiKey != null && !apiKey.isEmpty() && !apiKey.contains("your-api-key-here");
+    }
+
+    public boolean hasModel() {
+        String model = getModel();
+        return model != null && !model.isEmpty();
+    }
+
     public void setSummary(long entryId, String summary) {
         editor.putString(KEY_SUMMARY_PREFIX + entryId, summary);
         editor.apply();
@@ -293,8 +336,9 @@ public class SharedPreferencesRepository {
     }
 
     public void initializeDefaultModelOnFirst() {
-        if (!sharedPreferences.contains("groqModel")) {
-            editor.putString("groqModel", DEFAULT_MODEL);
+        ApiProvider provider = getApiProvider();
+        if (!sharedPreferences.contains(provider.getModelPreferenceKey())) {
+            editor.putString(provider.getModelPreferenceKey(), provider.getDefaultModel());
             editor.apply();
         }
     }

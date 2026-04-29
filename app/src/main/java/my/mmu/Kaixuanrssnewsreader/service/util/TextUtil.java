@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -379,88 +380,49 @@ public class TextUtil {
                 return;
             }
 
-            String apiKey = sharedPreferencesRepository.getGroqApiKey();
+            String apiKey = sharedPreferencesRepository.getApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("Groq API key is not configured. Please set a valid API key in Settings."));
+                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
                 return;
             }
 
-            String model = sharedPreferencesRepository.getGroqModel();
+            String model = sharedPreferencesRepository.getModel();
             if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("Groq model is not configured. Please set a valid model in Settings."));
+                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
                 return;
             }
 
-            String url = "https://api.groq.com/openai/v1/chat/completions";
+            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+            String url = provider.getEndpoint();
 
             try {
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("model", model);
+                String systemPrompt = "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.";
 
-                JSONArray messages = new JSONArray();
-                JSONObject systemMessage = new JSONObject();
-                systemMessage.put("role", "system");
-                systemMessage.put("content", "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.");
-                messages.put(systemMessage);
-
-                JSONObject userMessage = new JSONObject();
-                userMessage.put("role", "user");
-                userMessage.put("content", text);
-                messages.put(userMessage);
-
-                requestBody.put("messages", messages);
+                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, text, 4096);
 
                 MediaType JSON = MediaType.parse("application/json; charset=utf-8");
                 RequestBody body = RequestBody.create(requestBody.toString(), JSON);
 
-                Request request = new Request.Builder()
+                Request.Builder requestBuilder = new Request.Builder()
                         .url(url)
-                        .addHeader("Authorization", "Bearer " + apiKey)
-                        .addHeader("Content-Type", "application/json")
-                        .post(body)
-                        .build();
+                        .post(body);
 
-                try (Response response = client.newCall(request).execute()) {
+                addAuthHeaders(requestBuilder, provider, apiKey);
+                requestBuilder.addHeader("Content-Type", "application/json");
+
+                try (Response response = client.newCall(requestBuilder.build()).execute()) {
                     if (!response.isSuccessful()) {
                         String errorBody = response.body() != null ? response.body().string() : "";
                         Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-
-                        String errorMessage = "";
-                        int code = response.code();
-
-                        if (code == 401) {
-                            errorMessage = "Invalid API key. Please check your Groq API key in Settings.";
-                        } else if (code == 404) {
-                            errorMessage = "Invalid model name. Please check the Groq model in Settings.";
-                        } else if (code == 429) {
-                            errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
-                        } else if (code == 500 || code == 502 || code == 503) {
-                            errorMessage = "Groq service error. Please try again later.";
-                        } else {
-                            errorMessage = "API Error: " + code;
-                        }
-
-                        emitter.onError(new Exception(errorMessage + "\n\nDetails: " + errorBody));
+                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
                         return;
                     }
 
                     String responseBody = response.body() != null ? response.body().string() : "";
                     Log.d(TAG, "Full API Response length: " + responseBody.length());
-                    Log.d(TAG, "API Response (first 500 chars): " + responseBody.substring(0, Math.min(500, responseBody.length())));
-                    JSONObject jsonResponse = new JSONObject(responseBody);
-                    JSONArray choices = jsonResponse.getJSONArray("choices");
-                    if (choices.length() > 0) {
-                        String translatedText = choices.getJSONObject(0)
-                                .getJSONObject("message")
-                                .getString("content");
-
-                        Log.d(TAG, "Translated text length: " + translatedText.length());
-                        Log.d(TAG, "Translated text (first 200 chars): " + translatedText.substring(0, Math.min(200, translatedText.length())));
-
-                        emitter.onSuccess(translatedText);
-                    } else {
-                        emitter.onError(new Exception("No translation result found in API response"));
-                    }
+                    String translatedText = parseResponse(provider, responseBody);
+                    Log.d(TAG, "Translated text length: " + translatedText.length());
+                    emitter.onSuccess(translatedText);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Translation error", e);
@@ -505,28 +467,23 @@ public class TextUtil {
                 return;
             }
 
-            String apiKey = sharedPreferencesRepository.getGroqApiKey();
+            String apiKey = sharedPreferencesRepository.getApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("Groq API key is not configured. Please set a valid API key in Settings."));
+                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
                 return;
             }
 
-            String model = sharedPreferencesRepository.getGroqModel();
+            String model = sharedPreferencesRepository.getModel();
             if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("Groq model is not configured. Please set a valid model in Settings."));
+                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
                 return;
             }
 
-            String url = "https://api.groq.com/openai/v1/chat/completions";
+            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+            String url = provider.getEndpoint();
 
             try {
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("model", model);
-
-                JSONArray messages = new JSONArray();
-                JSONObject systemMessage = new JSONObject();
-                systemMessage.put("role", "system");
-                systemMessage.put("content", String.format(
+                String systemPrompt = String.format(
                     "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
                     + "Requirements:\n"
                     + "- Write in proper article form with a clear, informative headline on the first line\n"
@@ -540,65 +497,34 @@ public class TextUtil {
                     + "- Write in the SAME LANGUAGE as the original article\n\n"
                     + "IMPORTANT: Return ONLY the summary article. No labels, prefixes, explanations, or meta-commentary.",
                     targetWords
-                ));
-                messages.put(systemMessage);
+                );
 
-                JSONObject userMessage = new JSONObject();
-                userMessage.put("role", "user");
                 String contentToSummarize = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
-                userMessage.put("content", contentToSummarize);
-                messages.put(userMessage);
 
-                requestBody.put("messages", messages);
+                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, contentToSummarize, 4096);
 
                 MediaType JSON = MediaType.parse("application/json; charset=utf-8");
                 RequestBody body = RequestBody.create(requestBody.toString(), JSON);
 
-                Request request = new Request.Builder()
+                Request.Builder requestBuilder = new Request.Builder()
                         .url(url)
-                        .addHeader("Authorization", "Bearer " + apiKey)
-                        .addHeader("Content-Type", "application/json")
-                        .post(body)
-                        .build();
+                        .post(body);
 
-                try (Response response = client.newCall(request).execute()) {
+                addAuthHeaders(requestBuilder, provider, apiKey);
+                requestBuilder.addHeader("Content-Type", "application/json");
+
+                try (Response response = client.newCall(requestBuilder.build()).execute()) {
                     if (!response.isSuccessful()) {
                         String errorBody = response.body() != null ? response.body().string() : "";
                         Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-
-                        String errorMessage = "";
-                        int code = response.code();
-
-                        if (code == 401) {
-                            errorMessage = "Invalid API key. Please check your Groq API key in Settings.";
-                        } else if (code == 404) {
-                            errorMessage = "Invalid model name. Please check the Groq model in Settings.";
-                        } else if (code == 429) {
-                            errorMessage = "Rate limit exceeded. Please wait a moment before trying again.";
-                        } else if (code == 500 || code == 502 || code == 503) {
-                            errorMessage = "Groq service error. Please try again later.";
-                        } else {
-                            errorMessage = "API Error: " + code;
-                        }
-
-                        emitter.onError(new Exception(errorMessage + "\n\nDetails: " + errorBody));
+                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
                         return;
                     }
 
                     String responseBody = response.body() != null ? response.body().string() : "";
                     Log.d(TAG, "Summary API Response length: " + responseBody.length());
-                    JSONObject jsonResponse = new JSONObject(responseBody);
-                    JSONArray choices = jsonResponse.getJSONArray("choices");
-                    if (choices.length() > 0) {
-                        String summary = choices.getJSONObject(0)
-                                .getJSONObject("message")
-                                .getString("content");
-
-                        Log.d(TAG, "Summary length: " + summary.length());
-                        emitter.onSuccess(summary);
-                    } else {
-                        emitter.onError(new Exception("No summary found in API response"));
-                    }
+                    String summary = parseResponse(provider, responseBody);
+                    emitter.onSuccess(summary);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Summarization error", e);
@@ -609,5 +535,82 @@ public class TextUtil {
 
     public void onDestroy() {
         compositeDisposable.dispose();
+    }
+
+    private JSONObject buildRequestBody(ApiProvider provider, String model, String systemPrompt, String userContent, int maxTokens) throws Exception {
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("model", model);
+
+        if (provider.isAnthropicFormat()) {
+            requestBody.put("system", systemPrompt);
+            requestBody.put("max_tokens", maxTokens);
+            JSONArray messages = new JSONArray();
+            JSONObject userMessage = new JSONObject();
+            userMessage.put("role", "user");
+            userMessage.put("content", userContent);
+            messages.put(userMessage);
+            requestBody.put("messages", messages);
+        } else {
+            JSONArray messages = new JSONArray();
+            JSONObject systemMessage = new JSONObject();
+            systemMessage.put("role", "system");
+            systemMessage.put("content", systemPrompt);
+            messages.put(systemMessage);
+            JSONObject userMessage = new JSONObject();
+            userMessage.put("role", "user");
+            userMessage.put("content", userContent);
+            messages.put(userMessage);
+            requestBody.put("messages", messages);
+        }
+
+        return requestBody;
+    }
+
+    private void addAuthHeaders(Request.Builder requestBuilder, ApiProvider provider, String apiKey) {
+        if (provider.isAnthropicFormat()) {
+            requestBuilder.addHeader("x-api-key", apiKey);
+            requestBuilder.addHeader("anthropic-version", "2023-06-01");
+        } else {
+            requestBuilder.addHeader("Authorization", "Bearer " + apiKey);
+        }
+
+        if (provider == ApiProvider.OPENROUTER) {
+            requestBuilder.addHeader("HTTP-Referer", "https://github.com/smartnewscompanion");
+            requestBuilder.addHeader("X-Title", "SmartNewsCompanion");
+        }
+    }
+
+    private String parseResponse(ApiProvider provider, String responseBody) throws Exception {
+        JSONObject jsonResponse = new JSONObject(responseBody);
+
+        if (provider.isAnthropicFormat()) {
+            JSONArray content = jsonResponse.getJSONArray("content");
+            if (content.length() > 0) {
+                return content.getJSONObject(0).getString("text");
+            }
+            throw new Exception("No result found in API response");
+        } else {
+            JSONArray choices = jsonResponse.getJSONArray("choices");
+            if (choices.length() > 0) {
+                return choices.getJSONObject(0)
+                        .getJSONObject("message")
+                        .getString("content");
+            }
+            throw new Exception("No result found in API response");
+        }
+    }
+
+    private String buildErrorMessage(ApiProvider provider, int code) {
+        String name = provider.getKey();
+        if (code == 401) {
+            return "Invalid API key. Please check your " + name + " API key in Settings.";
+        } else if (code == 404) {
+            return "Invalid model name. Please check the " + name + " model in Settings.";
+        } else if (code == 429) {
+            return "Rate limit exceeded. Please wait a moment before trying again.";
+        } else if (code == 500 || code == 502 || code == 503) {
+            return name + " service error. Please try again later.";
+        }
+        return "API Error: " + code;
     }
 }

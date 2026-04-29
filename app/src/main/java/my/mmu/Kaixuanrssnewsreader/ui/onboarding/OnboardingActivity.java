@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.databinding.ActivityOnboardingBinding;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
 import my.mmu.Kaixuanrssnewsreader.ui.setupwebview.SetupWebViewActivity;
@@ -53,9 +54,11 @@ public class OnboardingActivity extends AppCompatActivity {
     }
 
     private void startApiKeySetup() {
+        ApiProvider provider = sharedPreferencesRepository.getApiProvider();
         Intent intent = new Intent(this, SetupWebViewActivity.class);
-        intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.groq_api_key_setup_title));
-        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.groq_api_key_instruction));
+        intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.api_key_setup_title));
+        intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(provider.getInstructionRes()));
+        intent.putExtra(SetupWebViewActivity.EXTRA_PROVIDER, provider.getKey());
         intent.putExtra(SetupWebViewActivity.EXTRA_FROM_ONBOARDING, true);
         startActivityForResult(intent, REQUEST_SETUP);
     }

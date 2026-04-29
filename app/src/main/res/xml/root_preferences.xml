@@ -63,27 +63,35 @@
         android:layout="@layout/text_preference_category"
         app:title="@string/translation_header">
 
+        <ListPreference
+            app:key="apiProvider"
+            app:title="@string/api_provider_title"
+            app:entries="@array/api_provider_names"
+            app:entryValues="@array/api_provider_values"
+            app:defaultValue="groq"
+            app:icon="@drawable/ic_baseline_language_24"
+            app:useSimpleSummaryProvider="true" />
+
         <Preference
-            app:key="groq_api_key_setup"
-            app:summary="@string/groq_api_key_setup_summary"
-            app:title="@string/groq_api_key_setup_title"
+            app:key="api_key_setup"
+            app:summary="@string/api_key_setup_summary"
+            app:title="@string/api_key_setup_title"
             app:icon="@drawable/api_settings"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference
             app:icon="@drawable/api_settings"
             app:key="groqApiKey"
-            app:summary="@string/groq_api_setting_summary"
-            app:title="@string/groq_api_setting_title"
-            android:dialogTitle="@string/groq_api_setting_dialog_title" />
+            app:summary="@string/api_setting_summary"
+            app:title="@string/api_setting_title"
+            android:dialogTitle="@string/api_setting_dialog_title" />
 
         <EditTextPreference
             app:icon="@drawable/ai_model"
             app:key="groqModel"
-            app:summary="@string/groqModel_summary"
-            app:title="@string/groqModel_title"
-            android:dialogTitle="@string/groqModel_dialog_title"
-            android:dialogMessage="@string/groqModel_dialog_description" />
+            app:summary="@string/api_model_summary"
+            app:title="@string/api_model_title"
+            android:dialogTitle="@string/api_model_dialog_title" />
 
         <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="500"

@@ -14,12 +14,14 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
@@ -49,6 +51,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     SharedPreferencesRepository sharedPreferencesRepository;
 
     private ListPreference backgroundMusicFilePreference;
+    private EditTextPreference apiKeyPreference;
+    private EditTextPreference modelPreference;
     private boolean isAdditionalImport;
     private final CharSequence[] defaultMusicEntries = {"Default", "Import music file (ogg format is preferred)"};
     private final CharSequence[] defaultMusicValues = {"default", "userFile"};
@@ -106,6 +110,9 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 case "backgroundMusicVolume":
                     ttsPlayer.changeMediaPlayerVolume();
                     break;
+                case "apiProvider":
+                    updatePreferenceKeysForProvider(sharedPreferencesRepository.getApiProvider());
+                    break;
             }
         }
     };
@@ -116,6 +123,10 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         backgroundMusicFilePreference = findPreference("backgroundMusicFile");
 
+        apiKeyPreference = findPreference("groqApiKey");
+        modelPreference = findPreference("groqModel");
+        updatePreferenceKeysForProvider(sharedPreferencesRepository.getApiProvider());
+
         if (!sharedPreferencesRepository.getBackgroundMusicFile().equals("default")) {
             backgroundMusicFilePreference.setEntries(extendedMusicEntries);
             backgroundMusicFilePreference.setEntryValues(extendedMusicValues);
@@ -124,14 +135,16 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             backgroundMusicFilePreference.setEntryValues(defaultMusicValues);
         }
 
-        Preference apiKeySetupPreference = findPreference("groq_api_key_setup");
+        Preference apiKeySetupPreference = findPreference("api_key_setup");
         if (apiKeySetupPreference != null) {
             apiKeySetupPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
+                    ApiProvider provider = sharedPreferencesRepository.getApiProvider();
                     Intent intent = new Intent(getActivity(), SetupWebViewActivity.class);
-                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.groq_api_key_setup_title));
-                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(R.string.groq_api_key_instruction));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_TITLE, getString(R.string.api_key_setup_title));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(provider.getInstructionRes()));
+                    intent.putExtra(SetupWebViewActivity.EXTRA_PROVIDER, provider.getKey());
                     startActivity(intent);
                     return true;
                 }
@@ -188,6 +201,30 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                     }
                 }
             });
+
+    private void updatePreferenceKeysForProvider(ApiProvider provider) {
+        SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+        if (prefs == null || apiKeyPreference == null || modelPreference == null) {
+            return;
+        }
+
+        String apiKeyPrefKey = provider.getApiKeyPreferenceKey();
+        String modelPrefKey = provider.getModelPreferenceKey();
+
+        apiKeyPreference.setKey(apiKeyPrefKey);
+        modelPreference.setKey(modelPrefKey);
+
+        String currentApiKey = prefs.getString(apiKeyPrefKey, "");
+        String currentModel = prefs.getString(modelPrefKey, "");
+
+        if (currentModel == null || currentModel.isEmpty()) {
+            currentModel = provider.getDefaultModel();
+            prefs.edit().putString(modelPrefKey, currentModel).apply();
+        }
+
+        apiKeyPreference.setText(currentApiKey != null ? currentApiKey : "");
+        modelPreference.setText(currentModel);
+    }
 
     private void handleSelectedFile(Uri fileUri) {
         File internalStorageDir = getActivity().getFilesDir();

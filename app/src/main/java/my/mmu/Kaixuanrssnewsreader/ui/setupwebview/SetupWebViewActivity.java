@@ -14,6 +14,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.databinding.ActivitySetupWebviewBinding;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -31,10 +32,12 @@ public class SetupWebViewActivity extends AppCompatActivity {
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_INSTRUCTION = "instruction";
     public static final String EXTRA_FROM_ONBOARDING = "from_onboarding";
+    public static final String EXTRA_PROVIDER = "provider";
 
     private ActivitySetupWebviewBinding binding;
     private boolean isInstructionExpanded = true;
     private boolean isFromOnboarding = false;
+    private ApiProvider provider;
 
     @Inject
     SharedPreferencesRepository sharedPreferencesRepository;
@@ -46,6 +49,8 @@ public class SetupWebViewActivity extends AppCompatActivity {
         String title = getIntent().getStringExtra(EXTRA_TITLE);
         String instruction = getIntent().getStringExtra(EXTRA_INSTRUCTION);
         isFromOnboarding = getIntent().getBooleanExtra(EXTRA_FROM_ONBOARDING, false);
+        String providerKey = getIntent().getStringExtra(EXTRA_PROVIDER);
+        provider = providerKey != null ? ApiProvider.fromKey(providerKey) : sharedPreferencesRepository.getApiProvider();
 
         binding = ActivitySetupWebviewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -57,7 +62,7 @@ public class SetupWebViewActivity extends AppCompatActivity {
         setupCompleteButton();
         setupSkipButton();
 
-        String existingKey = sharedPreferencesRepository.getGroqApiKey();
+        String existingKey = sharedPreferencesRepository.getApiKey();
         if (existingKey != null && !existingKey.isEmpty()) {
             binding.setupApiKeyInput.setText(existingKey);
         }
@@ -78,7 +83,7 @@ public class SetupWebViewActivity extends AppCompatActivity {
         if (instruction != null && !instruction.isEmpty()) {
             binding.setupInstructionText.setText(instruction);
         } else {
-            binding.setupInstructionText.setText(R.string.groq_api_key_instruction);
+            binding.setupInstructionText.setText(R.string.api_key_setup_summary);
         }
 
         binding.setupInstructionExpand.setOnClickListener(v -> {
@@ -93,10 +98,11 @@ public class SetupWebViewActivity extends AppCompatActivity {
     private void setupOpenConsoleButton() {
         MaterialButton openConsoleButton = binding.setupOpenConsoleButton;
         openConsoleButton.setOnClickListener(v -> {
+            String url = provider != null ? provider.getConsoleUrl() : "https://console.groq.com/keys";
             CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
                     .setShowTitle(true)
                     .build();
-            customTabsIntent.launchUrl(this, Uri.parse("https://console.groq.com/keys"));
+            customTabsIntent.launchUrl(this, Uri.parse(url));
         });
     }
 
@@ -128,7 +134,7 @@ public class SetupWebViewActivity extends AppCompatActivity {
                 return;
             }
 
-            sharedPreferencesRepository.setGroqApiKey(apiKey);
+            sharedPreferencesRepository.setApiKey(apiKey);
             sharedPreferencesRepository.setApiKeySetupCompleted(true);
 
             if (isFromOnboarding) {
