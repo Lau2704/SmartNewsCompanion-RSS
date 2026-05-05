@@ -139,10 +139,38 @@
         app:title="@string/text_to_speech_header">
 
         <Preference
-            android:key="key_text_to_speech_settings"
-            android:summary="@string/text_to_speech_settings_summary"
-            android:title="@string/text_to_speech_settings"
+            android:key="key_install_google_tts"
+            android:title="@string/install_google_tts_title"
+            android:summary="@string/install_google_tts_summary_not_installed"
+            app:icon="@drawable/ic_import" />
+
+        <Preference
+            android:key="key_google_tts_voice_data"
+            android:title="@string/google_tts_voice_data_title"
+            android:summary="@string/google_tts_voice_data_summary"
             app:icon="@drawable/ic_speech" />
+
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
+            android:max="200"
+            app:defaultValue="100"
+            app:icon="@drawable/ic_speech"
+            app:key="ttsSpeechRate"
+            app:min="50"
+            app:seekBarIncrement="10"
+            app:showSeekBarValue="true"
+            app:summary="@string/tts_speech_rate_summary"
+            app:title="@string/tts_speech_rate_title" />
+
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
+            android:max="200"
+            app:defaultValue="100"
+            app:icon="@drawable/ic_speech"
+            app:key="ttsPitch"
+            app:min="50"
+            app:seekBarIncrement="10"
+            app:showSeekBarValue="true"
+            app:summary="@string/tts_pitch_summary"
+            app:title="@string/tts_pitch_title" />
 
         <SwitchPreferenceCompat
             app:widgetLayout="@layout/preference_switch_m3"

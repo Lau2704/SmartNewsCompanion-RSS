@@ -35,6 +35,18 @@
     <string name="background_music_volume">Background music volume</string>
     <string name="background_music_volume_summary">Adjust the volume of background music</string>
 
+    <string name="install_google_tts_title">Install Google TTS</string>
+    <string name="install_google_tts_title_installed">Google TTS Engine</string>
+    <string name="install_google_tts_summary_installed">Google Text-to-Speech is installed</string>
+    <string name="install_google_tts_summary_not_installed">Google Text-to-Speech is not installed. Tap to download from Play Store.</string>
+    <string name="google_tts_voice_data_title">Download voice data</string>
+    <string name="google_tts_voice_data_summary">Download language packs for Google Text-to-Speech</string>
+
+    <string name="tts_speech_rate_title">Speech rate</string>
+    <string name="tts_speech_rate_summary">Adjust the speed of text-to-speech playback</string>
+    <string name="tts_pitch_title">Pitch</string>
+    <string name="tts_pitch_summary">Adjust the pitch of text-to-speech voice</string>
+
     <string name="theme_title">Dark theme</string>
     <string name="theme_summary_on">Dark theme enabled</string>
     <string name="theme_summary_off">Light theme enabled</string>

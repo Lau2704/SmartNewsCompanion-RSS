@@ -360,4 +360,22 @@ public class SharedPreferencesRepository {
         editor.putBoolean(KEY_API_KEY_SETUP_COMPLETED, completed);
         editor.apply();
     }
+
+    public int getTtsSpeechRate() {
+        return sharedPreferences.getInt("ttsSpeechRate", 100);
+    }
+
+    public void setTtsSpeechRate(int rate) {
+        editor.putInt("ttsSpeechRate", rate);
+        editor.apply();
+    }
+
+    public int getTtsPitch() {
+        return sharedPreferences.getInt("ttsPitch", 100);
+    }
+
+    public void setTtsPitch(int pitch) {
+        editor.putInt("ttsPitch", pitch);
+        editor.apply();
+    }
 }

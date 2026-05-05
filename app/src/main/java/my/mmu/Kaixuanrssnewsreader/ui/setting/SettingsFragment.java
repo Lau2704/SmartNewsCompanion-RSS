@@ -4,8 +4,10 @@ import static android.app.Activity.RESULT_OK;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -40,6 +42,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class SettingsFragment extends PreferenceFragmentCompat {
+
+    private static final String GOOGLE_TTS_PACKAGE = "com.google.android.tts";
 
     @Inject
     RssWorkManager rssWorkManager;
@@ -113,6 +117,12 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 case "apiProvider":
                     updatePreferenceKeysForProvider(sharedPreferencesRepository.getApiProvider());
                     break;
+                case "ttsSpeechRate":
+                    ttsPlayer.applyTtsSettings();
+                    break;
+                case "ttsPitch":
+                    ttsPlayer.applyTtsSettings();
+                    break;
             }
         }
     };
@@ -151,13 +161,44 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-        Preference ttsSettingsPreference = findPreference("key_text_to_speech_settings");
-        if (ttsSettingsPreference != null) {
-            ttsSettingsPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+        Preference installGoogleTtsPreference = findPreference("key_install_google_tts");
+        if (installGoogleTtsPreference != null) {
+            updateGoogleTtsInstallPreference(installGoogleTtsPreference);
+            installGoogleTtsPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
-                    Intent intent = new Intent("com.android.settings.TTS_SETTINGS");
-                    startActivity(intent);
+                    if (isGoogleTtsInstalled()) {
+                        startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+                    } else {
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + GOOGLE_TTS_PACKAGE)));
+                        } catch (android.content.ActivityNotFoundException e) {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + GOOGLE_TTS_PACKAGE)));
+                        }
+                    }
+                    return true;
+                }
+            });
+        }
+
+        Preference voiceDataPreference = findPreference("key_google_tts_voice_data");
+        if (voiceDataPreference != null) {
+            voiceDataPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    try {
+                        Intent directIntent = new Intent();
+                        directIntent.setClassName(GOOGLE_TTS_PACKAGE, "com.google.android.tts.settings.VoiceDataSettingsActivity");
+                        startActivity(directIntent);
+                    } catch (Exception e) {
+                        try {
+                            Intent installIntent = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                            installIntent.setPackage(GOOGLE_TTS_PACKAGE);
+                            startActivity(installIntent);
+                        } catch (Exception e2) {
+                            startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+                        }
+                    }
                     return true;
                 }
             });
@@ -168,6 +209,10 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         Objects.requireNonNull(getPreferenceManager().getSharedPreferences()).registerOnSharedPreferenceChangeListener(listener);
+        Preference installGoogleTtsPreference = findPreference("key_install_google_tts");
+        if (installGoogleTtsPreference != null) {
+            updateGoogleTtsInstallPreference(installGoogleTtsPreference);
+        }
     }
 
     @Override
@@ -250,6 +295,25 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         } catch (IOException e) {
             sharedPreferencesRepository.setBackgroundMusicFile("default");
             e.printStackTrace();
+        }
+    }
+
+    private boolean isGoogleTtsInstalled() {
+        try {
+            requireContext().getPackageManager().getPackageInfo(GOOGLE_TTS_PACKAGE, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void updateGoogleTtsInstallPreference(Preference preference) {
+        if (isGoogleTtsInstalled()) {
+            preference.setTitle(getString(R.string.install_google_tts_title_installed));
+            preference.setSummary(getString(R.string.install_google_tts_summary_installed));
+        } else {
+            preference.setTitle(getString(R.string.install_google_tts_title));
+            preference.setSummary(getString(R.string.install_google_tts_summary_not_installed));
         }
     }
 }

@@ -50,6 +50,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     public static final String TAG = TtsPlayer.class.getSimpleName();
+    public static final String GOOGLE_TTS_PACKAGE = "com.google.android.tts";
 
     private TextToSpeech tts;
     private PlaybackStateListener listener;
@@ -145,7 +146,17 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
         availableTtsEngines = null;
         currentTtsEngineIndex = -1;
-        initializeTtsEngine(ttsService, null);
+
+        try {
+            context.getPackageManager().getPackageInfo(GOOGLE_TTS_PACKAGE, 0);
+            initializeTtsEngine(ttsService, GOOGLE_TTS_PACKAGE);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Google TTS is not installed. TTS will not be available.");
+            isInit = false;
+            if (webViewCallback != null) {
+                webViewCallback.makeSnackbar("Google TTS is required. Please install it from Settings.");
+            }
+        }
     }
 
     private void initializeTtsEngine(Context ttsContext, String enginePackage) {
@@ -169,16 +180,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
                     if (defaultEngine == null || defaultEngine.isEmpty()) {
                         Log.e(TAG, "TTS initialized but default engine is null!");
-                        if (!enginesList.isEmpty()) {
-                            String fallbackEngine = enginesList.get(0).name;
-                            Log.d(TAG, "Attempting to use fallback engine: " + fallbackEngine);
-                            isInit = true;
-                        } else {
-                            // Try next engine if available
-                            Log.w(TAG, "Default engine null and no internal engines reported. Trying next available system engine...");
-                            attemptNextTtsEngine(ttsContext);
-                            return;
-                        }
+                        isInit = true;
                     } else {
                         isInit = true;
                     }
@@ -204,7 +206,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     Log.d(TAG, "TTS fully initialized and ready");
                 } catch (Exception e) {
                     Log.e(TAG, "Error verifying TTS engine", e);
-                    attemptNextTtsEngine(ttsContext);
+                    isInit = false;
                     return;
                 }
 
@@ -219,6 +221,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     Log.d(TAG, "Android version < LOLLIPOP, using legacy audio stream");
                 }
 
+                applyTtsSettings();
+
                 if (actionNeeded) {
                     Log.d(TAG, "Deferred auto-play activated — TTS is now ready");
                     setupTts();
@@ -230,8 +234,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                     actionNeeded = false;
                 }
             } else {
-                Log.e(TAG, "TTS initialization FAILED with status: " + status);
-                attemptNextTtsEngine(ttsContext);
+                Log.e(TAG, "Google TTS initialization FAILED with status: " + status);
+                isInit = false;
             }
         }, enginePackage);
 
@@ -979,23 +983,34 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             Log.w(TAG, "TTS is null, cannot set speech rate");
             return;
         }
-        
-        if (speechRate == 0) {
-            try {
-                int systemRate = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.TTS_DEFAULT_RATE);
-                speechRate = systemRate / 100.0f;
-            } catch (Settings.SettingNotFoundException e) {
-                Log.e(TAG, "TTS default rate setting not found", e);
-                speechRate = 1.0f;
-            }
-        }
-        
+
         try {
             tts.setSpeechRate(speechRate);
             Log.d(TAG, "TTS speech rate set to: " + speechRate);
         } catch (Exception e) {
             Log.e(TAG, "Failed to set TTS speech rate", e);
         }
+    }
+
+    public void setTtsPitch(float pitch) {
+        if (tts == null) {
+            Log.w(TAG, "TTS is null, cannot set pitch");
+            return;
+        }
+
+        try {
+            tts.setPitch(pitch);
+            Log.d(TAG, "TTS pitch set to: " + pitch);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to set TTS pitch", e);
+        }
+    }
+
+    public void applyTtsSettings() {
+        float speechRate = sharedPreferencesRepository.getTtsSpeechRate() / 100.0f;
+        float pitch = sharedPreferencesRepository.getTtsPitch() / 100.0f;
+        setTtsSpeechRate(speechRate);
+        setTtsPitch(pitch);
     }
 
     public void setWebViewCallback(WebViewListener listener) {

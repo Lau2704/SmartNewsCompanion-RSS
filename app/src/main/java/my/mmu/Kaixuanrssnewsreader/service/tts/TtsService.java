@@ -165,7 +165,7 @@ public class TtsService extends MediaBrowserServiceCompat {
                     mediaSession.setActive(true);
                 }
                 mediaSession.setMetadata(preparedData);
-                ttsPlayer.setTtsSpeechRate(Float.parseFloat(preparedData.getString("ttsSpeechRate")));
+                ttsPlayer.applyTtsSettings();
 
                 long mediaId = Long.parseLong(preparedData.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
                 long feedId = preparedData.getLong("feedId");
