@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
+import my.mmu.Kaixuanrssnewsreader.service.util.LocalLlmEngine;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,11 +42,13 @@ public class TextUtil {
     public static final String TAG = TextUtil.class.getSimpleName();
     private final CompositeDisposable compositeDisposable;
     private final SharedPreferencesRepository sharedPreferencesRepository;
+    private final LocalLlmEngine localLlmEngine;
     private final OkHttpClient client;
 
     @Inject
-    public TextUtil(SharedPreferencesRepository sharedPreferencesRepository) {
+    public TextUtil(SharedPreferencesRepository sharedPreferencesRepository, LocalLlmEngine localLlmEngine) {
         this.sharedPreferencesRepository = sharedPreferencesRepository;
+        this.localLlmEngine = localLlmEngine;
         compositeDisposable = new CompositeDisposable();
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
@@ -380,6 +383,24 @@ public class TextUtil {
                 return;
             }
 
+            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+
+            if (provider.isLocal()) {
+                try {
+                    if (!localLlmEngine.isModelLoaded()) {
+                        localLlmEngine.loadModel();
+                    }
+                    String systemPrompt = "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.";
+                    String result = localLlmEngine.complete(systemPrompt, text);
+                    emitter.onSuccess(result);
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "Local translation error", e);
+                    emitter.onError(e);
+                    return;
+                }
+            }
+
             String apiKey = sharedPreferencesRepository.getApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
                 emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
@@ -392,7 +413,6 @@ public class TextUtil {
                 return;
             }
 
-            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
             String url = provider.getEndpoint();
 
             try {
@@ -467,6 +487,41 @@ public class TextUtil {
                 return;
             }
 
+            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+
+            String systemPrompt = String.format(
+                "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
+                + "Requirements:\n"
+                + "- Write in proper article form with a clear, informative headline on the first line\n"
+                + "- Use flowing prose organized into 2-3 short paragraphs\n"
+                + "- Open with the most important information (who, what, when, where, why)\n"
+                + "- Follow with supporting details, context, and key quotes or data\n"
+                + "- Close with any significant implications or outcomes\n"
+                + "- Write in a neutral, journalistic tone\n"
+                + "- Preserve all specific names, numbers, dates, and locations from the original\n"
+                + "- Do NOT add any information not present in the original article\n"
+                + "- Write in the SAME LANGUAGE as the original article\n\n"
+                + "IMPORTANT: Return ONLY the summary article. No labels, prefixes, explanations, or meta-commentary.",
+                targetWords
+            );
+
+            String contentToSummarize = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
+
+            if (provider.isLocal()) {
+                try {
+                    if (!localLlmEngine.isModelLoaded()) {
+                        localLlmEngine.loadModel();
+                    }
+                    String result = localLlmEngine.complete(systemPrompt, contentToSummarize);
+                    emitter.onSuccess(result);
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "Local summarization error", e);
+                    emitter.onError(e);
+                    return;
+                }
+            }
+
             String apiKey = sharedPreferencesRepository.getApiKey();
             if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
                 emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
@@ -479,28 +534,9 @@ public class TextUtil {
                 return;
             }
 
-            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
             String url = provider.getEndpoint();
 
             try {
-                String systemPrompt = String.format(
-                    "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
-                    + "Requirements:\n"
-                    + "- Write in proper article form with a clear, informative headline on the first line\n"
-                    + "- Use flowing prose organized into 2-3 short paragraphs\n"
-                    + "- Open with the most important information (who, what, when, where, why)\n"
-                    + "- Follow with supporting details, context, and key quotes or data\n"
-                    + "- Close with any significant implications or outcomes\n"
-                    + "- Write in a neutral, journalistic tone\n"
-                    + "- Preserve all specific names, numbers, dates, and locations from the original\n"
-                    + "- Do NOT add any information not present in the original article\n"
-                    + "- Write in the SAME LANGUAGE as the original article\n\n"
-                    + "IMPORTANT: Return ONLY the summary article. No labels, prefixes, explanations, or meta-commentary.",
-                    targetWords
-                );
-
-                String contentToSummarize = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
-
                 JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, contentToSummarize, 4096);
 
                 MediaType JSON = MediaType.parse("application/json; charset=utf-8");

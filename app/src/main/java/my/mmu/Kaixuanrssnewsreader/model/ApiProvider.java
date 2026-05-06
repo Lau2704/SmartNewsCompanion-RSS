@@ -47,7 +47,16 @@ public enum ApiProvider {
             "https://console.anthropic.com/settings/keys",
             R.string.claude_api_key_instruction,
             R.string.claude_model_examples,
-            true);
+            true),
+
+    LOCAL("local",
+            R.string.provider_local,
+            "",
+            "gemma-2-2b-it-Q4_K_M",
+            "",
+            0,
+            0,
+            false);
 
     private final String key;
     private final int displayNameRes;
@@ -100,6 +109,10 @@ public enum ApiProvider {
 
     public boolean isAnthropicFormat() {
         return anthropicFormat;
+    }
+
+    public boolean isLocal() {
+        return this == LOCAL;
     }
 
     public String getApiKeyPreferenceKey() {

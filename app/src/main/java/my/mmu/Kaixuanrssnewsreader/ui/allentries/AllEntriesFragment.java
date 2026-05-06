@@ -163,12 +163,22 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             }
         });
 
-        allEntriesViewModel.getToastMessage().observe(getViewLifecycleOwner(), new Observer<String>() {
+        allEntriesViewModel.getToastMessage().observe(getViewLifecycleOwner(), new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer resId) {
+                if (resId != null) {
+                    Snackbar.make(requireView(), getString(resId), Snackbar.LENGTH_SHORT).show();
+                    allEntriesViewModel.resetToastMessage();
+                }
+            }
+        });
+
+        allEntriesViewModel.getToastMessageString().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(String s) {
                 if (s != null && !s.isEmpty()) {
                     Snackbar.make(requireView(), s, Snackbar.LENGTH_SHORT).show();
-                    allEntriesViewModel.resetToastMessage();
+                    allEntriesViewModel.resetToastMessageString();
                 }
             }
         });
@@ -177,8 +187,8 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             @Override
             public void onChanged(Integer integer) {
                 String unread;
-                if (integer != null) unread = integer + " unread";
-                else unread = "0 unread";
+                if (integer != null) unread = getString(R.string.unread_count, integer);
+                else unread = getString(R.string.no_unread);
                 unreadTextView.setText(unread);
             }
         });
@@ -239,7 +249,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                 });
             }
         } else {
-            title = "All feeds";
+            title = getString(R.string.all_feeds_title);
         }
 
         NavController navController = Navigation.findNavController(view);
@@ -265,7 +275,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
 
                     MenuItem menuItem = menu.findItem(R.id.search);
                     SearchView searchView = (SearchView) menuItem.getActionView();
-                    searchView.setQueryHint("Type here to search");
+                    searchView.setQueryHint(getString(R.string.search_hint));
 
                     searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                         @Override
@@ -377,7 +387,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             if (translationMethod.equals("lineByLine")) {
                 translateDisposable = textUtil.translateHtmlLineByLine(languageCode, targetLanguage, html, entryInfo.getEntryTitle(), entryInfo.getEntryId(), progress -> {
                     requireActivity().runOnUiThread(() ->
-                            Toast.makeText(requireContext(), progress + "% Translated for " + entryInfo.getEntryTitle(), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), getString(R.string.translated_for, progress, entryInfo.getEntryTitle()), Toast.LENGTH_SHORT).show()
                     );
                 }).subscribe(translatedHtml -> {
                     doWhenTranslationFinish(entryInfo, translatedHtml, targetLanguage);
@@ -387,7 +397,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             } else if (translationMethod.equals("paragraphByParagraph")) {
                 translateDisposable = textUtil.translateHtmlByParagraph(languageCode, targetLanguage, html, entryInfo.getEntryTitle(), entryInfo.getEntryId(), progress -> {
                         requireActivity().runOnUiThread(() ->
-                                Toast.makeText(requireContext(), progress + "% Translated for " + entryInfo.getEntryTitle(), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), getString(R.string.translated_for, progress, entryInfo.getEntryTitle()), Toast.LENGTH_SHORT).show()
                         );
             }).subscribe(translatedHtml -> {
                     doWhenTranslationFinish(entryInfo, translatedHtml, targetLanguage);
@@ -398,7 +408,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             } else {
                 translateDisposable = textUtil.translateHtmlAllAtOnce(languageCode, targetLanguage, html, entryInfo.getEntryTitle(), entryInfo.getEntryId(), progress -> {
                     requireActivity().runOnUiThread(() ->
-                            Toast.makeText(requireContext(), progress + "% Translated for " + entryInfo.getEntryTitle(), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), getString(R.string.translated_for, progress, entryInfo.getEntryTitle()), Toast.LENGTH_SHORT).show()
                     );
                 }).subscribe(translatedHtml -> {
                     doWhenTranslationFinish(entryInfo, translatedHtml, targetLanguage);
@@ -465,15 +475,15 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
 
         switch (filter) {
             case "read":
-                text = "Read only" + text;
+                text = getString(R.string.filter_read_only) + text;
                 binding.filterTitle.setText(text);
                 break;
             case "unread":
-                text = "Unread only" + text;
+                text = getString(R.string.filter_unread_only) + text;
                 binding.filterTitle.setText(text);
                 break;
             case "bookmark":
-                text = "Bookmarks" + text;
+                text = getString(R.string.filter_bookmarks) + text;
                 binding.filterTitle.setText(text);
                 break;
             default:
@@ -548,7 +558,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         } else {
             selectedEntries.remove(entryInfo);
         }
-        selectedCountTextView.setText(selectedEntries.size() + " selected");
+        selectedCountTextView.setText(getString(R.string.selected_count, selectedEntries.size()));
     }
 
     public void enterSelectionMode() {
@@ -563,9 +573,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
 
             // Find the TextView in the custom view and update it
             selectedCountTextView = actionBar.getCustomView().findViewById(R.id.selected_count);
-            selectedCountTextView.setText(selectedEntries.size() + " selected");
-
-            // Set up listeners for the action buttons in the custom view
+            selectedCountTextView.setText(getString(R.string.selected_count, selectedEntries.size()));
             actionBar.getCustomView().findViewById(R.id.menu_delete).setOnClickListener(v -> {
                 for (EntryInfo item : selectedEntries) {
                     allEntriesViewModel.deleteEntry(item.getEntryId());
@@ -582,7 +590,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                 for (EntryInfo item : selectedEntries) {
                     translate(item);
                 }
-                Toast.makeText(requireContext(), "Translating " + selectedEntries.size() + " entries", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.translating_entries, selectedEntries.size()), Toast.LENGTH_SHORT).show();
                 exitSelectionMode();
             });
             actionBar.getCustomView().findViewById(R.id.menu_cancel).setOnClickListener(v -> {

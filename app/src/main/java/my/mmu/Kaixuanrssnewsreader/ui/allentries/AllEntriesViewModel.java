@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.feed.FeedRepository;
 import my.mmu.Kaixuanrssnewsreader.data.playlist.Playlist;
@@ -47,7 +48,8 @@ public class AllEntriesViewModel extends ViewModel {
     private TtsExtractor ttsExtractor;
     private TtsPlayer ttsPlayer;
     private MutableLiveData<List<EntryInfo>> allEntries = new MutableLiveData<>();
-    private MutableLiveData<String> toastMessage = new MutableLiveData<>();
+    private MutableLiveData<Integer> toastMessage = new MutableLiveData<>();
+    private MutableLiveData<String> toastMessageString = new MutableLiveData<>();
     private MutableLiveData<Integer> unreadCount = new MutableLiveData<>();
     private LiveData<List<EntryInfo>> liveEntries;
 
@@ -119,7 +121,7 @@ public class AllEntriesViewModel extends ViewModel {
         return allEntries;
     }
 
-    public LiveData<String> getToastMessage() {
+    public LiveData<Integer> getToastMessage() {
         return toastMessage;
     }
 
@@ -133,6 +135,14 @@ public class AllEntriesViewModel extends ViewModel {
 
     public void resetToastMessage() {
         toastMessage.postValue(null);
+    }
+
+    public LiveData<String> getToastMessageString() {
+        return toastMessageString;
+    }
+
+    public void resetToastMessageString() {
+        toastMessageString.postValue(null);
     }
 
     public void insertPlaylist(List<Long> allEntryIds, long entryId) {
@@ -191,7 +201,7 @@ public class AllEntriesViewModel extends ViewModel {
 
                     @Override
                     public void onComplete() {
-                        toastMessage.postValue("All visited entries are deleted");
+                        toastMessage.postValue(R.string.visited_entries_deleted);
                     }
 
                     @Override
@@ -220,7 +230,7 @@ public class AllEntriesViewModel extends ViewModel {
 
                     @Override
                     public void onComplete() {
-                        toastMessage.postValue("All selected entries are deleted");
+                        toastMessage.postValue(R.string.selected_entries_deleted);
                     }
 
                     @Override
@@ -235,7 +245,7 @@ public class AllEntriesViewModel extends ViewModel {
                     @Override
                     public void run() throws Throwable {
                         String text = feedRepository.refreshEntries();
-                        toastMessage.postValue(text);
+                        toastMessageString.postValue(text);
                     }
                 }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -274,9 +284,9 @@ public class AllEntriesViewModel extends ViewModel {
                     @Override
                     public void onComplete() {
                         if (bool.equals("Y")) {
-                            toastMessage.postValue("Bookmark complete");
+                            toastMessage.postValue(R.string.bookmark_complete);
                         } else {
-                            toastMessage.postValue("Bookmark removed");
+                            toastMessage.postValue(R.string.bookmark_removed);
                         }
                     }
 

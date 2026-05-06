@@ -10,6 +10,9 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
+
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -25,6 +28,8 @@ import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
+import my.mmu.Kaixuanrssnewsreader.service.util.LocalLlmEngine;
+import my.mmu.Kaixuanrssnewsreader.service.util.LocalModelDownloader;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
 import my.mmu.Kaixuanrssnewsreader.ui.setupwebview.SetupWebViewActivity;
@@ -37,6 +42,8 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 import javax.inject.Inject;
+
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -54,9 +61,15 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Inject
     SharedPreferencesRepository sharedPreferencesRepository;
 
+    @Inject
+    LocalLlmEngine localLlmEngine;
+
     private ListPreference backgroundMusicFilePreference;
     private EditTextPreference apiKeyPreference;
     private EditTextPreference modelPreference;
+    private Preference localModelDownloadPreference;
+    private Preference localModelDeletePreference;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
     private boolean isAdditionalImport;
     private final CharSequence[] defaultMusicEntries = {"Default", "Import music file (ogg format is preferred)"};
     private final CharSequence[] defaultMusicValues = {"default", "userFile"};
@@ -123,6 +136,14 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 case "ttsPitch":
                     ttsPlayer.applyTtsSettings();
                     break;
+                case "appLanguage":
+                    String lang = sharedPreferences.getString("appLanguage", "system");
+                    if ("system".equals(lang)) {
+                        AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
+                    } else {
+                        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang));
+                    }
+                    break;
             }
         }
     };
@@ -156,6 +177,44 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                     intent.putExtra(SetupWebViewActivity.EXTRA_INSTRUCTION, getString(provider.getInstructionRes()));
                     intent.putExtra(SetupWebViewActivity.EXTRA_PROVIDER, provider.getKey());
                     startActivity(intent);
+                    return true;
+                }
+            });
+        }
+
+        localModelDownloadPreference = findPreference("local_model_download");
+        localModelDeletePreference = findPreference("local_model_delete");
+
+        if (localModelDownloadPreference != null) {
+            updateLocalModelPreference();
+            localModelDownloadPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    if (LocalModelDownloader.isModelDownloaded(requireContext())) {
+                        localLlmEngine.loadModel();
+                        Toast.makeText(requireContext(), R.string.local_model_loading, Toast.LENGTH_SHORT).show();
+                    } else {
+                        downloadLocalModel();
+                    }
+                    return true;
+                }
+            });
+        }
+
+        if (localModelDeletePreference != null) {
+            localModelDeletePreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                            .setTitle(R.string.local_model_delete)
+                            .setMessage(R.string.local_model_delete_confirm)
+                            .setPositiveButton(R.string.delete, (dialog, which) -> {
+                                localLlmEngine.unloadModel();
+                                LocalModelDownloader.deleteModel(requireContext());
+                                updateLocalModelPreference();
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
                     return true;
                 }
             });
@@ -253,6 +312,27 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             return;
         }
 
+        boolean isLocal = provider.isLocal();
+
+        Preference apiKeySetupPreference = findPreference("api_key_setup");
+        if (apiKeySetupPreference != null) {
+            apiKeySetupPreference.setVisible(!isLocal);
+        }
+        apiKeyPreference.setVisible(!isLocal);
+        modelPreference.setVisible(!isLocal);
+
+        if (localModelDownloadPreference != null) {
+            localModelDownloadPreference.setVisible(isLocal);
+        }
+        if (localModelDeletePreference != null) {
+            localModelDeletePreference.setVisible(isLocal && LocalModelDownloader.isModelDownloaded(requireContext()));
+        }
+
+        if (isLocal) {
+            updateLocalModelPreference();
+            return;
+        }
+
         String apiKeyPrefKey = provider.getApiKeyPreferenceKey();
         String modelPrefKey = provider.getModelPreferenceKey();
 
@@ -269,6 +349,58 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         apiKeyPreference.setText(currentApiKey != null ? currentApiKey : "");
         modelPreference.setText(currentModel);
+    }
+
+    private void updateLocalModelPreference() {
+        if (localModelDownloadPreference == null) return;
+
+        boolean downloaded = LocalModelDownloader.isModelDownloaded(requireContext());
+        if (downloaded) {
+            String size = LocalModelDownloader.formatFileSize(LocalModelDownloader.getDownloadedSize(requireContext()));
+            localModelDownloadPreference.setTitle(getString(R.string.local_model_downloaded, size));
+            localModelDownloadPreference.setSummary(R.string.local_model_size);
+        } else {
+            localModelDownloadPreference.setTitle(R.string.local_model_download);
+            localModelDownloadPreference.setSummary(R.string.local_model_not_downloaded);
+        }
+
+        if (localModelDeletePreference != null) {
+            localModelDeletePreference.setVisible(downloaded);
+        }
+    }
+
+    private void downloadLocalModel() {
+        androidx.appcompat.app.AlertDialog progressDialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(R.string.local_model_downloading)
+                .setView(new android.widget.ProgressBar(requireContext(), null, android.R.attr.progressBarStyleHorizontal))
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        android.widget.ProgressBar progressBar = (android.widget.ProgressBar) progressDialog.findViewById(android.R.id.progress);
+        if (progressBar != null) {
+            progressBar.setMax(100);
+            progressBar.setProgress(0);
+        }
+
+        compositeDisposable.add(
+                LocalModelDownloader.downloadModel(requireContext(), progress -> {
+                    if (progressBar != null) {
+                        requireActivity().runOnUiThread(() -> progressBar.setProgress(progress));
+                    }
+                }).subscribe(file -> {
+                    requireActivity().runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        updateLocalModelPreference();
+                        Toast.makeText(requireContext(), getString(R.string.local_model_downloaded, LocalModelDownloader.formatFileSize(file.length())), Toast.LENGTH_LONG).show();
+                    });
+                }, error -> {
+                    requireActivity().runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(requireContext(), "Download failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+                })
+        );
     }
 
     private void handleSelectedFile(Uri fileUri) {
@@ -315,5 +447,11 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             preference.setTitle(getString(R.string.install_google_tts_title));
             preference.setSummary(getString(R.string.install_google_tts_summary_not_installed));
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        compositeDisposable.dispose();
+        super.onDestroyView();
     }
 }

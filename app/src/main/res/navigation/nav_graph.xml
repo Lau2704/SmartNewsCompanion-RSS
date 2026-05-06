@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/feedFragment"
         android:name="my.mmu.Kaixuanrssnewsreader.ui.feed.FeedFragment"
-        android:label="Feed"
+        android:label="@string/feed"
         tools:layout="@layout/fragment_feed" >
         <action
             android:id="@+id/action_feedFragment_to_allEntriesFragment"
@@ -24,7 +24,7 @@
     <fragment
         android:id="@+id/allEntriesFragment"
         android:name="my.mmu.Kaixuanrssnewsreader.ui.allentries.AllEntriesFragment"
-        android:label="News"
+        android:label="@string/news"
         tools:layout="@layout/fragment_all_entries" >
         <action
             android:id="@+id/action_allEntriesFragment_to_feedFragment"
@@ -40,12 +40,12 @@
     <fragment
         android:id="@+id/helpFragment"
         android:name="my.mmu.Kaixuanrssnewsreader.ui.help.HelpFragment"
-        android:label="Help"
+        android:label="@string/help"
         tools:layout="@layout/fragment_help" />
     <fragment
         android:id="@+id/settingsFragment"
         android:name="my.mmu.Kaixuanrssnewsreader.ui.setting.SettingsFragment"
-        android:label="Settings" >
+        android:label="@string/setting" >
         <action
             android:id="@+id/action_settingsFragment_to_allEntriesFragment"
             app:destination="@id/allEntriesFragment"

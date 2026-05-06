@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">楷𫍽 RSS 新闻阅读器</string>
+    <string name="action_settings">设置</string>
+    <string name="add_manage_feed">添加/管理订阅源</string>
+    <string name="add_feed">添加订阅源</string>
+    <string name="news">新闻</string>
+    <string name="setting">设置</string>
+    <string name="interface_header">界面</string>
+    <string name="translation_header">语言</string>
+    <string name="text_to_speech_header">文字转语音</string>
+    <string name="sync_header">同步</string>
+    <string name="app_language_title">应用语言</string>
+    <string name="app_language_summary">更改应用的显示语言</string>
+    <string name="jobPeriodic_title">更新间隔</string>
+    <string name="confidence_threshold_title">置信度阈值 (%)</string>
+    <string name="background_music">背景音乐</string>
+    <string name="background_music_file">上传背景音乐</string>
+    <string name="background_music_summary_on">文字转语音朗读时播放背景音乐</string>
+    <string name="background_music_summary_off">文字转语音朗读时关闭背景音乐</string>
+    <string name="background_music_volume">背景音乐音量</string>
+    <string name="background_music_volume_summary">调整背景音乐的音量</string>
+    <string name="install_google_tts_title">安装 Google TTS</string>
+    <string name="install_google_tts_title_installed">Google TTS 引擎</string>
+    <string name="install_google_tts_summary_installed">Google 文字转语音已安装</string>
+    <string name="install_google_tts_summary_not_installed">Google 文字转语音未安装。点击从 Play 商店下载。</string>
+    <string name="google_tts_voice_data_title">下载语音数据</string>
+    <string name="google_tts_voice_data_summary">下载 Google 文字转语音的语言包</string>
+    <string name="tts_speech_rate_title">语速</string>
+    <string name="tts_speech_rate_summary">调整文字转语音播放的速度</string>
+    <string name="tts_pitch_title">音调</string>
+    <string name="tts_pitch_summary">调整文字转语音的音调</string>
+    <string name="theme_title">深色主题</string>
+    <string name="theme_summary_on">已启用深色主题</string>
+    <string name="theme_summary_off">已启用浅色主题</string>
+    <string name="entries_limit_title">每个订阅源的文章数量限制</string>
+    <string name="entries_limit_summary">刷新后删除最旧的未收藏文章（限制不包括已收藏的文章）</string>
+    <string name="display_summary_title">自动生成文章摘要</string>
+    <string name="display_summary_on">自动为文章生成摘要</string>
+    <string name="display_summary_off">不自动为文章生成摘要</string>
+    <string name="api_setting_title">API 密钥</string>
+    <string name="api_setting_summary">输入您的 API 密钥</string>
+    <string name="api_setting_dialog_title">API 密钥</string>
+    <string name="api_provider_title">API 提供商</string>
+    <string name="api_key_setup_title">获取 API 密钥</string>
+    <string name="api_key_setup_summary">创建或管理您的 API 密钥</string>
+    <string name="api_model_title">AI 模型</string>
+    <string name="api_model_summary">输入模型名称</string>
+    <string name="api_model_dialog_title">AI 模型</string>
+    <string name="summary_length_title">摘要长度</string>
+    <string name="summary_length_summary">AI 生成摘要的目标字数</string>
+    <string name="highlight_text_title">高亮文本</string>
+    <string name="highlight_text_on">搜索并高亮文字转语音正在朗读的段落</string>
+    <string name="highlight_text_off">文字转语音朗读时不高亮文本</string>
+    <string name="translationLanguage_title">目标语言</string>
+    <string name="translationMethod_title">翻译方式</string>
+    <string name="translationMethod_summary">选择应用的翻译方式。"逐行翻译"速度较慢但更准确，"一次全部翻译"速度更快但可能不够准确，"逐段翻译"则在两者之间取得平衡。</string>
+    <string name="confidence_threshold_summary">更高的百分比将带来更好的准确性，但切换语言的可能性会降低</string>
+    <string name="auto_translate_title">自动翻译文章</string>
+    <string name="auto_translate_on">自动将文章翻译为默认语言</string>
+    <string name="auto_translate_off">不自动翻译文章</string>
+    <string name="share">分享</string>
+    <string name="mark_as_read">标记为已读</string>
+    <string name="mark_as_unread">标记为未读</string>
+    <string name="delete">删除</string>
+    <string name="zoom_in">放大</string>
+    <string name="zoom_out">缩小</string>
+    <string name="bookmark">收藏</string>
+    <string name="open_in_browser">在浏览器中打开</string>
+    <string name="exit_browser">离线模式</string>
+    <string name="reload">重新提取文章</string>
+    <string name="onboarding_title">欢迎使用 SmartNews Companion</string>
+    <string name="onboarding_description">解锁 AI 驱动的翻译和摘要功能</string>
+    <string name="onboarding_features_title">借助 AI，您可以：</string>
+    <string name="onboarding_feature_translation">将文章翻译为您偏好的语言</string>
+    <string name="onboarding_feature_summarization">生成文章的 AI 摘要</string>
+    <string name="onboarding_setup_button">设置 AI 提供商</string>
+    <string name="onboarding_skip_button">暂时跳过</string>
+    <string name="setup_title">设置</string>
+    <string name="setup_instructions">说明</string>
+    <string name="setup_done_button">我已完成</string>
+    <string name="setup_open_console_button">打开控制台</string>
+    <string name="enter_api_key_title">输入您的 API 密钥</string>
+    <string name="enter_api_key_subtitle">从 console.groq.com 获取您的 API 密钥</string>
+    <string name="api_key_hint">API 密钥</string>
+    <string name="skip_button">跳过</string>
+    <string name="continue_button">继续</string>
+    <string name="complete_button">完成设置</string>
+    <string name="save_button">保存</string>
+    <string name="setup_required_title">需要设置</string>
+    <string name="setup_required_api_key_message">请在设置中配置您的 API 密钥以使用翻译功能。</string>
+    <string name="go_to_settings">前往设置</string>
+    <string name="reading_mode">切换到阅读模式</string>
+    <string name="playing_mode">切换到播放模式</string>
+    <string name="filter">筛选</string>
+    <string name="search">搜索</string>
+    <string name="feed">订阅源</string>
+    <string name="help">帮助</string>
+    <string name="add_more_feed">添加更多订阅源</string>
+    <string name="save_app_state">保存应用状态</string>
+    <string name="load_app_state">加载应用状态</string>
+    <string name="all_feed">所有订阅源</string>
+    <string name="reload_message">确定要重新提取文章内容吗？</string>
+    <string name="reload_all_message">确定要重新提取此订阅源下所有文章的内容吗？</string>
+    <string name="reload_confirmation">重新提取文章？</string>
+    <string name="cancel">取消</string>
+    <string name="yes">是</string>
+    <string name="login_request_confirmation">此新闻订阅源是否需要登录账号？</string>
+    <string name="login_complete_confirmation">登录完成了吗？</string>
+    <string name="no">否</string>
+    <string name="sort_by">排序方式</string>
+    <string name="sort_latest">最新优先</string>
+    <string name="sort_oldest">最旧优先</string>
+    <string name="filter_by">筛选条件</string>
+    <string name="filter_all">所有文章</string>
+    <string name="filter_bookmark">仅收藏</string>
+    <string name="filter_read">仅已读</string>
+    <string name="filter_unread">仅未读</string>
+    <string name="play">播放</string>
+    <string name="read">阅读</string>
+    <string name="more">更多</string>
+    <string name="help_what_is_rss">什么是 RSS？</string>
+    <string name="help_what_is_rss_desc">RSS（简易信息聚合）是一种技术，允许您以标准化格式从各种新闻网站收集和接收更新。通过订阅 RSS 源，您可以随时了解最新动态，并无缝访问您喜爱来源的最新文章。</string>
+    <string name="help_start">如何开始使用？</string>
+    <string name="help_start_desc">要订阅新闻源，请转到订阅源页面并在"添加"标签下的文本框中粘贴网址。订阅源成功提取后，如果订阅源不为空，文章将显示在新闻页面中。</string>
+    <string name="help_change_feed_language">如何更改订阅源的语言？</string>
+    <string name="help_change_feed_language_desc">要更改订阅源的语言，请转到订阅源页面的"管理"标签，点击编辑按钮，然后选择所需的语言。</string>
+    <string name="help_wrong_language">为什么文字转语音以错误的语言朗读？</string>
+    <string name="help_offline_reading">应用支持离线阅读吗？</string>
+    <string name="help_offline_reading_desc">是的，应用支持离线阅读。但需要提前提取文章内容。</string>
+    <string name="help_reading_playing_mode">什么是"阅读模式"和"播放模式"？</string>
+    <string name="help_reading_playing_mode_desc">在阅读模式下，仅显示文章内容，不提供文字转语音功能。在播放模式下，文章内容成功提取后将自动开始朗读。</string>
+    <string name="help_app_state">什么是"保存应用状态"和"加载应用状态"？</string>
+    <string name="help_app_state_desc">"保存应用状态"功能将导出 OPML 文件到存储。"加载应用状态"功能允许用户选择并导入 OPML 文件。</string>
+    <string name="help_extraction_fail">为什么我提取的文章没有任何内容？</string>
+    <string name="help_import_music">如何导入背景音乐音频文件？</string>
+    <string name="help_buttons">图标按钮功能</string>
+    <string name="help_buttons_desc">要了解图标按钮的功能，只需长按按钮即可查看说明。</string>
+    <string name="empty_feed">未找到订阅源</string>
+    <string name="delete_feed_message">删除订阅源？</string>
+    <string name="delete_feed_confirmation">确定要删除此订阅源吗？该订阅源下的所有文章也将被删除。</string>
+    <string name="empty_entry">未找到文章</string>
+    <string name="go_to_add_feed">前往添加订阅源</string>
+    <string name="add_delay">添加延迟（秒）</string>
+    <string name="translate">翻译</string>
+
+    <!-- Tab and navigation -->
+    <string name="tab_add">添加</string>
+    <string name="tab_manage">管理</string>
+    <string name="all_feeds_title">所有订阅源</string>
+    <string name="unread_count">%1$d 未读</string>
+    <string name="no_unread">0 未读</string>
+    <string name="selected_count">%1$d 已选择</string>
+
+    <!-- Add feed page -->
+    <string name="paste_rss_url_hint">在此粘贴 RSS 链接</string>
+    <string name="add_feed_button">添加订阅源</string>
+
+    <!-- Feed operation toasts -->
+    <string name="feed_already_added">此订阅源之前已添加过</string>
+    <string name="feed_broken_inaccessible">失败：此订阅源似乎已损坏或当前无法访问</string>
+    <string name="feed_added_success">订阅源已成功添加</string>
+    <string name="feed_broken">失败：此订阅源似乎已损坏</string>
+    <string name="feed_content_removed">此订阅源的提取内容已被移除</string>
+    <string name="feed_re_extract_failed">重新提取失败</string>
+    <string name="feed_deleted_success">订阅源已成功删除</string>
+    <string name="feed_delete_failed">删除订阅源失败</string>
+
+    <!-- Entry operation toasts -->
+    <string name="visited_entries_deleted">所有已访问的文章已删除</string>
+    <string name="selected_entries_deleted">所有已选文章已删除</string>
+    <string name="bookmark_complete">收藏完成</string>
+    <string name="bookmark_removed">已取消收藏</string>
+
+    <!-- Search and filter -->
+    <string name="search_hint">在此输入以搜索</string>
+    <string name="filter_read_only">仅已读</string>
+    <string name="filter_unread_only">仅未读</string>
+    <string name="filter_bookmarks">收藏</string>
+
+    <!-- Translation toast -->
+    <string name="translating_entries">正在翻译 %1$d 篇文章</string>
+
+    <!-- Time formatting -->
+    <string name="time_ago">前</string>
+    <string name="time_seconds">秒</string>
+    <string name="time_minutes">分钟</string>
+    <string name="time_hours">小时</string>
+    <string name="time_years">年</string>
+    <string name="time_months">个月</string>
+    <string name="time_week">周</string>
+    <string name="time_days">天</string>
+
+    <!-- Dialogs -->
+    <string name="feed_settings">订阅源设置</string>
+    <string name="update">更新</string>
+    <string name="use_system_settings">使用系统设置</string>
+    <string name="speech_rate_update_toast">语速更新将在下一篇文章中生效</string>
+    <string name="select_language">选择语言</string>
+    <string name="select">选择</string>
+    <string name="select_speech_rate">选择语速</string>
+
+    <!-- Feed settings dialog hints -->
+    <string name="feed_url_hint">链接</string>
+    <string name="feed_title_hint">标题</string>
+    <string name="feed_description_hint">描述</string>
+    <string name="feed_language_hint">语言</string>
+    <string name="feed_speech_rate_hint">语速</string>
+
+    <!-- Fragment labels and navigation -->
+    <string name="first_fragment_label">第一个片段</string>
+    <string name="second_fragment_label">第二个片段</string>
+    <string name="next">下一步</string>
+    <string name="previous">上一步</string>
+    <string name="hello_first_fragment">你好，第一个片段</string>
+    <string name="hello_second_fragment">你好，第二个片段。参数：%1$s</string>
+
+    <!-- TTS and settings -->
+    <string name="text_to_speech_settings">文字转语音设置</string>
+    <string name="text_to_speech_settings_summary">修改文字转语音的语速、音调和语言</string>
+    <string name="background_music_turn_on">开启背景音乐</string>
+    <string name="background_music_turn_off">关闭背景音乐</string>
+    <string name="highlight_text_turn_on">开启高亮文本</string>
+    <string name="highlight_text_turn_off">关闭高亮文本</string>
+    <string name="help_bluetooth_cut_off">为什么使用蓝牙时文字转语音在开始时会中断</string>
+    <string name="help_bluetooth_cut_off_desc">原因之一可能是某些蓝牙设备仅在有音频主动传输时才保持连接，而文字转语音并不属于这种情况。因此，当文字转语音开始朗读时，设备会尝试建立连接，导致文字转语音中断。为避免此问题，您可以尝试在设置页面中启用背景音乐，看看是否能解决问题</string>
+    <string name="help_extraction_fail_desc">某些网站可能需要更多时间才能正确提取。您可以在订阅源页面的"管理"标签中点击重新加载按钮来分配更多时间。尝试不同的延迟时间以确定最合适的时间。\n\n注意：更长的延迟时间将导致提取过程更长。请选择尽可能短的时间（如适用）。</string>
+    <string name="help_import_music_desc">您可以在设置页面的"上传背景音乐"下导入音频文件。请注意，仅支持音频文件，不支持视频文件。建议使用 OGG 格式以避免循环播放时出现失真。</string>
+    <string name="help_wrong_language_desc" formatted="false">有几种可能的原因导致了此问题：\n\n1. 订阅源的语言设置不正确。您可以在订阅源页面的"管理"标签中进行更改。\n\n2. 如果您使用了语言识别器（您可以在订阅源页面的"管理"标签下查看），识别器可能无法根据您在设置页面中设置的置信度阈值准确检测内容的语言。设置更高的置信度阈值将使语言更不容易被更改。例如，如果置信度阈值设置为 80%，而识别器对语言只有 50% 的把握，则会导致失败，语言将被设置为英语</string>
+    <string name="rss_search_link">通过以下链接使用关键词搜索 RSS 订阅源：\nhttps://rssfinder.app/</string>
+    <string name="login_message">某些网站的完整内容提取需要账户登录。如果您有该网站的账户，请点击"是"，您将被重定向到该网站进行登录。\n\n（注意：如果您未登录且新订阅源已被提取，您仍可以在登录后在添加订阅源页面重新提取）</string>
+    <string name="login_complete_message">如果选择"是"，您的新订阅源将添加到数据库中。如果选择"否"，您将继续停留在此页面。</string>
+    <string name="move_entries_above_to_bin">将上方的文章移至回收站</string>
+    <string name="move_entries_below_to_bin">将下方的文章移至回收站</string>
+    <string name="languageIdentifier">使用语言识别器</string>
+    <string name="language_identifier_header">语言识别器</string>
+    <string name="reload_suggestion_message">未能从此文章中提取到内容。是否要增加提取延迟时间？某些网站可能需要更多时间才能正确提取。</string>
+
+    <!-- API provider names (do not translate brand names) -->
+    <string name="provider_groq">Groq</string>
+    <string name="provider_openrouter">OpenRouter</string>
+    <string name="provider_gemini">Google Gemini</string>
+    <string name="provider_claude">Claude</string>
+    <string name="provider_openai">OpenAI</string>
+    <string name="groq_api_key_instruction">1. 登录您的 Groq 账户\n2. 前往 API Keys\n3. 点击 \"Create Key\"\n4. 复制并妥善保存您的 API 密钥</string>
+    <string name="groq_model_examples">例如 llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768</string>
+    <string name="openrouter_api_key_instruction">1. 登录您的 OpenRouter 账户\n2. 前往 Settings → API Keys\n3. 点击 \"Create Key\"\n4. 复制并妥善保存您的 API 密钥</string>
+    <string name="openrouter_model_examples">例如 openai/gpt-oss-20b:free, meta-llama/llama-3.1-8b-instruct:free, google/gemini-2.0-flash-exp:free</string>
+    <string name="gemini_api_key_instruction">1. 登录您的 Google 账户\n2. 前往 AI Studio\n3. 点击 \"Get API Key\"\n4. 创建或选择一个项目\n5. 复制并妥善保存您的 API 密钥</string>
+    <string name="gemini_model_examples">例如 gemini-2.0-flash, gemini-2.5-flash-preview-05-20, gemini-1.5-pro</string>
+    <string name="claude_api_key_instruction">1. 登录您的 Anthropic 账户\n2. 前往 Settings → API Keys\n3. 点击 \"Create Key\"\n4. 复制并妥善保存您的 API 密钥</string>
+    <string name="claude_model_examples">例如 claude-sonnet-4-20250514, claude-3-5-haiku-20241022, claude-3-5-sonnet-20241022</string>
+    <string name="openai_api_key_instruction">1. 登录您的 OpenAI 账户\n2. 前往 API Keys\n3. 点击 \"Create new secret key\"\n4. 复制并妥善保存您的 API 密钥</string>
+    <string name="openai_model_examples">例如 gpt-4o-mini, gpt-4o, gpt-4.1-mini, gpt-4.1-nano</string>
+    <string name="show_original">显示原文</string>
+    <string name="show_translation">显示译文</string>
+    <string name="re_extract_article">重新提取文章</string>
+    <string name="toggle_translation_desc">切换翻译</string>
+    <string name="default_translation_language">默认翻译语言</string>
+    <string name="page_load_failed">页面加载失败</string>
+    <string name="translated_for">已为 %2$s 翻译 %1$d%%</string>
+    <string name="provider_local">本地（设备端）</string>
+    <string name="local_model_download">下载模型</string>
+    <string name="local_model_downloaded">模型已下载（%1$s）</string>
+    <string name="local_model_not_downloaded">模型未下载</string>
+    <string name="local_model_downloading">正在下载模型…</string>
+    <string name="local_model_size">模型大小：约 1.7 GB</string>
+    <string name="local_model_delete">删除模型</string>
+    <string name="local_model_delete_confirm">删除本地 AI 模型？您可以稍后重新下载。</string>
+    <string name="local_model_loading">正在加载模型…</string>
+    <string name="local_model_not_loaded">本地模型未加载。请先在设置中下载。</string>
+</resources>

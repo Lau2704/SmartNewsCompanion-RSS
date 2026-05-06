@@ -31,6 +31,15 @@
         android:layout="@layout/text_preference_category"
         app:title="@string/interface_header">
 
+        <ListPreference
+            app:defaultValue="system"
+            app:entries="@array/app_language_names"
+            app:entryValues="@array/app_language_values"
+            app:icon="@drawable/ic_baseline_language_24"
+            app:key="appLanguage"
+            app:title="@string/app_language_title"
+            app:useSimpleSummaryProvider="true" />
+
         <SwitchPreferenceCompat
             app:widgetLayout="@layout/preference_switch_m3"
             app:icon="@drawable/ic_night_mode"
@@ -77,6 +86,20 @@
             app:summary="@string/api_key_setup_summary"
             app:title="@string/api_key_setup_title"
             app:icon="@drawable/api_settings"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="local_model_download"
+            app:title="@string/local_model_download"
+            app:summary="@string/local_model_not_downloaded"
+            app:icon="@drawable/ic_import"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="local_model_delete"
+            app:title="@string/local_model_delete"
+            app:summary="@string/local_model_size"
+            app:icon="@drawable/ic_trash"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference

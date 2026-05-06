@@ -88,14 +88,14 @@ public class SpeechRateSelectionDialog extends AppCompatDialogFragment {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setView(view)
                 .setIcon(R.drawable.ic_gauge)
-                .setTitle("Select speech rate")
-                .setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.select_speech_rate)
+                .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                     }
                 })
-                .setPositiveButton("Select", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.select, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         int radioId = radioGroup.getCheckedRadioButtonId();

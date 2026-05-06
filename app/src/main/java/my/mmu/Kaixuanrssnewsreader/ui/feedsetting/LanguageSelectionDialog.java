@@ -130,14 +130,14 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setView(view)
                 .setIcon(R.drawable.ic_setting)
-                .setTitle("Select language")
-                .setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.select_language)
+                .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                     }
                 })
-                .setPositiveButton("Select", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.select, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         int radioId = radioGroup.getCheckedRadioButtonId();

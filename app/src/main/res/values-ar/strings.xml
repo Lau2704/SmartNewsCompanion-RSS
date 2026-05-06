@@ -1,0 +1,271 @@
+<resources>
+    <string name="app_name">قارئ أخبار كاكسوان RSS</string>
+    <string name="action_settings">الإعدادات</string>
+    <string name="add_manage_feed">إضافة/إدارة الخلاصة</string>
+    <string name="add_feed">إضافة خلاصة</string>
+    <string name="news">الأخبار</string>
+    <string name="setting">الإعدادات</string>
+    <string name="interface_header">الواجهة</string>
+    <string name="translation_header">اللغة</string>
+    <string name="text_to_speech_header">تحويل النص إلى كلام</string>
+    <string name="sync_header">المزامنة</string>
+    <string name="app_language_title">لغة التطبيق</string>
+    <string name="app_language_summary">تغيير لغة عرض التطبيق</string>
+    <string name="jobPeriodic_title">فاصل التحديث</string>
+    <string name="confidence_threshold_title">عتبة الثقة (٪)</string>
+    <string name="background_music">موسيقى خلفية</string>
+    <string name="background_music_file">تحميل موسيقى خلفية</string>
+    <string name="background_music_summary_on">تشغيل موسيقى خلفية أثناء قراءة تحويل النص إلى كلام</string>
+    <string name="background_music_summary_off">إيقاف تشغيل موسيقى خلفية أثناء قراءة تحويل النص إلى كلام</string>
+    <string name="background_music_volume">مستوى صوت الموسيقى الخلفية</string>
+    <string name="background_music_volume_summary">ضبط مستوى صوت الموسيقى الخلفية</string>
+    <string name="install_google_tts_title">تثبيت Google TTS</string>
+    <string name="install_google_tts_title_installed">محرك Google TTS</string>
+    <string name="install_google_tts_summary_installed">تم تثبيت تحويل النص إلى كلام من Google</string>
+    <string name="install_google_tts_summary_not_installed">لم يتم تثبيت تحويل النص إلى كلام من Google. اضغط للتحميل من متجر Play.</string>
+    <string name="google_tts_voice_data_title">تحميل بيانات الصوت</string>
+    <string name="google_tts_voice_data_summary">تحميل حزم اللغات لتحويل النص إلى كلام من Google</string>
+    <string name="tts_speech_rate_title">سرعة الكلام</string>
+    <string name="tts_speech_rate_summary">ضبط سرعة تشغيل تحويل النص إلى كلام</string>
+    <string name="tts_pitch_title">حدة الصوت</string>
+    <string name="tts_pitch_summary">ضبط حدة صوت تحويل النص إلى كلام</string>
+    <string name="theme_title">السمة الداكنة</string>
+    <string name="theme_summary_on">تم تمكين السمة الداكنة</string>
+    <string name="theme_summary_off">تم تمكين السمة الفاتحة</string>
+    <string name="entries_limit_title">حد المقالات لكل خلاصة</string>
+    <string name="entries_limit_summary">حذف أقدم المقالات غير المفضلة بعد التحديث (الحد يستبعد المفضلة)</string>
+    <string name="display_summary_title">تلخيص المقالات تلقائيًا</string>
+    <string name="display_summary_on">إنشاء ملخص تلقائي للمقالات</string>
+    <string name="display_summary_off">عدم إنشاء ملخص تلقائي للمقالات</string>
+    <string name="api_setting_title">مفتاح API</string>
+    <string name="api_setting_summary">أدخل مفتاح API الخاص بك</string>
+    <string name="api_setting_dialog_title">مفتاح API</string>
+    <string name="api_provider_title">مزود API</string>
+    <string name="api_key_setup_title">الحصول على مفتاح API</string>
+    <string name="api_key_setup_summary">إنشاء أو إدارة مفتاح API الخاص بك</string>
+    <string name="api_model_title">نموذج الذكاء الاصطناعي</string>
+    <string name="api_model_summary">أدخل اسم النموذج</string>
+    <string name="api_model_dialog_title">نموذج الذكاء الاصطناعي</string>
+    <string name="summary_length_title">طول الملخص</string>
+    <string name="summary_length_summary">عدد الكلمات المستهدف للملخصات المُنشأة بالذكاء الاصطناعي</string>
+    <string name="highlight_text_title">تمييز النص</string>
+    <string name="highlight_text_on">البحث عن الفقرة التي يقرأها تحويل النص إلى كلام وتمييزها</string>
+    <string name="highlight_text_off">عدم تمييز النص أثناء قراءة تحويل النص إلى كلام</string>
+    <string name="translationLanguage_title">اللغة المطلوبة</string>
+    <string name="translationMethod_title">طريقة الترجمة</string>
+    <string name="translationMethod_summary">اختر كيف يترجم التطبيق النصوص. \"سطر بسطر\" أبطأ ولكن أكثر دقة، و\"الكل مرة واحدة\" أسرع ولكنه قد يكون أقل دقة، و\"فقرة بفقرة\" يوفر توازنًا بين الاثنين.</string>
+    <string name="confidence_threshold_summary">نسبة أعلى ستؤدي إلى دقة أفضل ولكن ستكون أقل احتمالية لتغيير اللغات</string>
+    <string name="auto_translate_title">ترجمة المقالات تلقائيًا</string>
+    <string name="auto_translate_on">ترجمة المقالات تلقائيًا إلى اللغة الافتراضية</string>
+    <string name="auto_translate_off">عدم ترجمة المقالات تلقائيًا</string>
+    <string name="share">مشاركة</string>
+    <string name="mark_as_read">وضع علامة كمقروء</string>
+    <string name="mark_as_unread">وضع علامة كغير مقروء</string>
+    <string name="delete">حذف</string>
+    <string name="zoom_in">تكبير</string>
+    <string name="zoom_out">تصغير</string>
+    <string name="bookmark">إضافة إلى المفضلة</string>
+    <string name="open_in_browser">فتح في المتصفح</string>
+    <string name="exit_browser">وضع عدم الاتصال</string>
+    <string name="reload">إعادة استخراج المقال</string>
+    <string name="onboarding_title">مرحبًا بك في SmartNews Companion</string>
+    <string name="onboarding_description">افتح ميزات الترجمة والتلخيص المدعومة بالذكاء الاصطناعي</string>
+    <string name="onboarding_features_title">باستخدام الذكاء الاصطناعي، يمكنك:</string>
+    <string name="onboarding_feature_translation">ترجمة المقالات إلى لغتك المفضلة</string>
+    <string name="onboarding_feature_summarization">إنشاء ملخصات بالم الذكاء الاصطناعي للمقالات</string>
+    <string name="onboarding_setup_button">إعداد مزود الذكاء الاصطناعي</string>
+    <string name="onboarding_skip_button">تخطي الآن</string>
+    <string name="setup_title">الإعداد</string>
+    <string name="setup_instructions">التعليمات</string>
+    <string name="setup_done_button">لقد أكملت ذلك</string>
+    <string name="setup_open_console_button">فتح وحدة التحكم</string>
+    <string name="enter_api_key_title">أدخل مفتاح API الخاص بك</string>
+    <string name="enter_api_key_subtitle">احصل على مفتاح API من console.groq.com</string>
+    <string name="api_key_hint">مفتاح API</string>
+    <string name="skip_button">تخطي</string>
+    <string name="continue_button">متابعة</string>
+    <string name="complete_button">إكمال الإعداد</string>
+    <string name="save_button">حفظ</string>
+    <string name="setup_required_title">الإعداد مطلوب</string>
+    <string name="setup_required_api_key_message">يرجى إعداد مفتاح API في الإعدادات لاستخدام ميزات الترجمة.</string>
+    <string name="go_to_settings">الذهاب إلى الإعدادات</string>
+    <string name="reading_mode">التبديل إلى وضع القراءة</string>
+    <string name="playing_mode">التبديل إلى وضع التشغيل</string>
+    <string name="filter">تصفية</string>
+    <string name="search">بحث</string>
+    <string name="feed">خلاصة</string>
+    <string name="help">مساعدة</string>
+    <string name="add_more_feed">إضافة خلاصة أخرى</string>
+    <string name="save_app_state">حفظ حالة التطبيق</string>
+    <string name="load_app_state">تحميل حالة التطبيق</string>
+    <string name="all_feed">جميع الخلاصات</string>
+    <string name="reload_message">هل أنت متأكد من إعادة استخراج محتوى المقال؟</string>
+    <string name="reload_all_message">هل أنت متأكد من إعادة استخراج محتوى جميع مقالات هذه الخلاصة؟</string>
+    <string name="reload_confirmation">إعادة استخراج المقال؟</string>
+    <string name="cancel">إلغاء</string>
+    <string name="yes">نعم</string>
+    <string name="login_request_confirmation">هل تتطلب خلاصة الأخبار هذه تسجيل الدخول؟</string>
+    <string name="login_complete_confirmation">هل أكملت تسجيل الدخول؟</string>
+    <string name="no">لا</string>
+    <string name="sort_by">ترتيب حسب</string>
+    <string name="sort_latest">الأحدث أولاً</string>
+    <string name="sort_oldest">الأقدم أولاً</string>
+    <string name="filter_by">تصفية حسب</string>
+    <string name="filter_all">جميع المقالات</string>
+    <string name="filter_bookmark">المفضلة فقط</string>
+    <string name="filter_read">المقروءة فقط</string>
+    <string name="filter_unread">غير المقروءة فقط</string>
+    <string name="play">تشغيل</string>
+    <string name="read">قراءة</string>
+    <string name="more">المزيد</string>
+    <string name="help_what_is_rss">ما هو RSS؟</string>
+    <string name="help_what_is_rss_desc">RSS (التجميع البسيط جداً) هي تقنية تسمح لك بجمع وتلقي التحديثات من مواقع الأخبار المختلفة بتنسيق موحد. من خلال الاشتراك في خلاصات RSS، يمكنك البقاء على اطلاع والوصول بسهولة إلى أحدث المقالات من مصادرك المفضلة.</string>
+    <string name="help_start">كيف أبدأ؟</string>
+    <string name="help_start_desc">للاشتراك في مصدر أخبار، انتقل إلى صفحة الخلاصة والصق عنوان URL في مربع النص تحت علامة التبويب \"إضافة\". بمجرد استخراج الخلاصة بنجاح، سيتم عرض المقالات في صفحة الأخبار إذا لم تكن الخلاصة فارغة.</string>
+    <string name="help_change_feed_language">كيفية تغيير لغة الخلاصة؟</string>
+    <string name="help_change_feed_language_desc">لتغيير لغة الخلاصة، يمكنك الذهاب إلى علامة التبويب \"إدارة\" في صفحة الخلاصة والنقر على زر التعديل. حدد اللغة المطلوبة للخلاصة.</string>
+    <string name="help_wrong_language">لماذا يتحدث تحويل النص إلى كلام بلغة خاطئة؟</string>
+    <string name="help_offline_reading">هل يدعم التطبيق القراءة بدون اتصال؟</string>
+    <string name="help_offline_reading_desc">نعم، التطبيق يدعم القراءة بدون اتصال. ومع ذلك، يجب استخراج المقالات مسبقًا.</string>
+    <string name="help_reading_playing_mode">ما هما \"وضع القراءة\" و\"وضع التشغيل\"؟</string>
+    <string name="help_reading_playing_mode_desc">في وضع القراءة، سيتم عرض المقال فقط دون وظيفة تحويل النص إلى كلام.\n\nفي وضع التشغيل، سيبدأ تحويل النص إلى كلام بقراءة محتوى المقال بمجرد استخراجه بنجاح.</string>
+    <string name="help_app_state">ما هما \"حفظ حالة التطبيق\" و\"تحميل حالة التطبيق\"؟</string>
+    <string name="help_app_state_desc">ستقوم وظيفة \"حفظ حالة التطبيق\" بتصدير ملف OPML إلى التخزين. تسمح وظيفة \"تحميل حالة التطبيق\" للمستخدم باختيار واستيراد ملف OPML.</string>
+    <string name="help_extraction_fail">لماذا لا يحتوي المقال المستخرج على أي محتوى؟</string>
+    <string name="help_import_music">كيف يمكنني استيراد ملف صوتي للموسيقى الخلفية؟</string>
+    <string name="help_buttons">وظائف أزرار الأيقونات</string>
+    <string name="help_buttons_desc">للتعرف على وظائف أزرار الأيقونات، ما عليك سوى الضغط مطولاً على الزر لعرض الوصف.</string>
+    <string name="empty_feed">لم يتم العثور على خلاصة</string>
+    <string name="delete_feed_message">حذف الخلاصة؟</string>
+    <string name="delete_feed_confirmation">هل أنت متأكد من حذف هذه الخلاصة؟ سيتم حذف جميع المقالات تحت هذه الخلاصة أيضًا.</string>
+    <string name="empty_entry">لم يتم العثور على إدخال</string>
+    <string name="go_to_add_feed">الذهاب إلى إضافة خلاصة</string>
+    <string name="add_delay">إضافة تأخير (ثانية)</string>
+    <string name="translate">ترجمة</string>
+
+    <!-- Tab and navigation -->
+    <string name="tab_add">إضافة</string>
+    <string name="tab_manage">إدارة</string>
+    <string name="all_feeds_title">جميع الخلاصات</string>
+    <string name="unread_count">%1$d غير مقروء</string>
+    <string name="no_unread">0 غير مقروء</string>
+    <string name="selected_count">%1$d محدد</string>
+
+    <!-- Add feed page -->
+    <string name="paste_rss_url_hint">الصق رابط RSS هنا</string>
+    <string name="add_feed_button">إضافة خلاصة</string>
+
+    <!-- Feed operation toasts -->
+    <string name="feed_already_added">تمت إضافة هذه الخلاصة مسبقًا</string>
+    <string name="feed_broken_inaccessible">فشل: يبدو أن هذه الخلاصة معطلة أو غير قابلة للوصول حاليًا</string>
+    <string name="feed_added_success">تمت إضافة الخلاصة بنجاح</string>
+    <string name="feed_broken">فشل: يبدو أن هذه الخلاصة معطلة</string>
+    <string name="feed_content_removed">تمت إزالة المحتوى المستخرج لهذه الخلاصة</string>
+    <string name="feed_re_extract_failed">فشل في إعادة الاستخراج</string>
+    <string name="feed_deleted_success">تم حذف الخلاصة بنجاح</string>
+    <string name="feed_delete_failed">فشل في حذف الخلاصة</string>
+
+    <!-- Entry operation toasts -->
+    <string name="visited_entries_deleted">تم حذف جميع المقالات التي تمت زيارتها</string>
+    <string name="selected_entries_deleted">تم حذف جميع المقالات المحددة</string>
+    <string name="bookmark_complete">تمت الإضافة إلى المفضلة</string>
+    <string name="bookmark_removed">تمت إزالة المفضلة</string>
+
+    <!-- Search and filter -->
+    <string name="search_hint">اكتب هنا للبحث</string>
+    <string name="filter_read_only">المقروءة فقط</string>
+    <string name="filter_unread_only">غير المقروءة فقط</string>
+    <string name="filter_bookmarks">المفضلة</string>
+
+    <!-- Translation toast -->
+    <string name="translating_entries">جارٍ ترجمة %1$d مقالة</string>
+
+    <!-- Time formatting -->
+    <string name="time_ago">منذ</string>
+    <string name="time_seconds">ثوانٍ</string>
+    <string name="time_minutes">دقائق</string>
+    <string name="time_hours">ساعات</string>
+    <string name="time_years">سنوات</string>
+    <string name="time_months">أشهر</string>
+    <string name="time_week">أسبوع</string>
+    <string name="time_days">أيام</string>
+
+    <!-- Dialogs -->
+    <string name="feed_settings">إعدادات الخلاصة</string>
+    <string name="update">تحديث</string>
+    <string name="use_system_settings">استخدام إعدادات النظام</string>
+    <string name="speech_rate_update_toast">سيتم تطبيق تحديث سرعة الكلام على المقالة التالية</string>
+    <string name="select_language">اختر اللغة</string>
+    <string name="select">تحديد</string>
+    <string name="select_speech_rate">اختر سرعة الكلام</string>
+
+    <!-- Feed settings dialog hints -->
+    <string name="feed_url_hint">الرابط</string>
+    <string name="feed_title_hint">العنوان</string>
+    <string name="feed_description_hint">الوصف</string>
+    <string name="feed_language_hint">اللغة</string>
+    <string name="feed_speech_rate_hint">سرعة الكلام</string>
+
+    <!-- Fragment labels and navigation -->
+    <string name="first_fragment_label">الجزء الأول</string>
+    <string name="second_fragment_label">الجزء الثاني</string>
+    <string name="next">التالي</string>
+    <string name="previous">السابق</string>
+    <string name="hello_first_fragment">مرحبًا، الجزء الأول</string>
+    <string name="hello_second_fragment">مرحبًا، الجزء الثاني. المعامل: %1$s</string>
+
+    <!-- TTS and settings -->
+    <string name="text_to_speech_settings">إعدادات تحويل النص إلى كلام</string>
+    <string name="text_to_speech_settings_summary">تعديل سرعة الكلام وحدة الصوت ولغات تحويل النص إلى كلام</string>
+    <string name="background_music_turn_on">تشغيل موسيقى الخلفية</string>
+    <string name="background_music_turn_off">إيقاف موسيقى الخلفية</string>
+    <string name="highlight_text_turn_on">تشغيل تمييز النص</string>
+    <string name="highlight_text_turn_off">إيقاف تمييز النص</string>
+    <string name="help_bluetooth_cut_off">لماذا ينقطع تحويل النص إلى كلام عند نقطة البداية عند استخدام البلوتوث</string>
+    <string name="help_bluetooth_cut_off_desc">قد يكون أحد الأسباب أن بعض أجهزة البلوتوث تحافظ على الاتصال فقط عندما يكون الصوت يمر بشكل نشط، وهو ليس الحال مع تحويل النص إلى كلام. ونتيجة لذلك، يحاول الجهاز إنشاء الاتصال عند نقطة البداية عندما يبدأ تحويل النص إلى كلام، مما يتسبب في انقطاعه. لتجنب هذه المشكلة، يمكنك تجربة تمكين موسيقى الخلفية في صفحة الإعدادات ومعرفة ما إذا كانت تحل المشكلة</string>
+    <string name="help_extraction_fail_desc">قد تتطلب بعض مواقع الويب وقتًا إضافيًا للاستخراج الصحيح. لتخصيص المزيد من الوقت، يمكنك زيارة علامة التبويب \"إدارة\" في صفحة الخلاصة والنقر على زر إعادة التحميل. جرب أوقات تأخير مختلفة لتحديد الأنسب.\n\nملاحظة: ستؤدي أوقات التأخير الأطول إلى عملية استخراج أطول. يرجى اختيار أقصر وقت ممكن، إن أمكن.</string>
+    <string name="help_import_music_desc">يمكنك استيراد ملف صوتي في صفحة الإعدادات ضمن \"تحميل موسيقى خلفية\". يرجى ملاحظة أن الملفات الصوتية فقط مدعومة، وملفات الفيديو غير مدعومة. يُنصح باستخدام تنسيق OGG لتجنب أي تشويه عند التكرار.</string>
+    <string name="help_wrong_language_desc" formatted="false">هناك عدة احتمالات قد تكون أدت إلى هذه المشكلة:\n\n1. لغة الخلاصة غير صحيحة. يمكنك تغيير اللغة من خلال الوصول إلى علامة التبويب \"إدارة\" في صفحة الخلاصة.\n\n2. إذا كنت تستخدم معرف اللغة (يمكنك التحقق من ذلك في علامة التبويب \"إدارة\" ضمن صفحة الخلاصة)، فقد لا يتمكن المعرف من اكتشاف لغة المحتوى بدقة بناءً على عتبة الثقة التي قمت بتعيينها في صفحة الإعدادات. سيؤدي تعيين عتبة ثقة أعلى إلى جعل تغيير اللغة أقل احتمالًا. على سبيل المثال، إذا تم تعيين عتبة الثقة على 80٪ وكان المعرف واثقًا بنسبة 50٪ فقط من اللغة، فسيؤدي ذلك إلى فشل وسيتم تعيين اللغة على الإنجليزية</string>
+    <string name="rss_search_link">ابحث عن خلاصات RSS بالكلمات المفتاحية باستخدام هذا الرابط:\nhttps://rssfinder.app/</string>
+    <string name="login_message">يتطلب استخراج المحتوى الكامل لبعض مواقع الويب حسابًا. إذا كان لديك حساب لتسجيل الدخول إلى الموقع، يرجى النقر على \"نعم\" وسيتم إعادة توجيهك إلى الموقع لتسجيل الدخول بحسابك.\n\n(ملاحظة: إذا لم تقم بتسجيل الدخول وتم استخراج خلاصتك الجديدة، يمكنك إعادة استخراج الخلاصة في صفحة إضافة الخلاصة بعد تسجيل الدخول)</string>
+    <string name="login_complete_message">إذا اخترت \"نعم\"، ستتم إضافة خلاصتك الجديدة إلى قاعدة البيانات. إذا اخترت \"لا\"، ستستمر في البقاء في هذه الصفحة.</string>
+    <string name="move_entries_above_to_bin">نقل المقالات أعلاه إلى سلة المحذوفات</string>
+    <string name="move_entries_below_to_bin">نقل المقالات أدناه إلى سلة المحذوفات</string>
+    <string name="languageIdentifier">استخدام معرف اللغة</string>
+    <string name="language_identifier_header">معرف اللغة</string>
+    <string name="reload_suggestion_message">لم يتم استخراج أي محتوى من هذه المقالة. هل ترغب في زيادة وقت تأخير الاستخراج؟ قد تتطلب بعض مواقع الويب وقتًا إضافيًا للاستخراج الصحيح.</string>
+
+    <!-- API provider names (do not translate brand names) -->
+    <string name="provider_groq">Groq</string>
+    <string name="provider_openrouter">OpenRouter</string>
+    <string name="provider_gemini">Google Gemini</string>
+    <string name="provider_claude">Claude</string>
+    <string name="provider_openai">OpenAI</string>
+    <string name="groq_api_key_instruction">1. سجّل الدخول إلى حسابك في Groq\n2. انتقل إلى API Keys\n3. انقر على \"Create Key\"\n4. انسخ مفتاح API واحفظه بشكل آمن</string>
+    <string name="groq_model_examples">مثال: llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768</string>
+    <string name="openrouter_api_key_instruction">1. سجّل الدخول إلى حسابك في OpenRouter\n2. انتقل إلى Settings ← API Keys\n3. انقر على \"Create Key\"\n4. انسخ مفتاح API واحفظه بشكل آمن</string>
+    <string name="openrouter_model_examples">مثال: openai/gpt-oss-20b:free, meta-llama/llama-3.1-8b-instruct:free, google/gemini-2.0-flash-exp:free</string>
+    <string name="gemini_api_key_instruction">1. سجّل الدخول إلى حسابك في Google\n2. انتقل إلى AI Studio\n3. انقر على \"Get API Key\"\n4. أنشئ مشروعًا أو اختر واحدًا\n5. انسخ مفتاح API واحفظه بشكل آمن</string>
+    <string name="gemini_model_examples">مثال: gemini-2.0-flash, gemini-2.5-flash-preview-05-20, gemini-1.5-pro</string>
+    <string name="claude_api_key_instruction">1. سجّل الدخول إلى حسابك في Anthropic\n2. انتقل إلى Settings ← API Keys\n3. انقر على \"Create Key\"\n4. انسخ مفتاح API واحفظه بشكل آمن</string>
+    <string name="claude_model_examples">مثال: claude-sonnet-4-20250514, claude-3-5-haiku-20241022, claude-3-5-sonnet-20241022</string>
+    <string name="openai_api_key_instruction">1. سجّل الدخول إلى حسابك في OpenAI\n2. انتقل إلى API Keys\n3. انقر على \"Create new secret key\"\n4. انسخ مفتاح API واحفظه بشكل آمن</string>
+    <string name="openai_model_examples">مثال: gpt-4o-mini, gpt-4o, gpt-4.1-mini, gpt-4.1-nano</string>
+    <string name="show_original">عرض الأصل</string>
+    <string name="show_translation">عرض الترجمة</string>
+    <string name="re_extract_article">إعادة استخراج المقال</string>
+    <string name="toggle_translation_desc">تبديل الترجمة</string>
+    <string name="default_translation_language">لغة الترجمة الافتراضية</string>
+    <string name="page_load_failed">فشل تحميل الصفحة</string>
+    <string name="translated_for">%1$d%% تمت الترجمة لـ %2$s</string>
+    <string name="provider_local">محلي (على الجهاز)</string>
+    <string name="local_model_download">تنزيل النموذج</string>
+    <string name="local_model_downloaded">تم تنزيل النموذج (%1$s)</string>
+    <string name="local_model_not_downloaded">لم يتم تنزيل النموذج</string>
+    <string name="local_model_downloading">جارٍ تنزيل النموذج…</string>
+    <string name="local_model_size">حجم النموذج: ~1.7 جيجابايت</string>
+    <string name="local_model_delete">حذف النموذج</string>
+    <string name="local_model_delete_confirm">هل تريد حذف نموذج الذكاء الاصطناعي المحلي؟ يمكنك إعادة تنزيله لاحقًا.</string>
+    <string name="local_model_loading">جارٍ تحميل النموذج…</string>
+    <string name="local_model_not_loaded">لم يتم تحميل النموذج المحلي. يرجى تنزيله من الإعدادات.</string>
+</resources>

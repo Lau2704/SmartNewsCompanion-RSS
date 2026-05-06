@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
 import my.mmu.Kaixuanrssnewsreader.data.feed.FeedRepository;
@@ -43,7 +44,7 @@ public class FeedViewModel extends ViewModel {
     private TtsPlayer ttsPlayer;
     private final TtsExtractor ttsExtractor;
     private MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
-    private MutableLiveData<String> toastMessage = new MutableLiveData<>();
+    private MutableLiveData<Integer> toastMessage = new MutableLiveData<>();
     private MutableLiveData<List<Feed>> allFeeds = new MutableLiveData<>();
     private RssFeed rssFeed;
 
@@ -77,7 +78,7 @@ public class FeedViewModel extends ViewModel {
         return isLoading;
     }
 
-    public LiveData<String> getToastMessage() {
+    public LiveData<Integer> getToastMessage() {
         return toastMessage;
     }
 
@@ -107,7 +108,7 @@ public class FeedViewModel extends ViewModel {
                     rssFeed.setLink(link);
                     Log.d("Test Url",link);
                 } else {
-                    toastMessage.postValue("This feed has been added before");
+                    toastMessage.postValue(R.string.feed_already_added);
                 }
             }
         }).subscribeOn(Schedulers.io())
@@ -129,7 +130,7 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        toastMessage.postValue("Failed: This feed seems to be broken or inaccessible now");
+                        toastMessage.postValue(R.string.feed_broken_inaccessible);
                         isLoading.postValue(false);
                     }
                 });
@@ -151,13 +152,13 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onComplete() {
-                        toastMessage.postValue("Feed has been successfully added");
+                        toastMessage.postValue(R.string.feed_added_success);
                         isLoading.postValue(false);
                     }
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        toastMessage.postValue("Failed: This feed seems to be broken");
+                        toastMessage.postValue(R.string.feed_broken);
                         isLoading.postValue(false);
                     }
                 });
@@ -180,7 +181,7 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onComplete() {
-                        toastMessage.postValue("The extracted content for this feed has been removed");
+                        toastMessage.postValue(R.string.feed_content_removed);
                         ttsExtractor.extractAllEntries();
                         Log.d("FYP", "reExtractFeed completed. Now calling extractAllEntries()");
                         isLoading.postValue(false);
@@ -188,7 +189,7 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        toastMessage.postValue("Failed on re-extracting");
+                        toastMessage.postValue(R.string.feed_re_extract_failed);
                         isLoading.postValue(false);
                     }
                 });
@@ -217,13 +218,13 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onComplete() {
-                        toastMessage.postValue("Feed has been successfully deleted");
+                        toastMessage.postValue(R.string.feed_deleted_success);
                         isLoading.postValue(false);
                     }
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        toastMessage.postValue("Failed on deleting feed");
+                        toastMessage.postValue(R.string.feed_delete_failed);
                         isLoading.postValue(false);
                     }
                 });

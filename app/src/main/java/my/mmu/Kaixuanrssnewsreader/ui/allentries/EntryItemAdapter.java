@@ -287,7 +287,7 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
     public String covertTimeToText(Date date) {
 
         String convTime = null;
-        String suffix = "ago";
+        String suffix = context.getString(R.string.time_ago);
         Date nowTime = new Date();
 
         long dateDiff = nowTime.getTime() - date.getTime();
@@ -298,21 +298,21 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
         long day = TimeUnit.MILLISECONDS.toDays(dateDiff);
 
         if (second < 60) {
-            convTime = second + " seconds " + suffix;
+            convTime = second + " " + context.getString(R.string.time_seconds) + " " + suffix;
         } else if (minute < 60) {
-            convTime = minute + " minutes " + suffix;
+            convTime = minute + " " + context.getString(R.string.time_minutes) + " " + suffix;
         } else if (hour < 24) {
-            convTime = hour + " hours " + suffix;
+            convTime = hour + " " + context.getString(R.string.time_hours) + " " + suffix;
         } else if (day >= 7) {
             if (day > 360) {
-                convTime = (day / 360) + " years " + suffix;
+                convTime = (day / 360) + " " + context.getString(R.string.time_years) + " " + suffix;
             } else if (day > 30) {
-                convTime = (day / 30) + " months " + suffix;
+                convTime = (day / 30) + " " + context.getString(R.string.time_months) + " " + suffix;
             } else {
-                convTime = (day / 7) + " week " + suffix;
+                convTime = (day / 7) + " " + context.getString(R.string.time_week) + " " + suffix;
             }
         } else {
-            convTime = day + " days " + suffix;
+            convTime = day + " " + context.getString(R.string.time_days) + " " + suffix;
         }
 
         return convTime;

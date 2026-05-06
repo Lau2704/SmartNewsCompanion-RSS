@@ -4,22 +4,22 @@
     <item
         android:id="@+id/translate"
         android:icon="@drawable/ic_language"
-        android:title="Translate"
-        android:contentDescription="Translate"
+        android:title="@string/translate"
+        android:contentDescription="@string/translate"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/reExtract"
         android:icon="@drawable/ic_reload"
         android:title="@string/reload"
-        android:contentDescription="Re-extract article"
+        android:contentDescription="@string/re_extract_article"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/toggleTranslation"
         android:icon="@drawable/ic_letter_switch"
-        android:title="Show Original"
-        android:contentDescription="Toggle Translation"
+        android:title="@string/show_original"
+        android:contentDescription="@string/toggle_translation_desc"
         android:visible="false"
         app:showAsAction="always" />
 

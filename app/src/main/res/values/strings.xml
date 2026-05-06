@@ -21,6 +21,57 @@
     <string name="text_to_speech_header">Text-to-Speech</string>
     <string name="sync_header">Sync</string>
 
+    <string name="app_language_title">App language</string>
+    <string name="app_language_summary">Change the display language of the app</string>
+    <string-array name="app_language_names">
+        <item>System default</item>
+        <item>English</item>
+        <item>中文（简体）</item>
+        <item>中文（繁體）</item>
+        <item>Bahasa Melayu</item>
+        <item>Español</item>
+        <item>Français</item>
+        <item>Deutsch</item>
+        <item>日本語</item>
+        <item>한국어</item>
+        <item>Português</item>
+        <item>Português (Brasil)</item>
+        <item>Русский</item>
+        <item>العربية</item>
+        <item>हिन्दी</item>
+        <item>Bahasa Indonesia</item>
+        <item>ไทย</item>
+        <item>Tiếng Việt</item>
+        <item>Italiano</item>
+        <item>Türkçe</item>
+        <item>Nederlands</item>
+        <item>Polski</item>
+    </string-array>
+    <string-array name="app_language_values">
+        <item>system</item>
+        <item>en</item>
+        <item>zh</item>
+        <item>zh-TW</item>
+        <item>ms</item>
+        <item>es</item>
+        <item>fr</item>
+        <item>de</item>
+        <item>ja</item>
+        <item>ko</item>
+        <item>pt</item>
+        <item>pt-BR</item>
+        <item>ru</item>
+        <item>ar</item>
+        <item>hi</item>
+        <item>in</item>
+        <item>th</item>
+        <item>vi</item>
+        <item>it</item>
+        <item>tr</item>
+        <item>nl</item>
+        <item>pl</item>
+    </string-array>
+
     <string name="jobPeriodic_title">Update interval</string>
     <string name="confidence_threshold_title">Confidence threshold (%)</string>
 
@@ -78,6 +129,7 @@
     <string name="provider_gemini">Google Gemini</string>
     <string name="provider_claude">Claude</string>
     <string name="provider_openai">OpenAI</string>
+    <string name="provider_local">Local (On-Device)</string>
 
     <string name="groq_api_key_instruction">1. Sign in to your Groq account\n2. Go to API Keys\n3. Click "Create Key"\n4. Copy and save your API key securely</string>
     <string name="groq_model_examples">e.g. llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768</string>
@@ -100,6 +152,7 @@
         <item>Google Gemini</item>
         <item>Claude</item>
         <item>OpenAI</item>
+        <item>Local (On-Device)</item>
     </string-array>
     <string-array name="api_provider_values">
         <item>groq</item>
@@ -107,6 +160,7 @@
         <item>gemini</item>
         <item>claude</item>
         <item>openai</item>
+        <item>local</item>
     </string-array>
 
     <string name="highlight_text_title">Highlight text</string>
@@ -252,5 +306,88 @@
     <!-- Reload Feed Dialog -->
     <string name="add_delay">Add delay (sec)</string>
     <string name="translate">Translate</string>
+
+    <!-- Tab and navigation -->
+    <string name="tab_add">Add</string>
+    <string name="tab_manage">Manage</string>
+    <string name="all_feeds_title">All feeds</string>
+    <string name="unread_count">%1$d unread</string>
+    <string name="no_unread">0 unread</string>
+    <string name="selected_count">%1$d selected</string>
+
+    <!-- Add feed page -->
+    <string name="paste_rss_url_hint">Paste the RSS URL here</string>
+    <string name="add_feed_button">Add feed</string>
+
+    <!-- Feed operation toasts -->
+    <string name="feed_already_added">This feed has been added before</string>
+    <string name="feed_broken_inaccessible">Failed: This feed seems to be broken or inaccessible now</string>
+    <string name="feed_added_success">Feed has been successfully added</string>
+    <string name="feed_broken">Failed: This feed seems to be broken</string>
+    <string name="feed_content_removed">The extracted content for this feed has been removed</string>
+    <string name="feed_re_extract_failed">Failed on re-extracting</string>
+    <string name="feed_deleted_success">Feed has been successfully deleted</string>
+    <string name="feed_delete_failed">Failed on deleting feed</string>
+
+    <!-- Entry operation toasts -->
+    <string name="visited_entries_deleted">All visited entries are deleted</string>
+    <string name="selected_entries_deleted">All selected entries are deleted</string>
+    <string name="bookmark_complete">Bookmark complete</string>
+    <string name="bookmark_removed">Bookmark removed</string>
+
+    <!-- Search and filter -->
+    <string name="search_hint">Type here to search</string>
+    <string name="filter_read_only">Read only</string>
+    <string name="filter_unread_only">Unread only</string>
+    <string name="filter_bookmarks">Bookmarks</string>
+
+    <!-- Translation toast -->
+    <string name="translating_entries">Translating %1$d entries</string>
+
+    <!-- Time formatting -->
+    <string name="time_ago">ago</string>
+    <string name="time_seconds">seconds</string>
+    <string name="time_minutes">minutes</string>
+    <string name="time_hours">hours</string>
+    <string name="time_years">years</string>
+    <string name="time_months">months</string>
+    <string name="time_week">week</string>
+    <string name="time_days">days</string>
+
+    <!-- Dialogs -->
+    <string name="feed_settings">Feed settings</string>
+    <string name="update">Update</string>
+    <string name="use_system_settings">Use system\'s settings</string>
+    <string name="speech_rate_update_toast">Update on speech rate will be reflected in the next article</string>
+    <string name="select_language">Select language</string>
+    <string name="select">Select</string>
+    <string name="select_speech_rate">Select speech rate</string>
+
+    <!-- Feed settings dialog hints -->
+    <string name="feed_url_hint">URL</string>
+    <string name="feed_title_hint">Title</string>
+    <string name="feed_description_hint">Description</string>
+    <string name="feed_language_hint">Language</string>
+    <string name="feed_speech_rate_hint">Speech Rate</string>
+
+    <!-- WebView menu -->
+    <string name="show_original">Show Original</string>
+    <string name="show_translation">Show Translation</string>
+    <string name="re_extract_article">Re-extract article</string>
+    <string name="toggle_translation_desc">Toggle Translation</string>
+    <string name="default_translation_language">Default Translation Language</string>
+    <string name="page_load_failed">Page Load Failed</string>
+    <string name="translated_for">%1$d%% Translated for %2$s</string>
+
+    <!-- Local LLM model -->
+    <string name="local_model_download">Download Model</string>
+    <string name="local_model_downloaded">Model Downloaded (%1$s)</string>
+    <string name="local_model_not_downloaded">Model Not Downloaded</string>
+    <string name="local_model_downloading">Downloading model…</string>
+    <string name="local_model_size">Model size: ~1.7 GB</string>
+    <string name="local_model_delete">Delete Model</string>
+    <string name="local_model_delete_confirm">Delete the local AI model? You can re-download it later.</string>
+    <string name="local_model_loading">Loading model…</string>
+    <string name="local_model_not_loaded">Local model not loaded. Please download it in Settings.</string>
 
 </resources>

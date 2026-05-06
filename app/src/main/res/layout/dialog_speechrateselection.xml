@@ -22,7 +22,7 @@
                 android:id="@+id/speechRateRadioButton0"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:text="Use system's settings"/>
+                android:text="@string/use_system_settings"/>
 
             <RadioButton
                 android:id="@+id/speechRateRadioButton1"

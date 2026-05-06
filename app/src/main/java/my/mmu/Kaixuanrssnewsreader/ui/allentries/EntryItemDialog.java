@@ -99,7 +99,7 @@ public class EntryItemDialog extends AppCompatDialogFragment {
 
         feedTitle.setText(entryInfo.getFeedTitle());
         entryTitle.setText(entryInfo.getEntryTitle());
-        entryDate.setText(new SimpleDateFormat("EEE, d MMM yyyy").format(entryInfo.getEntryPublishedDate()));
+        entryDate.setText(java.text.SimpleDateFormat.getDateInstance(java.text.SimpleDateFormat.MEDIUM, getContext().getResources().getConfiguration().getLocales().get(0)).format(entryInfo.getEntryPublishedDate()));
         if (entryInfo.getEntryDescription() != null) {
             entryDesc.setText(Html.fromHtml(entryInfo.getEntryDescription()));
         }

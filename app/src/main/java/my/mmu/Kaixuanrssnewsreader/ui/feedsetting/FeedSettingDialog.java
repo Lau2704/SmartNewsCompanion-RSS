@@ -67,10 +67,10 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
                 } catch (Exception e) {
                     Log.d(TAG, "Failed to create Locale " + e.getMessage());
                     language = null;
-                    languageDisplayName = LanguageSelectionDialog.languageIdentifierTAG;
+                    languageDisplayName = getString(R.string.languageIdentifier);
                 }
             } else {
-                languageDisplayName = LanguageSelectionDialog.languageIdentifierTAG;
+                languageDisplayName = getString(R.string.languageIdentifier);
             }
         }
 
@@ -87,7 +87,7 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
 
         String speechRateDisplayName;
         if (speechRateDisplay == 0) {
-            speechRateDisplayName = "Use system's settings";
+            speechRateDisplayName = getString(R.string.use_system_settings);
         } else{
             speechRateDisplayName = Float.toString(speechRateDisplay) + "x";
         }
@@ -119,20 +119,20 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setView(view)
                 .setIcon(R.drawable.ic_setting)
-                .setTitle("Feed settings")
-                .setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.feed_settings)
+                .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                     }
                 })
-                .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String updatedTitle = Objects.requireNonNull(titleEditText.getText()).toString();
                         String updatedDesc = Objects.requireNonNull(descriptionEditText.getText()).toString();
                         feedSettingViewModel.updateTitleDescLanguage(updatedTitle, updatedDesc, language, link);
-                        Toast.makeText(requireContext(), "Update on speech rate will be reflected in the next article", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), R.string.speech_rate_update_toast, Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -147,7 +147,7 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
             language = newLanguage;
         }
         if (language == null) {
-            languageTextView.setText(newLanguage);
+            languageTextView.setText(getString(R.string.languageIdentifier));
         } else {
             Locale locale = new Locale(newLanguage);
             languageTextView.setText(locale.getDisplayName());
@@ -158,7 +158,7 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
     public void modifySpeechRate(float ttsSpeechRate) {
         String speechRate;
         if (ttsSpeechRate == 0) {
-            speechRate = "Use system's setting";
+            speechRate = getString(R.string.use_system_settings);
         } else {
             speechRate = ttsSpeechRate + "x";
         }

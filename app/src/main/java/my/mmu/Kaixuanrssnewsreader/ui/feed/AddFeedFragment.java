@@ -65,11 +65,11 @@ public class AddFeedFragment extends Fragment implements FeedViewModel.AddFeedCa
             }
         });
 
-        feedViewModel.getToastMessage().observe(getViewLifecycleOwner(), new Observer<String>() {
+        feedViewModel.getToastMessage().observe(getViewLifecycleOwner(), new Observer<Integer>() {
             @Override
-            public void onChanged(String s) {
-                if (s != null && !s.isEmpty()) {
-                    Snackbar.make(requireView(), s, Snackbar.LENGTH_SHORT).show();
+            public void onChanged(Integer resId) {
+                if (resId != null) {
+                    Snackbar.make(requireView(), getString(resId), Snackbar.LENGTH_SHORT).show();
                     feedViewModel.resetToastMessage();
                 }
             }

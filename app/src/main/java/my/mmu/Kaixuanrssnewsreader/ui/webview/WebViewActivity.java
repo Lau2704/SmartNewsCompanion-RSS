@@ -193,7 +193,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private void showTranslationLanguageDialog(Context context) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Default Translation Language");
+        builder.setTitle(getString(R.string.default_translation_language));
 
         CharSequence[] entries = getResources().getStringArray(R.array.defaultTranslationLanguage);
         CharSequence[] entryValues = getResources().getStringArray(R.array.defaultTranslationLanguage_values);
@@ -1124,7 +1124,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         boolean hasTranslated = translatedHtml != null && !translatedHtml.trim().isEmpty();
 
         toggleTranslationButton.setVisible(hasOriginal && hasTranslated);
-        toggleTranslationButton.setTitle(isTranslatedView ? "Show Original" : "Show Translation");
+        toggleTranslationButton.setTitle(isTranslatedView ? getString(R.string.show_original) : getString(R.string.show_translation));
 
         String htmlToLoad = isTranslatedView ? translatedHtml : originalHtml;
 
@@ -1167,7 +1167,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     Log.d(TAG, "Translated HTML synced from auto translation.");
                                 }
 
-                                toggleTranslationButton.setTitle(isTranslatedView ? "Show Original" : "Show Translation");
+                                toggleTranslationButton.setTitle(isTranslatedView ? getString(R.string.show_original) : getString(R.string.show_translation));
 
                                 Log.d(TAG, "AutoTranslation - Final Original:\n" + webViewViewModel.getOriginalHtmlById(currentId));
                                 Log.d(TAG, "AutoTranslation - Final Translated:\n" + webViewViewModel.getHtmlById(currentId));
@@ -1329,7 +1329,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 Log.d(TAG, "HTML loaded for toggle view:\n" + htmlToLoad);
 
                 if (htmlToLoad != null && !htmlToLoad.trim().isEmpty()) {
-                    toggleTranslationButton.setTitle(isTranslatedView ? "Show Original" : "Show Translation");
+                    toggleTranslationButton.setTitle(isTranslatedView ? getString(R.string.show_original) : getString(R.string.show_translation));
                     loadHtmlIntoWebView(htmlToLoad);
 
                     if (isTranslatedView) {
@@ -2484,7 +2484,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
         new AlertDialog.Builder(this)
-            .setTitle("Page Load Failed")
+            .setTitle(getString(R.string.page_load_failed))
             .setMessage("The page failed to load correctly after " + MAX_RETRY_ATTEMPTS + " attempts.\n\n" +
                        "Error: " + errorMessage + "\n\n" +
                        "Would you like to retry loading the page?")

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kaixuan RSS Nachrichtenleser</string>
+    <string name="action_settings">Einstellungen</string>
+    <string name="add_manage_feed">Feed hinzufugen/verwalten</string>
+    <string name="add_feed">Feed hinzufugen</string>
+    <string name="news">Nachrichten</string>
+    <string name="setting">Einstellungen</string>
+    <string name="interface_header">Oberflache</string>
+    <string name="translation_header">Sprache</string>
+    <string name="text_to_speech_header">Text-zu-Sprache</string>
+    <string name="sync_header">Synchronisierung</string>
+    <string name="app_language_title">App-Sprache</string>
+    <string name="app_language_summary">Die Anzeigesprache der App andern</string>
+    <string name="jobPeriodic_title">Aktualisierungsintervall</string>
+    <string name="confidence_threshold_title">Konfidenzschwelle (%)</string>
+    <string name="background_music">Hintergrundmusik</string>
+    <string name="background_music_file">Hintergrundmusik hochladen</string>
+    <string name="background_music_summary_on">Hintergrundmusik abspielen, wenn Text-zu-Sprache liest</string>
+    <string name="background_music_summary_off">Hintergrundmusik ausschalten, wenn Text-zu-Sprache liest</string>
+    <string name="background_music_volume">Lautstarke der Hintergrundmusik</string>
+    <string name="background_music_volume_summary">Die Lautstarke der Hintergrundmusik anpassen</string>
+    <string name="install_google_tts_title">Google TTS installieren</string>
+    <string name="install_google_tts_title_installed">Google TTS-Engine</string>
+    <string name="install_google_tts_summary_installed">Google Text-zu-Sprache ist installiert</string>
+    <string name="install_google_tts_summary_not_installed">Google Text-zu-Sprache ist nicht installiert. Tippen Sie hier, um es aus dem Play Store herunterzuladen.</string>
+    <string name="google_tts_voice_data_title">Sprachdaten herunterladen</string>
+    <string name="google_tts_voice_data_summary">Sprachpakete fur Google Text-zu-Sprache herunterladen</string>
+    <string name="tts_speech_rate_title">Sprechgeschwindigkeit</string>
+    <string name="tts_speech_rate_summary">Die Geschwindigkeit der Text-zu-Sprache-Wiedergabe anpassen</string>
+    <string name="tts_pitch_title">Tonhohe</string>
+    <string name="tts_pitch_summary">Die Tonhohe der Text-zu-Sprache-Stimme anpassen</string>
+    <string name="theme_title">Dunkles Design</string>
+    <string name="theme_summary_on">Dunkles Design aktiviert</string>
+    <string name="theme_summary_off">Helles Design aktiviert</string>
+    <string name="entries_limit_title">Artikellimit pro Feed</string>
+    <string name="entries_limit_summary">Alteste nicht mit Lesezeichen versehene Artikel nach der Aktualisierung loschen (Limit schliesst Lesezeichen aus)</string>
+    <string name="display_summary_title">Artikel automatisch zusammenfassen</string>
+    <string name="display_summary_on">Automatisch eine Zusammenfassung fur Artikel generieren</string>
+    <string name="display_summary_off">Keine automatische Zusammenfassung fur Artikel generieren</string>
+    <string name="api_setting_title">API-Schlussel</string>
+    <string name="api_setting_summary">Geben Sie Ihren API-Schlussel ein</string>
+    <string name="api_setting_dialog_title">API-Schlussel</string>
+    <string name="api_provider_title">API-Anbieter</string>
+    <string name="api_key_setup_title">API-Schlussel abrufen</string>
+    <string name="api_key_setup_summary">Erstellen oder verwalten Sie Ihren API-Schlussel</string>
+    <string name="api_model_title">KI-Modell</string>
+    <string name="api_model_summary">Geben Sie den Modellnamen ein</string>
+    <string name="api_model_dialog_title">KI-Modell</string>
+    <string name="summary_length_title">Zusammenfassungslange</string>
+    <string name="summary_length_summary">Zielwortzahl fur KI-generierte Zusammenfassungen</string>
+    <string name="highlight_text_title">Text hervorheben</string>
+    <string name="highlight_text_on">Den Absatz suchen und hervorheben, in dem Text-zu-Sprache spricht</string>
+    <string name="highlight_text_off">Text nicht hervorheben, wenn Text-zu-Sprache spricht</string>
+    <string name="translationLanguage_title">Gewunschte Sprache</string>
+    <string name="translationMethod_title">Ubersetzungsmethode</string>
+    <string name="translationMethod_summary">Wahlen Sie, wie die App Text ubersetzt. \'Zeile fur Zeile\' ist langsamer, aber genauer, \'Alles auf einmal\' ist schneller, aber moglicherweise weniger genau, und \'Absatz fur Absatz\' bietet einen Kompromiss zwischen beiden.</string>
+    <string name="confidence_threshold_summary">Ein höherer Prozentsatz führt zu einer besseren Genauigkeit, macht es jedoch unwahrscheinlicher, dass die Sprache gewechselt wird</string>
+    <string name="auto_translate_title">Artikel automatisch ubersetzen</string>
+    <string name="auto_translate_on">Artikel automatisch in die Standardsprache ubersetzen</string>
+    <string name="auto_translate_off">Artikel nicht automatisch ubersetzen</string>
+    <string name="share">Teilen</string>
+    <string name="mark_as_read">Als gelesen markieren</string>
+    <string name="mark_as_unread">Als ungelesen markieren</string>
+    <string name="delete">Loschen</string>
+    <string name="zoom_in">Vergrossern</string>
+    <string name="zoom_out">Verkleinern</string>
+    <string name="bookmark">Lesezeichen</string>
+    <string name="open_in_browser">Im Browser offnen</string>
+    <string name="exit_browser">Offlinemodus</string>
+    <string name="reload">Artikel neu extrahieren</string>
+    <string name="onboarding_title">Willkommen bei SmartNews Companion</string>
+    <string name="onboarding_description">KI-gestutzte Ubersetzungs- und Zusammenfassungsfunktionen freischalten</string>
+    <string name="onboarding_features_title">Mit KI konnen Sie:</string>
+    <string name="onboarding_feature_translation">Artikel in Ihre bevorzugte Sprache ubersetzen</string>
+    <string name="onboarding_feature_summarization">KI-Zusammenfassungen von Artikeln generieren</string>
+    <string name="onboarding_setup_button">KI-Anbieter einrichten</string>
+    <string name="onboarding_skip_button">Vorerst uberspringen</string>
+    <string name="setup_title">Einrichtung</string>
+    <string name="setup_instructions">Anleitungen</string>
+    <string name="setup_done_button">Ich habe dies abgeschlossen</string>
+    <string name="setup_open_console_button">Konsole offnen</string>
+    <string name="enter_api_key_title">Geben Sie Ihren API-Schlussel ein</string>
+    <string name="enter_api_key_subtitle">Holen Sie sich Ihren API-Schlussel von console.groq.com</string>
+    <string name="api_key_hint">API-Schlussel</string>
+    <string name="skip_button">Uberspringen</string>
+    <string name="continue_button">Fortfahren</string>
+    <string name="complete_button">Einrichtung abschliessen</string>
+    <string name="save_button">Speichern</string>
+    <string name="setup_required_title">Einrichtung erforderlich</string>
+    <string name="setup_required_api_key_message">Bitte richten Sie Ihren API-Schlussel in den Einstellungen ein, um die Ubersetzungsfunktionen zu nutzen.</string>
+    <string name="go_to_settings">Zu den Einstellungen</string>
+    <string name="reading_mode">Zum Lesemodus wechseln</string>
+    <string name="playing_mode">Zum Wiedergabemodus wechseln</string>
+    <string name="filter">Filtern</string>
+    <string name="search">Suchen</string>
+    <string name="feed">Feed</string>
+    <string name="help">Hilfe</string>
+    <string name="add_more_feed">Weitere Feeds hinzufugen</string>
+    <string name="save_app_state">App-Zustand speichern</string>
+    <string name="load_app_state">App-Zustand laden</string>
+    <string name="all_feed">Alle Feeds</string>
+    <string name="reload_message">Mochten Sie den Inhalt des Artikels wirklich neu extrahieren?</string>
+    <string name="reload_all_message">Mochten Sie wirklich alle Artikelinhalte dieses Feeds neu extrahieren?</string>
+    <string name="reload_confirmation">Artikel neu extrahieren?</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="yes">Ja</string>
+    <string name="login_request_confirmation">Erfordert dieser Nachrichtenfeed ein Benutzerkonto?</string>
+    <string name="login_complete_confirmation">Anmeldung abgeschlossen?</string>
+    <string name="no">Nein</string>
+    <string name="sort_by">Sortieren nach</string>
+    <string name="sort_latest">Neueste zuerst</string>
+    <string name="sort_oldest">Alteste zuerst</string>
+    <string name="filter_by">Filtern nach</string>
+    <string name="filter_all">Alle Artikel</string>
+    <string name="filter_bookmark">Nur Lesezeichen</string>
+    <string name="filter_read">Nur gelesene</string>
+    <string name="filter_unread">Nur ungelesene</string>
+    <string name="play">Abspielen</string>
+    <string name="read">Lesen</string>
+    <string name="more">Mehr</string>
+    <string name="help_what_is_rss">Was ist RSS?</string>
+    <string name="help_what_is_rss_desc">RSS (Really Simple Syndication) ist eine Technologie, die es Ihnen ermoglicht, Aktualisierungen von verschiedenen Nachrichtenseiten in einem standardisierten Format zu sammeln und zu empfangen. Durch das Abonnieren von RSS-Feeds konnen Sie informiert bleiben und mühelos auf die neuesten Artikel Ihrer Lieblingsquellen zugreifen.</string>
+    <string name="help_start">Wie fange ich an?</string>
+    <string name="help_start_desc">Um eine Nachrichtenquelle zu abonnieren, navigieren Sie zur Feed-Seite und fügen Sie die URL in das Textfeld unter der Registerkarte \'Hinzufugen\' ein. Sobald der Feed erfolgreich extrahiert wurde, werden die Artikel auf der Nachrichtenseite angezeigt, wenn der Feed nicht leer ist.</string>
+    <string name="help_change_feed_language">Wie andert man die Sprache eines Feeds?</string>
+    <string name="help_change_feed_language_desc">Um die Sprache eines Feeds zu andern, gehen Sie zur Registerkarte \'Verwalten\' auf der Feed-Seite und klicken Sie auf die Schaltflache Bearbeiten. Wahlen Sie die gewunschte Sprache fur den Feed aus.</string>
+    <string name="help_wrong_language">Warum spricht Text-zu-Sprache in der falschen Sprache?</string>
+    <string name="help_offline_reading">Unterstützt die App das Offline-Lesen?</string>
+    <string name="help_offline_reading_desc">Ja, die App unterstutzt das Offline-Lesen. Die Artikel mussen jedoch im Voraus extrahiert werden.</string>
+    <string name="help_reading_playing_mode">Was sind der \'Lesemodus\' und der \'Wiedergabemodus\'?</string>
+    <string name="help_reading_playing_mode_desc">Im Lesemodus wird nur der Artikel ohne Text-zu-Sprache-Funktionalitat angezeigt.\n\nIm Wiedergabemodus beginnt Text-zu-Sprache, den Inhalt des Artikels vorzulesen, sobald er erfolgreich extrahiert wurde.</string>
+    <string name="help_app_state">Was sind \'App-Zustand speichern\' und \'App-Zustand laden\'?</string>
+    <string name="help_app_state_desc">Die Funktion \'App-Zustand speichern\' exportiert eine OPML-Datei in den Speicher. Die Funktion \'App-Zustand laden\' ermoglicht es dem Benutzer, eine OPML-Datei auszuwahlen und zu importieren.</string>
+    <string name="help_extraction_fail">Warum hat mein extrahierter Artikel keinen Inhalt?</string>
+    <string name="help_import_music">Wie kann ich eine Audiodatei fur Hintergrundmusik importieren?</string>
+    <string name="help_buttons">Symbol-Schaltflachen-Funktionen</string>
+    <string name="help_buttons_desc">Um mehr uber die Funktionen der Symbol-Schaltflachen zu erfahren, drucken Sie einfach lang auf die Schaltflache, um die Beschreibung anzuzeigen.</string>
+    <string name="empty_feed">Kein Feed gefunden</string>
+    <string name="delete_feed_message">Feed loschen?</string>
+    <string name="delete_feed_confirmation">Sind Sie sicher, dass Sie diesen Feed loschen mochten? Alle Artikel unter diesem Feed werden ebenfalls geloscht.</string>
+    <string name="empty_entry">Kein Eintrag gefunden</string>
+    <string name="go_to_add_feed">Zum Feed hinzufugen gehen</string>
+    <string name="add_delay">Verzogerung hinzufugen (Sek)</string>
+    <string name="translate">Ubersetzen</string>
+
+    <!-- Tab and navigation -->
+    <string name="tab_add">Hinzufugen</string>
+    <string name="tab_manage">Verwalten</string>
+    <string name="all_feeds_title">Alle Feeds</string>
+    <string name="unread_count">%1$d ungelesen</string>
+    <string name="no_unread">0 ungelesen</string>
+    <string name="selected_count">%1$d ausgewahlt</string>
+
+    <!-- Add feed page -->
+    <string name="paste_rss_url_hint">RSS-URL hier einfugen</string>
+    <string name="add_feed_button">Feed hinzufugen</string>
+
+    <!-- Feed operation toasts -->
+    <string name="feed_already_added">Dieser Feed wurde bereits hinzugefugt</string>
+    <string name="feed_broken_inaccessible">Fehlgeschlagen: Dieser Feed scheint defekt oder derzeit nicht zugaenglich zu sein</string>
+    <string name="feed_added_success">Feed wurde erfolgreich hinzugefugt</string>
+    <string name="feed_broken">Fehlgeschlagen: Dieser Feed scheint defekt zu sein</string>
+    <string name="feed_content_removed">Der extrahierte Inhalt fur diesen Feed wurde entfernt</string>
+    <string name="feed_re_extract_failed">Erneute Extraktion fehlgeschlagen</string>
+    <string name="feed_deleted_success">Feed wurde erfolgreich geloscht</string>
+    <string name="feed_delete_failed">Feed loschen fehlgeschlagen</string>
+
+    <!-- Entry operation toasts -->
+    <string name="visited_entries_deleted">Alle besuchten Eintrage wurden geloscht</string>
+    <string name="selected_entries_deleted">Alle ausgewahlten Eintrage wurden geloscht</string>
+    <string name="bookmark_complete">Lesezeichen gesetzt</string>
+    <string name="bookmark_removed">Lesezeichen entfernt</string>
+
+    <!-- Search and filter -->
+    <string name="search_hint">Hier tippen zum Suchen</string>
+    <string name="filter_read_only">Nur gelesene</string>
+    <string name="filter_unread_only">Nur ungelesene</string>
+    <string name="filter_bookmarks">Lesezeichen</string>
+
+    <!-- Translation toast -->
+    <string name="translating_entries">%1$d Eintrage werden ubersetzt</string>
+
+    <!-- Time formatting -->
+    <string name="time_ago">vor</string>
+    <string name="time_seconds">Sekunden</string>
+    <string name="time_minutes">Minuten</string>
+    <string name="time_hours">Stunden</string>
+    <string name="time_years">Jahren</string>
+    <string name="time_months">Monaten</string>
+    <string name="time_week">Woche</string>
+    <string name="time_days">Tagen</string>
+
+    <!-- Dialogs -->
+    <string name="feed_settings">Feed-Einstellungen</string>
+    <string name="update">Aktualisieren</string>
+    <string name="use_system_settings">Systemeinstellungen verwenden</string>
+    <string name="speech_rate_update_toast">Die Aktualisierung der Sprechgeschwindigkeit wird im nachsten Artikel angezeigt</string>
+    <string name="select_language">Sprache auswahlen</string>
+    <string name="select">Auswahlen</string>
+    <string name="select_speech_rate">Sprechgeschwindigkeit auswahlen</string>
+
+    <!-- Feed settings dialog hints -->
+    <string name="feed_url_hint">URL</string>
+    <string name="feed_title_hint">Titel</string>
+    <string name="feed_description_hint">Beschreibung</string>
+    <string name="feed_language_hint">Sprache</string>
+    <string name="feed_speech_rate_hint">Sprechgeschwindigkeit</string>
+
+    <!-- Fragment labels -->
+    <string name="first_fragment_label">Erstes Fragment</string>
+    <string name="second_fragment_label">Zweites Fragment</string>
+    <string name="next">Weiter</string>
+    <string name="previous">Zuruck</string>
+    <string name="hello_first_fragment">Hallo erstes Fragment</string>
+    <string name="hello_second_fragment">Hallo zweites Fragment. Argument: %1$s</string>
+    <string name="text_to_speech_settings">Text-in-Sprache-Einstellungen</string>
+    <string name="text_to_speech_settings_summary">Sprechgeschwindigkeit, Tonhohe und Sprachen der Text-in-Sprache-andern</string>
+    <string name="background_music_turn_on">Hintergrundmusik einschalten</string>
+    <string name="background_music_turn_off">Hintergrundmusik ausschalten</string>
+    <string name="highlight_text_turn_on">Texthervorhebung einschalten</string>
+    <string name="highlight_text_turn_off">Texthervorhebung ausschalten</string>
+    <string name="help_bluetooth_cut_off">Warum wird die Text-in-Sprache am Anfang bei Verwendung von Bluetooth abgeschnitten</string>
+    <string name="help_bluetooth_cut_off_desc">Ein Grund dafur konnte sein, dass einige Bluetooth-Gerate die Verbindung nur aufrechterhalten, wenn Audio aktiv ubertragen wird, was bei Text-in-Sprache nicht der Fall ist. Infolgedessen versucht das Geraet, die Verbindung zum Startzeitpunkt herzustellen, wenn die Text-in-Sprache zu sprechen beginnt, was zum Abschneiden fuhrt. Um dieses Problem zu vermeiden, konnen Sie versuchen, die Hintergrundmusik auf der Einstellungsseite zu aktivieren und prufen, ob das Problem behoben wird</string>
+    <string name="help_extraction_fail_desc">Einige Websites benotigen moglicherweise zusatzliche Zeit fur eine ordnungsgemasse Extraktion. Um mehr Zeit einzuraumen, konnen Sie die Registerkarte \'Verwalten\' auf der Feed-Seite aufrufen und auf die Schaltflache zum Neuladen klicken. Experimentieren Sie mit unterschiedlichen Verzogerungszeiten, um die geeignetste zu ermitteln.\n\nHinweis: Langere Verzogerungszeiten fuhren zu einem langeren Extraktionsprozess. Bitte wahlen Sie die kurzestmogliche Zeit, falls zutreffend.</string>
+    <string name="help_import_music_desc">Sie konnen eine Audiodatei auf der Einstellungsseite unter \'Hintergrundmusik hochladen\' importieren. Bitte beachten Sie, dass nur Audiodateien unterstutzt werden und Videodateien nicht unterstutzt werden. Es wird empfohlen, das OGG-Format zu verwenden, um Verzerrungen beim Loopen zu vermeiden.</string>
+    <string name="help_wrong_language_desc" formatted="false">Es gibt einige Moglichkeiten, die zu diesem Problem gefuhrt haben konnten:\n\n1. Die Sprache des Feeds ist falsch. Sie konnen die Sprache andern, indem Sie auf die Registerkarte \'Verwalten\' auf der Feed-Seite zugreifen.\n\n2. Wenn Sie den Sprachidentifikator verwenden (Sie konnen dies auf der Registerkarte \'Verwalten\' auf der Feed-Seite uberprufen), kann der Identifikator die Sprache des Inhalts moglicherweise nicht genau anhand des Konfidenzschwellenwerts erkennen, den Sie auf der Einstellungsseite festgelegt haben. Ein hoherer Konfidenzschwellenwert macht es unwahrscheinlicher, dass die Sprache geandert wird. Wenn beispielsweise der Konfidenzschwellenwert auf 80% festgelegt ist und der Identifikator nur zu 50% sicher uber die Sprache ist, fuhrt dies zu einem Fehler und die Sprache wird auf Englisch gesetzt</string>
+    <string name="rss_search_link">Suchen Sie RSS-Feeds nach Schlusswortern uber diesen Link:\nhttps://rssfinder.app/</string>
+    <string name="login_message">Ein Konto ist erforderlich, um den vollstandigen Inhalt EINIGER Websites zu extrahieren. Wenn Sie ein Konto fur die Anmeldung auf der Website haben, klicken Sie bitte auf \"Ja\" und Sie werden zur Website weitergeleitet, um sich mit Ihrem Konto anzumelden. \n\n(Hinweis: Wenn Sie sich nicht angemeldet haben und Ihr neuer Feed extrahiert wurde, konnen Sie den Feed dennoch auf der Feed-Hinzufugen-Seite nach der Anmeldung erneut extrahieren)</string>
+    <string name="login_complete_message">Wenn \"Ja\", wird Ihr neuer Feed zur Datenbank hinzugefugt. Wenn \"Nein\", bleiben Sie auf dieser Seite.</string>
+    <string name="move_entries_above_to_bin">Obige Eintrage in den Papierkorb verschieben</string>
+    <string name="move_entries_below_to_bin">Untere Eintrage in den Papierkorb verschieben</string>
+    <string name="languageIdentifier">Sprachidentifikator verwenden</string>
+    <string name="language_identifier_header">Sprachidentifikator</string>
+    <string name="reload_suggestion_message">Es wurde kein Inhalt aus diesem Artikel extrahiert. Mochten Sie die Extraktionsverzogerungszeit erhoehen? Einige Websites benotigen moglicherweise zusatzliche Zeit fur eine ordnungsgemasse Extraktion.</string>
+
+    <!-- API provider strings -->
+    <string name="provider_groq">Groq</string>
+    <string name="provider_openrouter">OpenRouter</string>
+    <string name="provider_gemini">Google Gemini</string>
+    <string name="provider_claude">Claude</string>
+    <string name="provider_openai">OpenAI</string>
+    <string name="groq_api_key_instruction">1. Melden Sie sich in Ihrem Groq-Konto an\n2. Gehen Sie zu API Keys\n3. Klicken Sie auf \"Create Key\"\n4. Kopieren und speichern Sie Ihren API-Schlussel sicher</string>
+    <string name="groq_model_examples">z.B. llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768</string>
+    <string name="openrouter_api_key_instruction">1. Melden Sie sich in Ihrem OpenRouter-Konto an\n2. Gehen Sie zu Settings → API Keys\n3. Klicken Sie auf \"Create Key\"\n4. Kopieren und speichern Sie Ihren API-Schlussel sicher</string>
+    <string name="openrouter_model_examples">z.B. openai/gpt-oss-20b:free, meta-llama/llama-3.1-8b-instruct:free, google/gemini-2.0-flash-exp:free</string>
+    <string name="gemini_api_key_instruction">1. Melden Sie sich in Ihrem Google-Konto an\n2. Gehen Sie zu AI Studio\n3. Klicken Sie auf \"Get API Key\"\n4. Erstellen oder wahlen Sie ein Projekt\n5. Kopieren und speichern Sie Ihren API-Schlussel sicher</string>
+    <string name="gemini_model_examples">z.B. gemini-2.0-flash, gemini-2.5-flash-preview-05-20, gemini-1.5-pro</string>
+    <string name="claude_api_key_instruction">1. Melden Sie sich in Ihrem Anthropic-Konto an\n2. Gehen Sie zu Settings → API Keys\n3. Klicken Sie auf \"Create Key\"\n4. Kopieren und speichern Sie Ihren API-Schlussel sicher</string>
+    <string name="claude_model_examples">z.B. claude-sonnet-4-20250514, claude-3-5-haiku-20241022, claude-3-5-sonnet-20241022</string>
+    <string name="openai_api_key_instruction">1. Melden Sie sich in Ihrem OpenAI-Konto an\n2. Gehen Sie zu API Keys\n3. Klicken Sie auf \"Create new secret key\"\n4. Kopieren und speichern Sie Ihren API-Schlussel sicher</string>
+    <string name="openai_model_examples">z.B. gpt-4o-mini, gpt-4o, gpt-4.1-mini, gpt-4.1-nano</string>
+    <string name="show_original">Original anzeigen</string>
+    <string name="show_translation">Übersetzung anzeigen</string>
+    <string name="re_extract_article">Artikel neu extrahieren</string>
+    <string name="toggle_translation_desc">Übersetzung umschalten</string>
+    <string name="default_translation_language">Standard-Übersetzungssprache</string>
+    <string name="page_load_failed">Seite konnte nicht geladen werden</string>
+    <string name="translated_for">%1$d%% Übersetzt für %2$s</string>
+    <string name="provider_local">Lokal (Auf dem Gerät)</string>
+    <string name="local_model_download">Modell herunterladen</string>
+    <string name="local_model_downloaded">Modell heruntergeladen (%1$s)</string>
+    <string name="local_model_not_downloaded">Modell nicht heruntergeladen</string>
+    <string name="local_model_downloading">Modell wird heruntergeladen…</string>
+    <string name="local_model_size">Modellgröße: ~1,7 GB</string>
+    <string name="local_model_delete">Modell löschen</string>
+    <string name="local_model_delete_confirm">Lokales KI-Modell löschen? Sie können es später erneut herunterladen.</string>
+    <string name="local_model_loading">Modell wird geladen…</string>
+    <string name="local_model_not_loaded">Lokales Modell nicht geladen. Bitte laden Sie es in den Einstellungen herunter.</string>
+</resources>
