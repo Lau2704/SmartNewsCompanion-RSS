@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">フィード設定</string>
     <string name="update">更新</string>
-    <string name="use_system_settings">システム設定を使用</string>
+    <string name="use_system_settings">アプリ設定を使用</string>
     <string name="speech_rate_update_toast">読み上げ速度の変更は次の記事から反映されます</string>
     <string name="select_language">言語を選択</string>
     <string name="select">選択</string>

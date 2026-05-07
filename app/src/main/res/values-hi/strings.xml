@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">फ़ीड सेटिंग्स</string>
     <string name="update">अपडेट करें</string>
-    <string name="use_system_settings">सिस्टम सेटिंग्स का उपयोग करें</string>
+    <string name="use_system_settings">ऐप सेटिंग्स का उपयोग करें</string>
     <string name="speech_rate_update_toast">भाषण दर में बदलाव अगले लेख में दिखेगा</string>
     <string name="select_language">भाषा चुनें</string>
     <string name="select">चुनें</string>

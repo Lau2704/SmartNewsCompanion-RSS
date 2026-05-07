@@ -13,20 +13,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
 import my.mmu.Kaixuanrssnewsreader.R;
-import my.mmu.Kaixuanrssnewsreader.data.feed.FeedRepository;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
-
-@AndroidEntryPoint
 public class SpeechRateSelectionDialog extends AppCompatDialogFragment {
 
     public static final String TAG = "SpeechRateDialog";
-
-    @Inject
-    FeedRepository feedRepository;
 
     private RadioGroup radioGroup;
     private long feedId;
@@ -126,7 +117,6 @@ public class SpeechRateSelectionDialog extends AppCompatDialogFragment {
                                 speechRate = 3.0f;
                                 break;
                         }
-                        feedRepository.updateTtsSpeechRateById(feedId, speechRate);
                         listener.modifySpeechRate(speechRate);
                     }
                 });

@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Cài đặt feed</string>
     <string name="update">Cập nhật</string>
-    <string name="use_system_settings">Sử dụng cài đặt hệ thống</string>
+    <string name="use_system_settings">Sử dụng cài đặt ứng dụng</string>
     <string name="speech_rate_update_toast">Cập nhật tốc độ đọc sẽ được áp dụng ở bài viết tiếp theo</string>
     <string name="select_language">Chọn ngôn ngữ</string>
     <string name="select">Chọn</string>

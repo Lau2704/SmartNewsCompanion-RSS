@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">إعدادات الخلاصة</string>
     <string name="update">تحديث</string>
-    <string name="use_system_settings">استخدام إعدادات النظام</string>
+    <string name="use_system_settings">استخدام إعدادات التطبيق</string>
     <string name="speech_rate_update_toast">سيتم تطبيق تحديث سرعة الكلام على المقالة التالية</string>
     <string name="select_language">اختر اللغة</string>
     <string name="select">تحديد</string>

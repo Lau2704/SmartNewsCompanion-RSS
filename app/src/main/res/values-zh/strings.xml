@@ -194,7 +194,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">订阅源设置</string>
     <string name="update">更新</string>
-    <string name="use_system_settings">使用系统设置</string>
+    <string name="use_system_settings">使用应用设置</string>
     <string name="speech_rate_update_toast">语速更新将在下一篇文章中生效</string>
     <string name="select_language">选择语言</string>
     <string name="select">选择</string>

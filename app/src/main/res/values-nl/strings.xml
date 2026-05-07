@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Feed-instellingen</string>
     <string name="update">Bijwerken</string>
-    <string name="use_system_settings">Systeeminstellingen gebruiken</string>
+    <string name="use_system_settings">App-instellingen gebruiken</string>
     <string name="speech_rate_update_toast">De update van de spraaksnelheid wordt weerspiegeld in het volgende artikel</string>
     <string name="select_language">Taal selecteren</string>
     <string name="select">Selecteren</string>

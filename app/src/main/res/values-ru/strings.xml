@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Настройки ленты</string>
     <string name="update">Обновить</string>
-    <string name="use_system_settings">Использовать настройки системы</string>
+    <string name="use_system_settings">Использовать настройки приложения</string>
     <string name="speech_rate_update_toast">Изменение скорости речи отобразится в следующей статье</string>
     <string name="select_language">Выберите язык</string>
     <string name="select">Выбрать</string>

@@ -194,7 +194,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Configuración de la fuente</string>
     <string name="update">Actualizar</string>
-    <string name="use_system_settings">Usar configuración del sistema</string>
+    <string name="use_system_settings">Usar preferencias de la aplicación</string>
     <string name="speech_rate_update_toast">La actualización de la velocidad de voz se reflejará en el próximo artículo</string>
     <string name="select_language">Seleccionar idioma</string>
     <string name="select">Seleccionar</string>

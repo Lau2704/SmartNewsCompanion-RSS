@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Besleme ayarları</string>
     <string name="update">Güncelle</string>
-    <string name="use_system_settings">Sistem ayarlarını kullan</string>
+    <string name="use_system_settings">Uygulama ayarlarını kullan</string>
     <string name="speech_rate_update_toast">Konuşma hızı güncellemesi bir sonraki makalede yansıtılacaktır</string>
     <string name="select_language">Dil seçin</string>
     <string name="select">Seç</string>

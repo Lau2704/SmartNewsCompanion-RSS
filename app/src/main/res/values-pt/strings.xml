@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Definições do feed</string>
     <string name="update">Atualizar</string>
-    <string name="use_system_settings">Usar definições do sistema</string>
+    <string name="use_system_settings">Usar preferências da aplicação</string>
     <string name="speech_rate_update_toast">A atualização da velocidade de fala será refletida no próximo artigo</string>
     <string name="select_language">Selecionar idioma</string>
     <string name="select">Selecionar</string>

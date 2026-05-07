@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">피드 설정</string>
     <string name="update">업데이트</string>
-    <string name="use_system_settings">시스템 설정 사용</string>
+    <string name="use_system_settings">앱 설정 사용</string>
     <string name="speech_rate_update_toast">읽기 속도 변경은 다음 기사부터 적용됩니다</string>
     <string name="select_language">언어 선택</string>
     <string name="select">선택</string>

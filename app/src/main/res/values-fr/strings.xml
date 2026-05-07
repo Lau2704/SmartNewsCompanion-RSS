@@ -194,7 +194,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Paramètres du flux</string>
     <string name="update">Mettre à jour</string>
-    <string name="use_system_settings">Utiliser les paramètres du système</string>
+    <string name="use_system_settings">Utiliser les préférences de l\'application</string>
     <string name="speech_rate_update_toast">La mise à jour de la vitesse de parole sera reflétée dans le prochain article</string>
     <string name="select_language">Sélectionner la langue</string>
     <string name="select">Sélectionner</string>

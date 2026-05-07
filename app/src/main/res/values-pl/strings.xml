@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Ustawienia kanału</string>
     <string name="update">Aktualizuj</string>
-    <string name="use_system_settings">Użyj ustawień systemu</string>
+    <string name="use_system_settings">Użyj ustawień aplikacji</string>
     <string name="speech_rate_update_toast">Aktualizacja szybkości mowy zostanie odzwierciedlona w następnym artykule</string>
     <string name="select_language">Wybierz język</string>
     <string name="select">Wybierz</string>

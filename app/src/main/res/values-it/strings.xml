@@ -193,7 +193,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Impostazioni del feed</string>
     <string name="update">Aggiorna</string>
-    <string name="use_system_settings">Usa le impostazioni di sistema</string>
+    <string name="use_system_settings">Usa le impostazioni dell\'app</string>
     <string name="speech_rate_update_toast">L\'aggiornamento della velocità di lettura sarà applicato nel prossimo articolo</string>
     <string name="select_language">Seleziona lingua</string>
     <string name="select">Seleziona</string>

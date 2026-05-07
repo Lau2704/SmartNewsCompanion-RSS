@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
+import my.mmu.Kaixuanrssnewsreader.data.feed.FeedRepository;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewListener;
@@ -60,6 +61,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private final TtsExtractor ttsExtractor;
     private final EntryRepository entryRepository;
     private final SharedPreferencesRepository sharedPreferencesRepository;
+    private final FeedRepository feedRepository;
 
     private int sentenceCounter;
     private List<String> sentences = new ArrayList<>();
@@ -92,11 +94,12 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private int currentTtsEngineIndex = -1;
 
     @Inject
-    public TtsPlayer(@ApplicationContext Context context, TtsExtractor ttsExtractor, EntryRepository entryRepository, SharedPreferencesRepository sharedPreferencesRepository) {
+    public TtsPlayer(@ApplicationContext Context context, TtsExtractor ttsExtractor, EntryRepository entryRepository, SharedPreferencesRepository sharedPreferencesRepository, FeedRepository feedRepository) {
         super(context);
         this.ttsExtractor = ttsExtractor;
         this.entryRepository = entryRepository;
         this.sharedPreferencesRepository = sharedPreferencesRepository;
+        this.feedRepository = feedRepository;
         this.context = context;
         this.isPausedManually = sharedPreferencesRepository.getIsPausedManually();
         
@@ -1007,8 +1010,20 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void applyTtsSettings() {
-        float speechRate = sharedPreferencesRepository.getTtsSpeechRate() / 100.0f;
+        float speechRate;
         float pitch = sharedPreferencesRepository.getTtsPitch() / 100.0f;
+
+        if (feedId > 0) {
+            float feedSpeechRate = feedRepository.getTtsSpeechRateById(feedId);
+            if (feedSpeechRate > 0) {
+                speechRate = feedSpeechRate;
+            } else {
+                speechRate = sharedPreferencesRepository.getTtsSpeechRate() / 100.0f;
+            }
+        } else {
+            speechRate = sharedPreferencesRepository.getTtsSpeechRate() / 100.0f;
+        }
+
         setTtsSpeechRate(speechRate);
         setTtsPitch(pitch);
     }

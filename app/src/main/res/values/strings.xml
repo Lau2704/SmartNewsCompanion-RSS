@@ -357,7 +357,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Feed settings</string>
     <string name="update">Update</string>
-    <string name="use_system_settings">Use system\'s settings</string>
+    <string name="use_system_settings">Use app settings</string>
     <string name="speech_rate_update_toast">Update on speech rate will be reflected in the next article</string>
     <string name="select_language">Select language</string>
     <string name="select">Select</string>

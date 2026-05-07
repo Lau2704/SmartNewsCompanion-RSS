@@ -194,7 +194,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Feed-Einstellungen</string>
     <string name="update">Aktualisieren</string>
-    <string name="use_system_settings">Systemeinstellungen verwenden</string>
+    <string name="use_system_settings">App-Einstellungen verwenden</string>
     <string name="speech_rate_update_toast">Die Aktualisierung der Sprechgeschwindigkeit wird im nachsten Artikel angezeigt</string>
     <string name="select_language">Sprache auswahlen</string>
     <string name="select">Auswahlen</string>

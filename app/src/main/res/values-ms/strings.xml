@@ -194,7 +194,7 @@
     <!-- Dialogs -->
     <string name="feed_settings">Tetapan suapan</string>
     <string name="update">Kemas kini</string>
-    <string name="use_system_settings">Gunakan tetapan sistem</string>
+    <string name="use_system_settings">Gunakan tetapan aplikasi</string>
     <string name="speech_rate_update_toast">Kemas kini kelajuan ucapan akan dipaparkan pada artikel seterusnya</string>
     <string name="select_language">Pilih bahasa</string>
     <string name="select">Pilih</string>

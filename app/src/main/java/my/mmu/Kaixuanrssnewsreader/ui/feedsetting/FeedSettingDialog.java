@@ -132,6 +132,7 @@ public class FeedSettingDialog extends AppCompatDialogFragment implements FeedSe
                         String updatedTitle = Objects.requireNonNull(titleEditText.getText()).toString();
                         String updatedDesc = Objects.requireNonNull(descriptionEditText.getText()).toString();
                         feedSettingViewModel.updateTitleDescLanguage(updatedTitle, updatedDesc, language, link);
+                        feedSettingViewModel.updateSpeechRate(feedId, speechRateDisplay);
                         Toast.makeText(requireContext(), R.string.speech_rate_update_toast, Toast.LENGTH_SHORT).show();
                     }
                 });
