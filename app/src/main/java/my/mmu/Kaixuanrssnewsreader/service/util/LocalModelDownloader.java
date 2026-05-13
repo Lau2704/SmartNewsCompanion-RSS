@@ -18,9 +18,18 @@ import okhttp3.Response;
 public class LocalModelDownloader {
 
     private static final String TAG = "LocalModelDownloader";
-    private static final String MODEL_URL = "https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf";
+    private static final String MODEL_URL = "https://huggingface.co/bartowski/google_gemma-4-E2B-it-GGUF/resolve/main/google_gemma-4-E2B-it-IQ2_M.gguf";
     private static final String MODEL_DIR = "models";
-    private static final String MODEL_FILENAME = "gemma-2-2b-it-Q4_K_M.gguf";
+    private static final String MODEL_FILENAME = "google_gemma-4-E2B-it-IQ2_M.gguf";
+
+    private static volatile boolean paused = false;
+    private static volatile boolean cancelled = false;
+    private static volatile boolean downloading = false;
+    private static volatile int currentProgress = 0;
+
+    public static int getCurrentProgress() {
+        return currentProgress;
+    }
 
     public static File getModelFile(Context context) {
         return new File(new File(context.getFilesDir(), MODEL_DIR), MODEL_FILENAME);
@@ -54,8 +63,37 @@ public class LocalModelDownloader {
         }
     }
 
+    public static boolean isDownloading() {
+        return downloading;
+    }
+
+    public static boolean isPaused() {
+        return paused;
+    }
+
+    public static void pauseDownload() {
+        paused = true;
+    }
+
+    public static void resumeDownload() {
+        paused = false;
+    }
+
+    public static void cancelDownload(Context context) {
+        cancelled = true;
+        paused = false;
+        File tempFile = new File(new File(context.getFilesDir(), MODEL_DIR), MODEL_FILENAME + ".tmp");
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
+    }
+
     public static Single<File> downloadModel(Context context, Consumer<Integer> progressCallback) {
         return Single.<File>create(emitter -> {
+            downloading = true;
+            paused = false;
+            cancelled = false;
+
             File modelDir = new File(context.getFilesDir(), MODEL_DIR);
             if (!modelDir.exists()) {
                 modelDir.mkdirs();
@@ -66,6 +104,7 @@ public class LocalModelDownloader {
 
             if (outputFile.exists() && outputFile.length() > 1_000_000) {
                 Log.d(TAG, "Model already downloaded");
+                downloading = false;
                 emitter.onSuccess(outputFile);
                 return;
             }
@@ -81,7 +120,8 @@ public class LocalModelDownloader {
 
             try (Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    emitter.onError(new IOException("Download failed with code: " + response.code()));
+                    downloading = false;
+                    if (!emitter.isDisposed()) emitter.onError(new IOException("Download failed with code: " + response.code()));
                     return;
                 }
 
@@ -97,6 +137,20 @@ public class LocalModelDownloader {
                     int lastProgress = -1;
 
                     while ((bytesRead = is.read(buffer)) != -1) {
+                        while (paused && !cancelled) {
+                            Thread.sleep(500);
+                        }
+
+                        if (cancelled) {
+                            fos.close();
+                            if (tempFile.exists()) {
+                                tempFile.delete();
+                            }
+                            downloading = false;
+                            if (!emitter.isDisposed()) emitter.onError(new IOException("Download cancelled"));
+                            return;
+                        }
+
                         fos.write(buffer, 0, bytesRead);
                         totalRead += bytesRead;
 
@@ -104,6 +158,7 @@ public class LocalModelDownloader {
                             int progress = (int) ((totalRead * 100) / contentLength);
                             if (progress != lastProgress) {
                                 lastProgress = progress;
+                                currentProgress = progress;
                                 if (progressCallback != null) {
                                     progressCallback.accept(progress);
                                 }
@@ -114,20 +169,30 @@ public class LocalModelDownloader {
                     fos.flush();
                 }
 
+                if (cancelled) {
+                    downloading = false;
+                    if (!emitter.isDisposed()) emitter.onError(new IOException("Download cancelled"));
+                    return;
+                }
+
                 if (!tempFile.renameTo(outputFile)) {
-                    emitter.onError(new IOException("Failed to rename temp file"));
+                    downloading = false;
+                    if (!emitter.isDisposed()) emitter.onError(new IOException("Failed to rename temp file"));
                     return;
                 }
 
                 Log.d(TAG, "Model downloaded successfully: " + formatFileSize(outputFile.length()));
+                downloading = false;
+                currentProgress = 100;
                 emitter.onSuccess(outputFile);
 
             } catch (Exception e) {
-                Log.e(TAG, "Download error", e);
+                downloading = false;
                 if (tempFile.exists()) {
                     tempFile.delete();
                 }
-                emitter.onError(e);
+                Log.e(TAG, "Download error", e);
+                if (!emitter.isDisposed()) emitter.onError(e);
             }
         }).subscribeOn(Schedulers.io());
     }

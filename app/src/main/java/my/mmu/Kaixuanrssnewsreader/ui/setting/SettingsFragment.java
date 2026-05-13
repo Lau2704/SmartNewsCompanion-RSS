@@ -2,15 +2,27 @@ package my.mmu.Kaixuanrssnewsreader.ui.setting;
 
 import static android.app.Activity.RESULT_OK;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 
 import androidx.activity.result.ActivityResult;
@@ -30,6 +42,7 @@ import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
 import my.mmu.Kaixuanrssnewsreader.service.util.LocalLlmEngine;
 import my.mmu.Kaixuanrssnewsreader.service.util.LocalModelDownloader;
+import my.mmu.Kaixuanrssnewsreader.service.util.ModelDownloadService;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity;
 import my.mmu.Kaixuanrssnewsreader.ui.setupwebview.SetupWebViewActivity;
@@ -71,6 +84,11 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     private Preference localModelDeletePreference;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
     private boolean isAdditionalImport;
+    private AlertDialog downloadDialog;
+    private BroadcastReceiver downloadReceiver;
+    private Handler progressPollHandler;
+    private ProgressBar dialogProgressBar;
+    private TextView dialogProgressText;
     private final CharSequence[] defaultMusicEntries = {"Default", "Import music file (ogg format is preferred)"};
     private final CharSequence[] defaultMusicValues = {"default", "userFile"};
     private final CharSequence[] extendedMusicEntries  = {"Default", "Imported music file", "Import another music file (ogg format is preferred)"};
@@ -272,6 +290,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         if (installGoogleTtsPreference != null) {
             updateGoogleTtsInstallPreference(installGoogleTtsPreference);
         }
+
+        updatePreferenceKeysForProvider(sharedPreferencesRepository.getApiProvider());
     }
 
     @Override
@@ -358,9 +378,9 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         if (downloaded) {
             String size = LocalModelDownloader.formatFileSize(LocalModelDownloader.getDownloadedSize(requireContext()));
             localModelDownloadPreference.setTitle(getString(R.string.local_model_downloaded, size));
-            localModelDownloadPreference.setSummary(R.string.local_model_size);
+            localModelDownloadPreference.setSummary(getString(R.string.local_model_name));
         } else {
-            localModelDownloadPreference.setTitle(R.string.local_model_download);
+            localModelDownloadPreference.setTitle(getString(R.string.local_model_download) + " - " + getString(R.string.local_model_name));
             localModelDownloadPreference.setSummary(R.string.local_model_not_downloaded);
         }
 
@@ -370,37 +390,135 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void downloadLocalModel() {
-        androidx.appcompat.app.AlertDialog progressDialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle(R.string.local_model_downloading)
-                .setView(new android.widget.ProgressBar(requireContext(), null, android.R.attr.progressBarStyleHorizontal))
-                .setCancelable(false)
-                .create();
-        progressDialog.show();
+        boolean reconnecting = LocalModelDownloader.isDownloading();
 
-        android.widget.ProgressBar progressBar = (android.widget.ProgressBar) progressDialog.findViewById(android.R.id.progress);
-        if (progressBar != null) {
-            progressBar.setMax(100);
-            progressBar.setProgress(0);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_model_download, null);
+        dialogProgressBar = dialogView.findViewById(R.id.downloadProgressBar);
+        dialogProgressText = dialogView.findViewById(R.id.downloadProgressText);
+        Button btnCancel = dialogView.findViewById(R.id.btnCancelDownload);
+        Button btnPauseResume = dialogView.findViewById(R.id.btnPauseResumeDownload);
+        Button btnBackground = dialogView.findViewById(R.id.btnBackgroundDownload);
+
+        if (reconnecting) {
+            int progress = LocalModelDownloader.getCurrentProgress();
+            dialogProgressBar.setProgress(progress);
+            dialogProgressText.setText(getString(R.string.local_model_download_progress, getString(R.string.local_model_name), progress));
+            if (LocalModelDownloader.isPaused()) {
+                btnPauseResume.setText(R.string.local_model_download_continue);
+            } else {
+                btnPauseResume.setText(R.string.local_model_download_pause);
+            }
         }
 
-        compositeDisposable.add(
-                LocalModelDownloader.downloadModel(requireContext(), progress -> {
-                    if (progressBar != null) {
-                        requireActivity().runOnUiThread(() -> progressBar.setProgress(progress));
+        downloadDialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.local_model_downloading)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        downloadDialog.setOnDismissListener(dialog -> stopProgressPolling());
+
+        btnCancel.setOnClickListener(v -> {
+            LocalModelDownloader.cancelDownload(requireContext());
+            requireContext().stopService(new Intent(requireContext(), ModelDownloadService.class));
+            downloadDialog.dismiss();
+        });
+
+        btnPauseResume.setOnClickListener(v -> {
+            if (LocalModelDownloader.isDownloading()) {
+                String currentText = btnPauseResume.getText().toString();
+                if (currentText.equals(getString(R.string.local_model_download_pause))) {
+                    LocalModelDownloader.pauseDownload();
+                    btnPauseResume.setText(R.string.local_model_download_continue);
+                } else {
+                    LocalModelDownloader.resumeDownload();
+                    btnPauseResume.setText(R.string.local_model_download_pause);
+                }
+            }
+        });
+
+        btnBackground.setOnClickListener(v -> downloadDialog.dismiss());
+
+        registerDownloadReceiver();
+
+        if (!reconnecting) {
+            Intent serviceIntent = new Intent(requireContext(), ModelDownloadService.class);
+            ContextCompat.startForegroundService(requireContext(), serviceIntent);
+        }
+
+        downloadDialog.show();
+        startProgressPolling();
+    }
+
+    private void startProgressPolling() {
+        progressPollHandler = new Handler(Looper.getMainLooper());
+        progressPollHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (downloadDialog != null && downloadDialog.isShowing()) {
+                    int progress = LocalModelDownloader.getCurrentProgress();
+                    if (dialogProgressBar != null) {
+                        dialogProgressBar.setProgress(progress);
                     }
-                }).subscribe(file -> {
-                    requireActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                        updateLocalModelPreference();
-                        Toast.makeText(requireContext(), getString(R.string.local_model_downloaded, LocalModelDownloader.formatFileSize(file.length())), Toast.LENGTH_LONG).show();
-                    });
-                }, error -> {
-                    requireActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                        Toast.makeText(requireContext(), "Download failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-                })
-        );
+                    if (dialogProgressText != null) {
+                        dialogProgressText.setText(getString(R.string.local_model_download_progress, getString(R.string.local_model_name), progress));
+                    }
+                    if (LocalModelDownloader.isDownloading()) {
+                        progressPollHandler.postDelayed(this, 500);
+                    }
+                }
+            }
+        }, 500);
+    }
+
+    private void stopProgressPolling() {
+        if (progressPollHandler != null) {
+            progressPollHandler.removeCallbacksAndMessages(null);
+            progressPollHandler = null;
+        }
+        dialogProgressBar = null;
+        dialogProgressText = null;
+    }
+
+    private void registerDownloadReceiver() {
+        if (downloadReceiver != null) return;
+        downloadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (ModelDownloadService.ACTION_COMPLETE.equals(intent.getAction())) {
+                    if (downloadDialog != null && downloadDialog.isShowing()) {
+                        downloadDialog.dismiss();
+                    }
+                    stopProgressPolling();
+                    updateLocalModelPreference();
+                    Toast.makeText(requireContext(), getString(R.string.local_model_downloaded, LocalModelDownloader.formatFileSize(LocalModelDownloader.getDownloadedSize(requireContext()))), Toast.LENGTH_LONG).show();
+                    unregisterDownloadReceiver();
+                } else if (ModelDownloadService.ACTION_FAILED.equals(intent.getAction())) {
+                    if (downloadDialog != null && downloadDialog.isShowing()) {
+                        downloadDialog.dismiss();
+                    }
+                    stopProgressPolling();
+                    String error = intent.getStringExtra("error");
+                    if (error != null && !"Download cancelled".equals(error)) {
+                        Toast.makeText(requireContext(), "Download failed: " + error, Toast.LENGTH_LONG).show();
+                    }
+                    unregisterDownloadReceiver();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ModelDownloadService.ACTION_COMPLETE);
+        filter.addAction(ModelDownloadService.ACTION_FAILED);
+        requireActivity().registerReceiver(downloadReceiver, filter);
+    }
+
+    private void unregisterDownloadReceiver() {
+        if (downloadReceiver != null) {
+            try {
+                requireActivity().unregisterReceiver(downloadReceiver);
+            } catch (Exception ignored) {}
+            downloadReceiver = null;
+        }
     }
 
     private void handleSelectedFile(Uri fileUri) {
@@ -451,6 +569,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onDestroyView() {
+        stopProgressPolling();
+        unregisterDownloadReceiver();
         compositeDisposable.dispose();
         super.onDestroyView();
     }

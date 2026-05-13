@@ -20,8 +20,8 @@ class LocalLlmEngine @Inject constructor(
     companion object {
         private const val TAG = "LocalLlmEngine"
         private const val MODEL_DIR = "models"
-        private const val MODEL_FILENAME = "gemma-2-2b-it-Q4_K_M.gguf"
-        private const val CONTEXT_LENGTH = 2048
+        private const val MODEL_FILENAME = "google_gemma-4-E2B-it-IQ2_M.gguf"
+        private const val CONTEXT_LENGTH = 4096
         private const val INFERENCE_TIMEOUT_MS = 300_000L
     }
 
@@ -74,7 +74,7 @@ class LocalLlmEngine @Inject constructor(
 
         val helper = llamaHelper!!
 
-        val prompt = "<start_of_turn>user\n$systemPrompt\n\n$userMessage<end_of_turn>\n<start_of_turn>model\n"
+        val prompt = "<start_of_turn>system\n$systemPrompt<end_of_turn>\n<start_of_turn>user\n$userMessage<end_of_turn>\n<start_of_turn>model\n"
 
         val result = StringBuilder()
 

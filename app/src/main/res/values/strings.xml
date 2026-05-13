@@ -384,10 +384,20 @@
     <string name="local_model_downloaded">Model Downloaded (%1$s)</string>
     <string name="local_model_not_downloaded">Model Not Downloaded</string>
     <string name="local_model_downloading">Downloading model…</string>
-    <string name="local_model_size">Model size: ~1.7 GB</string>
+    <string name="local_model_size">Model size: ~1.2 GB</string>
     <string name="local_model_delete">Delete Model</string>
     <string name="local_model_delete_confirm">Delete the local AI model? You can re-download it later.</string>
     <string name="local_model_loading">Loading model…</string>
     <string name="local_model_not_loaded">Local model not loaded. Please download it in Settings.</string>
+    <string name="local_model_name">Gemma 4 E2B - IQ2_M</string>
+    <string name="local_model_download_cancel">Cancel</string>
+    <string name="local_model_download_pause">Pause</string>
+    <string name="local_model_download_continue">Continue</string>
+    <string name="local_model_download_background">Background</string>
+    <string name="local_model_download_progress">Downloading %1$s… %2$d%%</string>
+    <string name="local_model_download_complete">Model Download Complete</string>
+    <string name="local_model_download_complete_summary">Gemma 4 E2B (%1$s) is ready to use</string>
+    <string name="local_model_download_failed">Model Download Failed</string>
+    <string name="local_model_notification_channel">Model Download</string>
 
 </resources>

@@ -93,14 +93,16 @@
             app:title="@string/local_model_download"
             app:summary="@string/local_model_not_downloaded"
             app:icon="@drawable/ic_import"
-            app:iconSpaceReserved="false" />
+            app:iconSpaceReserved="false"
+            app:isPreferenceVisible="false" />
 
         <Preference
             app:key="local_model_delete"
             app:title="@string/local_model_delete"
             app:summary="@string/local_model_size"
             app:icon="@drawable/ic_trash"
-            app:iconSpaceReserved="false" />
+            app:iconSpaceReserved="false"
+            app:isPreferenceVisible="false" />
 
         <EditTextPreference
             app:icon="@drawable/api_settings"

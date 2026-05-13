@@ -52,7 +52,7 @@ public enum ApiProvider {
     LOCAL("local",
             R.string.provider_local,
             "",
-            "gemma-2-2b-it-Q4_K_M",
+            "gemma-4-E2B-it",
             "",
             0,
             0,
