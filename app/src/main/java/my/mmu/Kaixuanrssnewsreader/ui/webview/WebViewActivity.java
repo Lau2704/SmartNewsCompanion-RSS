@@ -78,6 +78,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private LiveData<Entry> autoTranslationObserver;
     private Observer<Entry> checkAutoTranslated;
     private volatile boolean isDestroyed = false;
+    private boolean isWebViewContentLoaded = false;
     // Share
     private ActivityWebviewBinding binding;
     private WebViewViewModel webViewViewModel;
@@ -323,7 +324,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private void translate() {
         String apiKey = sharedPreferencesRepository.getApiKey();
-        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+        if (!sharedPreferencesRepository.getApiProvider().isLocal() && (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here"))) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
         }
@@ -418,7 +419,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         String apiKey = sharedPreferencesRepository.getApiKey();
-        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+        if (!sharedPreferencesRepository.getApiProvider().isLocal() && (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here"))) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
             return;
         }
@@ -918,6 +919,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
 
                     String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
+                    if (html == null || html.trim().isEmpty()) {
+                        html = entry.getContent();
+                    }
+                    content = entry.getContent();
                     boolean isHtmlAvailable = html != null && !html.trim().isEmpty();
 
                     if (!isHtmlAvailable) {
@@ -1651,7 +1656,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         runOnUiThread(() -> {
             if (isDestroyed) return;
             int ttsProgress = (ttsPlayer != null) ? ttsPlayer.getCurrentExtractProgress() : 100;
-            int webProgress = (webView != null) ? webView.getProgress() : 100;
+            int webProgress = isWebViewContentLoaded ? 100 : (webView != null ? webView.getProgress() : 100);
             int combinedProgress = Math.min(ttsProgress, webProgress);
 
             if (loading != null) {
@@ -1895,9 +1900,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             public void run() {
                 if (isDestroyed) return;
                 if (!isReadingMode) {
-                    if (loading != null) {
-                        loading.setVisibility(View.INVISIBLE);
-                    }
+                    syncLoadingWithTts();
                     if (functionButtons != null) {
                         functionButtons.setVisibility(View.VISIBLE);
                         functionButtons.setAlpha(1.0f);
@@ -2159,6 +2162,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
             Log.d(TAG, "WebClient: onPageStarted - loadingWebView visible.");
+            isWebViewContentLoaded = false;
             webViewViewModel.setLoadingState(true);
             currentLoadingUrl = url;
             retryHandler.removeCallbacksAndMessages(null);
@@ -2197,7 +2201,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         public void onPageCommitVisible(WebView view, String url) {
             super.onPageCommitVisible(view, url);
             Log.d(TAG, "WebClient: onPageCommitVisible - loadingWebView hidden.");
+            isWebViewContentLoaded = true;
             webViewViewModel.setLoadingState(false);
+            syncLoadingWithTts();
             if (content != null) {
                 if (currentId != ttsPlaylist.getPlayingId()) {
                     ttsPlaylist.updatePlayingId(currentId);
@@ -2222,6 +2228,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
             Log.d(TAG, "ReadingWebClient: onPageStarted - loadingWebView visible.");
+            isWebViewContentLoaded = false;
             webViewViewModel.setLoadingState(true);
             currentLoadingUrl = url;
             retryHandler.removeCallbacksAndMessages(null);
@@ -2260,6 +2267,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         @Override
         public void onPageCommitVisible(WebView view, String url) {
             super.onPageCommitVisible(view, url);
+            isWebViewContentLoaded = true;
             loading.setVisibility(View.INVISIBLE);
             Log.d(TAG, "ReadingWebClient: onPageCommitVisible - loadingWebView hidden.");
             webViewViewModel.setLoadingState(false);

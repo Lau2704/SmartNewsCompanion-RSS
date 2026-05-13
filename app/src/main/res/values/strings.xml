@@ -388,6 +388,7 @@
     <string name="local_model_delete">Delete Model</string>
     <string name="local_model_delete_confirm">Delete the local AI model? You can re-download it later.</string>
     <string name="local_model_loading">Loading model…</string>
+    <string name="local_model_file_location">Model File Location</string>
     <string name="local_model_not_loaded">Local model not loaded. Please download it in Settings.</string>
     <string name="local_model_name">Gemma 4 E2B - IQ2_M</string>
     <string name="local_model_download_cancel">Cancel</string>
@@ -399,5 +400,9 @@
     <string name="local_model_download_complete_summary">Gemma 4 E2B (%1$s) is ready to use</string>
     <string name="local_model_download_failed">Model Download Failed</string>
     <string name="local_model_notification_channel">Model Download</string>
+
+    <!-- Playlist Control Bar -->
+    <string name="playlist_queue">Playlist Queue</string>
+    <string name="no_playlist_entries">No articles in queue</string>
 
 </resources>

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +23,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -35,19 +38,25 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlaylist;
+import my.mmu.Kaixuanrssnewsreader.service.tts.TtsService;
 import my.mmu.Kaixuanrssnewsreader.databinding.FragmentAllEntriesBinding;
 
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import my.mmu.Kaixuanrssnewsreader.service.util.AutoTranslator;
 import my.mmu.Kaixuanrssnewsreader.service.util.TextUtil;
+import my.mmu.Kaixuanrssnewsreader.ui.webview.MediaBrowserHelper;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.jsoup.Jsoup;
@@ -97,6 +106,17 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
     private boolean isSelectionMode = false;
     private WebViewViewModel webViewViewModel;
     private CompositeDisposable compositeDisposable;
+
+    private MediaBrowserHelper mediaBrowserHelper;
+    private MaterialCardView playlistControlBar;
+    private ImageButton controlBarPlayPause;
+    private ImageButton controlBarSkipNext;
+    private ImageButton controlBarSkipPrevious;
+    private ImageButton controlBarPlaylistBtn;
+    private TextView controlBarTitle;
+    private TextView controlBarSubtitle;
+    private CompositeDisposable controlBarDisposables = new CompositeDisposable();
+    private int currentPlaybackState = PlaybackStateCompat.STATE_NONE;
 
 
     @Override
@@ -322,7 +342,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
             }
         });
 
-
+        setupPlaylistControlBar(view);
     }
 
     private void doWhenTranslationFinish(EntryInfo entryInfo, String translatedHtml, String targetLanguage) {
@@ -426,7 +446,149 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (controlBarDisposables != null) {
+            controlBarDisposables.dispose();
+        }
+        playlistControlBar = null;
+        controlBarPlayPause = null;
+        controlBarSkipNext = null;
+        controlBarSkipPrevious = null;
+        controlBarPlaylistBtn = null;
+        controlBarTitle = null;
+        controlBarSubtitle = null;
         binding = null;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mediaBrowserHelper != null) {
+            mediaBrowserHelper.onStart();
+        }
+        refreshControlBarState();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mediaBrowserHelper != null) {
+            mediaBrowserHelper.onStop();
+        }
+    }
+
+    private void setupPlaylistControlBar(@NonNull View view) {
+        View controlBarInclude = view.findViewById(R.id.playlistControlBarInclude);
+        if (controlBarInclude == null) return;
+
+        playlistControlBar = (MaterialCardView) controlBarInclude;
+        controlBarPlayPause = controlBarInclude.findViewById(R.id.controlBarPlayPause);
+        controlBarPlayPause.setImageTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.white)));
+        controlBarSkipNext = controlBarInclude.findViewById(R.id.controlBarSkipNext);
+        controlBarSkipPrevious = controlBarInclude.findViewById(R.id.controlBarSkipPrevious);
+        controlBarPlaylistBtn = controlBarInclude.findViewById(R.id.controlBarPlaylistBtn);
+        controlBarTitle = controlBarInclude.findViewById(R.id.controlBarTitle);
+        controlBarSubtitle = controlBarInclude.findViewById(R.id.controlBarSubtitle);
+
+        mediaBrowserHelper = new MediaBrowserHelper(requireContext(), TtsService.class) {
+            @Override
+            protected void onChildrenLoaded(@NonNull String parentId, @NonNull List<android.support.v4.media.MediaBrowserCompat.MediaItem> children) {
+                refreshControlBarState();
+            }
+        };
+
+        mediaBrowserHelper.registerCallback(new android.support.v4.media.session.MediaControllerCompat.Callback() {
+            @Override
+            public void onPlaybackStateChanged(@Nullable android.support.v4.media.session.PlaybackStateCompat state) {
+                if (state != null) {
+                    currentPlaybackState = state.getState();
+                    updatePlayPauseIcon(currentPlaybackState);
+                }
+            }
+
+            @Override
+            public void onMetadataChanged(@NonNull android.support.v4.media.MediaMetadataCompat metadata) {
+                refreshControlBarState();
+            }
+        });
+
+        controlBarPlayPause.setOnClickListener(v -> {
+            if (mediaBrowserHelper == null) return;
+            android.support.v4.media.session.MediaControllerCompat.TransportControls controls =
+                    mediaBrowserHelper.getTransportControls();
+            if (controls == null) return;
+
+            if (currentPlaybackState == PlaybackStateCompat.STATE_PLAYING) {
+                controls.pause();
+            } else {
+                controls.play();
+            }
+        });
+
+        controlBarSkipNext.setOnClickListener(v -> {
+            if (mediaBrowserHelper != null) {
+                android.support.v4.media.session.MediaControllerCompat.TransportControls controls =
+                        mediaBrowserHelper.getTransportControls();
+                if (controls != null) controls.skipToNext();
+            }
+        });
+
+        controlBarSkipPrevious.setOnClickListener(v -> {
+            if (mediaBrowserHelper != null) {
+                android.support.v4.media.session.MediaControllerCompat.TransportControls controls =
+                        mediaBrowserHelper.getTransportControls();
+                if (controls != null) controls.skipToPrevious();
+            }
+        });
+
+        controlBarPlaylistBtn.setOnClickListener(v -> {
+            long playingId = ttsPlayer.getCurrentId();
+            PlaylistBottomSheet bottomSheet = PlaylistBottomSheet.newInstance(playingId);
+            bottomSheet.show(getChildFragmentManager(), PlaylistBottomSheet.TAG);
+        });
+
+        if (ttsPlayer.getCurrentId() > 0) {
+            refreshControlBarState();
+        }
+    }
+
+    private void refreshControlBarState() {
+        if (playlistControlBar == null) return;
+
+        long currentId = ttsPlayer.getCurrentId();
+        if (currentId <= 0 && currentPlaybackState == PlaybackStateCompat.STATE_NONE) {
+            playlistControlBar.setVisibility(View.GONE);
+            return;
+        }
+
+        playlistControlBar.setVisibility(View.VISIBLE);
+
+        if (currentId > 0) {
+            controlBarDisposables.add(
+                    Single.fromCallable(() -> entryRepository.getEntryInfoById(currentId))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(entryInfo -> {
+                                if (controlBarTitle != null && entryInfo != null) {
+                                    controlBarTitle.setText(entryInfo.getEntryTitle());
+                                    controlBarSubtitle.setText(entryInfo.getFeedTitle());
+                                }
+                            }, throwable -> Log.e(TAG, "Failed to load control bar info", throwable))
+            );
+        }
+
+        updatePlayPauseIcon(ttsPlayer.isSpeaking()
+                ? PlaybackStateCompat.STATE_PLAYING
+                : PlaybackStateCompat.STATE_PAUSED);
+    }
+
+    private void updatePlayPauseIcon(int state) {
+        if (controlBarPlayPause == null) return;
+        if (state == PlaybackStateCompat.STATE_PLAYING) {
+            controlBarPlayPause.setImageResource(R.drawable.ic_baseline_pause_24);
+        } else {
+            controlBarPlayPause.setImageResource(R.drawable.ic_baseline_play_arrow_24);
+        }
     }
 
     @Override

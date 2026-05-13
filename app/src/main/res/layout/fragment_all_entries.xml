@@ -128,8 +128,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="80dp"
         app:fabSize="normal"
         android:src="@drawable/ic_read"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
+
+    <include
+        android:id="@+id/playlistControlBarInclude"
+        layout="@layout/view_playlist_control_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

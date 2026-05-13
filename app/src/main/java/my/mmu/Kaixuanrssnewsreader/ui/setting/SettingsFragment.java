@@ -209,8 +209,13 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 @Override
                 public boolean onPreferenceClick(@NonNull Preference preference) {
                     if (LocalModelDownloader.isModelDownloaded(requireContext())) {
-                        localLlmEngine.loadModel();
-                        Toast.makeText(requireContext(), R.string.local_model_loading, Toast.LENGTH_SHORT).show();
+                        File modelFile = LocalModelDownloader.getModelFile(requireContext());
+                        String size = LocalModelDownloader.formatFileSize(LocalModelDownloader.getDownloadedSize(requireContext()));
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle(R.string.local_model_file_location)
+                                .setMessage(modelFile.getAbsolutePath() + "\n\n" + size)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show();
                     } else {
                         downloadLocalModel();
                     }

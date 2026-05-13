@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/playlistControlBar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0.5dp"
+    app:strokeColor="@color/stroke">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageButton
+            android:id="@+id/controlBarSkipPrevious"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_baseline_skip_previous_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/previous"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageButton
+            android:id="@+id/controlBarPlayPause"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_baseline_play_arrow_24"
+            android:background="@drawable/round_primary_bg"
+            android:contentDescription="@string/play"
+            android:padding="8dp"
+            app:layout_constraintStart_toEndOf="@id/controlBarSkipPrevious"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/controlBarTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            app:layout_constraintStart_toEndOf="@id/controlBarPlayPause"
+            app:layout_constraintEnd_toStartOf="@id/controlBarPlaylistBtn"
+            app:layout_constraintTop_toTopOf="@id/controlBarSkipPrevious"
+            app:layout_constraintBottom_toTopOf="@id/controlBarSubtitle" />
+
+        <TextView
+            android:id="@+id/controlBarSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/unreadText"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            app:layout_constraintStart_toEndOf="@id/controlBarPlayPause"
+            app:layout_constraintEnd_toStartOf="@id/controlBarPlaylistBtn"
+            app:layout_constraintTop_toBottomOf="@id/controlBarTitle"
+            app:layout_constraintBottom_toBottomOf="@id/controlBarSkipPrevious" />
+
+        <ImageButton
+            android:id="@+id/controlBarPlaylistBtn"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/ic_queue_music"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/playlist_queue"
+            app:layout_constraintEnd_toStartOf="@id/controlBarSkipNext"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageButton
+            android:id="@+id/controlBarSkipNext"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_baseline_skip_next_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/next"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

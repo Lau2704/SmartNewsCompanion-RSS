@@ -473,13 +473,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     @Override
     public void extractToTts(String content, String language) {
-        if (tts == null) {
-            Log.w(TAG, "TTS engine is not initialized.");
-            return;
-        }
-
         if (content == null || content.trim().isEmpty()) {
             Log.w(TAG, "extractToTts: No content provided.");
+            countDownLatch.countDown();
             return;
         }
 
@@ -543,6 +539,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 if (webViewCallback != null) webViewCallback.askForReload(feedId);
                 sentences.clear();
                 actionNeeded = false;
+                countDownLatch.countDown();
                 return;
             } else {
                 int savedProgress = entryRepository.getSentCount(currentId);

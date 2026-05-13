@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="56dp"
+    android:layout_height="56dp"
+    android:background="@drawable/round_primary_bg"
+    android:elevation="6dp">
+
+    <ImageButton
+        android:id="@+id/miniPlayerPlayPause"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_baseline_play_arrow_24"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/play"
+        android:padding="12dp" />
+
+</FrameLayout>

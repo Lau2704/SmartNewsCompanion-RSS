@@ -23,6 +23,10 @@ class LocalLlmEngine @Inject constructor(
         private const val MODEL_FILENAME = "google_gemma-4-E2B-it-IQ2_M.gguf"
         private const val CONTEXT_LENGTH = 4096
         private const val INFERENCE_TIMEOUT_MS = 300_000L
+
+        init {
+            System.loadLibrary("rnllama")
+        }
     }
 
     private var llamaHelper: LlamaHelper? = null
