@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 
@@ -279,7 +280,12 @@ public class TextUtil {
                                             }
                                             // Remove extra elements from the DOM
                                             for (int i = translatedTexts.length; i < elements.size(); i++) {
-                                                elements.get(i).remove();
+                                                Element element = elements.get(i);
+                                                Node parent = element.parentNode();
+                                                if (parent != null && element.siblingIndex() < parent.childNodeSize()
+                                                        && parent.childNode(element.siblingIndex()) == element) {
+                                                    element.remove();
+                                                }
                                             }
                                         }
                                         // If total translatedTexts is more than the total elements, add additional elements
@@ -387,6 +393,10 @@ public class TextUtil {
 
             if (provider.isLocal()) {
                 try {
+                    if (!localLlmEngine.isModelDownloaded()) {
+                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
+                        return;
+                    }
                     if (!localLlmEngine.isModelLoaded()) {
                         localLlmEngine.loadModel();
                     }
@@ -509,6 +519,10 @@ public class TextUtil {
 
             if (provider.isLocal()) {
                 try {
+                    if (!localLlmEngine.isModelDownloaded()) {
+                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
+                        return;
+                    }
                     if (!localLlmEngine.isModelLoaded()) {
                         localLlmEngine.loadModel();
                     }
@@ -569,8 +583,124 @@ public class TextUtil {
         }).subscribeOn(Schedulers.io());
     }
 
+    public Single<String> summarizeAndTranslateText(String text, int targetWords, String sourceLanguage, String targetLanguage) {
+        return Single.<String>create(emitter -> {
+            if (text == null || text.isEmpty()) {
+                emitter.onError(new IllegalArgumentException("Invalid content for summarization"));
+                return;
+            }
+
+            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+
+            String systemPrompt;
+            if (sourceLanguage != null && targetLanguage != null && sourceLanguage.equals(targetLanguage)) {
+                systemPrompt = String.format(
+                    "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
+                    + "Requirements:\n"
+                    + "- Write in proper article form with a clear, informative headline on the first line\n"
+                    + "- Use flowing prose organized into 2-3 short paragraphs\n"
+                    + "- Open with the most important information (who, what, when, where, why)\n"
+                    + "- Follow with supporting details, context, and key quotes or data\n"
+                    + "- Close with any significant implications or outcomes\n"
+                    + "- Write in a neutral, journalistic tone\n"
+                    + "- Preserve all specific names, numbers, dates, and locations from the original\n"
+                    + "- Do NOT add any information not present in the original article\n"
+                    + "- Write in the SAME LANGUAGE as the original article\n\n"
+                    + "IMPORTANT: Return ONLY the summary article. No labels, prefixes, explanations, or meta-commentary.",
+                    targetWords
+                );
+            } else {
+                systemPrompt = String.format(
+                    "You are a professional news editor and translator. Summarize the following news article into a concise summary of approximately %d words, written entirely in %s.\n\n"
+                    + "Requirements:\n"
+                    + "- Write in proper article form with a clear, informative headline on the first line\n"
+                    + "- Use flowing prose organized into 2-3 short paragraphs\n"
+                    + "- Open with the most important information (who, what, when, where, why)\n"
+                    + "- Follow with supporting details, context, and key quotes or data\n"
+                    + "- Close with any significant implications or outcomes\n"
+                    + "- Write in a neutral, journalistic tone\n"
+                    + "- Preserve all specific names, numbers, dates, and locations from the original\n"
+                    + "- Do NOT add any information not present in the original article\n"
+                    + "- Write the ENTIRE summary in %s\n\n"
+                    + "IMPORTANT: Return ONLY the summary article in %s. No labels, prefixes, explanations, or meta-commentary.",
+                    targetWords, targetLanguage, targetLanguage, targetLanguage
+                );
+            }
+
+            String contentToProcess = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
+
+            if (provider.isLocal()) {
+                try {
+                    if (!localLlmEngine.isModelDownloaded()) {
+                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
+                        return;
+                    }
+                    if (!localLlmEngine.isModelLoaded()) {
+                        localLlmEngine.loadModel();
+                    }
+                    String result = localLlmEngine.complete(systemPrompt, contentToProcess);
+                    emitter.onSuccess(result);
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "Local summarize+translate error", e);
+                    emitter.onError(e);
+                    return;
+                }
+            }
+
+            String apiKey = sharedPreferencesRepository.getApiKey();
+            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
+                return;
+            }
+
+            String model = sharedPreferencesRepository.getModel();
+            if (model == null || model.isEmpty()) {
+                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
+                return;
+            }
+
+            String url = provider.getEndpoint();
+
+            try {
+                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, contentToProcess, 4096);
+
+                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
+
+                Request.Builder requestBuilder = new Request.Builder()
+                        .url(url)
+                        .post(body);
+
+                addAuthHeaders(requestBuilder, provider, apiKey);
+                requestBuilder.addHeader("Content-Type", "application/json");
+
+                try (Response response = client.newCall(requestBuilder.build()).execute()) {
+                    if (!response.isSuccessful()) {
+                        String errorBody = response.body() != null ? response.body().string() : "";
+                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
+                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
+                        return;
+                    }
+
+                    String responseBody = response.body() != null ? response.body().string() : "";
+                    Log.d(TAG, "Summarize+Translate API Response length: " + responseBody.length());
+                    String result = parseResponse(provider, responseBody);
+                    emitter.onSuccess(result);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Summarize+Translate error", e);
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
     public void onDestroy() {
         compositeDisposable.dispose();
+    }
+
+    public boolean isLocalModelReady() {
+        return localLlmEngine.isModelDownloaded();
     }
 
     private JSONObject buildRequestBody(ApiProvider provider, String model, String systemPrompt, String userContent, int maxTokens) throws Exception {

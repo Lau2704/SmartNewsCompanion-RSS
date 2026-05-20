@@ -146,6 +146,15 @@
             app:summaryOn="@string/auto_translate_on"
             app:title="@string/auto_translate_title" />
 
+        <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_translate_summary"
+            app:key="autoTranslateSummary"
+            app:summaryOff="@string/auto_translate_summary_off"
+            app:summaryOn="@string/auto_translate_summary_on"
+            app:title="@string/auto_translate_summary_title" />
+
         <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="100"
             app:defaultValue="50"

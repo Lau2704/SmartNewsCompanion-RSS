@@ -175,14 +175,42 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/autoSummaryButton"
+    <LinearLayout
+        android:id="@+id/fabContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:contentDescription="Auto Summary"
-        android:src="@drawable/auto_summary_no_background"
+        android:orientation="vertical"
+        android:gravity="end"
         app:layout_constraintBottom_toTopOf="@id/buttonsContainer"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/translateFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/content_desc_translate"
+            android:src="@drawable/ic_language"
+            app:fabSize="mini" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/summaryFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/content_desc_summary"
+            android:src="@drawable/ic_newspaper"
+            app:fabSize="mini" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/translateSummaryFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/content_desc_translate_summary"
+            android:src="@drawable/ic_translate_summary"
+            app:fabSize="mini" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

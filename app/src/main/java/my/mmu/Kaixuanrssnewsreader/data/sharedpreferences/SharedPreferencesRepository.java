@@ -28,6 +28,9 @@ public class SharedPreferencesRepository {
     private static final String KEY_CURRENT_READING_ENTRY_ID = "current_reading_entry_id";
     private static final String KEY_SUMMARY_PREFIX = "summary_";
     private static final String KEY_SUMMARY_LANG_PREFIX = "summary_lang_";
+    private static final String KEY_TRANSLATED_SUMMARY_PREFIX = "translated_summary_";
+    private static final String KEY_TRANSLATED_SUMMARY_LANG_PREFIX = "translated_summary_lang_";
+    private static final String KEY_ACTIVE_FAB_PREFIX = "active_fab_";
 
     @Inject
     public SharedPreferencesRepository(@ApplicationContext Context context) {
@@ -319,6 +322,33 @@ public class SharedPreferencesRepository {
 
     public boolean getIsSummaryView(long entryId) {
         return sharedPreferences.getBoolean(KEY_WEB_VIEW_MODE + "_" + entryId + "_summary", false);
+    }
+
+    public void setTranslatedSummary(long entryId, String summary, String language) {
+        editor.putString(KEY_TRANSLATED_SUMMARY_PREFIX + entryId, summary);
+        editor.putString(KEY_TRANSLATED_SUMMARY_LANG_PREFIX + entryId, language);
+        editor.apply();
+    }
+
+    public String getTranslatedSummary(long entryId) {
+        return sharedPreferences.getString(KEY_TRANSLATED_SUMMARY_PREFIX + entryId, "");
+    }
+
+    public String getTranslatedSummaryLanguage(long entryId) {
+        return sharedPreferences.getString(KEY_TRANSLATED_SUMMARY_LANG_PREFIX + entryId, null);
+    }
+
+    public boolean getAutoTranslateSummary() {
+        return sharedPreferences.getBoolean("autoTranslateSummary", false);
+    }
+
+    public void setActiveFab(long entryId, String fab) {
+        editor.putString(KEY_ACTIVE_FAB_PREFIX + entryId, fab);
+        editor.apply();
+    }
+
+    public String getActiveFab(long entryId) {
+        return sharedPreferences.getString(KEY_ACTIVE_FAB_PREFIX + entryId, "NONE");
     }
 
     public boolean hasGroqApiKey() {

@@ -34,6 +34,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.preference.PreferenceFragmentCompat;
 
 import my.mmu.Kaixuanrssnewsreader.R;
@@ -160,6 +161,21 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                         AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
                     } else {
                         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang));
+                    }
+                    break;
+                case "autoTranslate":
+                    if (sharedPreferences.getBoolean("autoTranslate", false)) {
+                        disableOtherAutoSettings("autoTranslate");
+                    }
+                    break;
+                case "displaySummary":
+                    if (sharedPreferences.getBoolean("displaySummary", false)) {
+                        disableOtherAutoSettings("displaySummary");
+                    }
+                    break;
+                case "autoTranslateSummary":
+                    if (sharedPreferences.getBoolean("autoTranslateSummary", false)) {
+                        disableOtherAutoSettings("autoTranslateSummary");
                     }
                     break;
             }
@@ -570,6 +586,28 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             preference.setTitle(getString(R.string.install_google_tts_title));
             preference.setSummary(getString(R.string.install_google_tts_summary_not_installed));
         }
+    }
+
+    private void disableOtherAutoSettings(String enabledKey) {
+        SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+        if (prefs == null) return;
+        SharedPreferences.Editor ed = prefs.edit();
+        if (!"autoTranslate".equals(enabledKey)) {
+            ed.putBoolean("autoTranslate", false);
+            SwitchPreferenceCompat pref = findPreference("autoTranslate");
+            if (pref != null) pref.setChecked(false);
+        }
+        if (!"displaySummary".equals(enabledKey)) {
+            ed.putBoolean("displaySummary", false);
+            SwitchPreferenceCompat pref = findPreference("displaySummary");
+            if (pref != null) pref.setChecked(false);
+        }
+        if (!"autoTranslateSummary".equals(enabledKey)) {
+            ed.putBoolean("autoTranslateSummary", false);
+            SwitchPreferenceCompat pref = findPreference("autoTranslateSummary");
+            if (pref != null) pref.setChecked(false);
+        }
+        ed.apply();
     }
 
     @Override

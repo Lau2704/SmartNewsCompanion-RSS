@@ -174,7 +174,10 @@
     <string name="languageIdentifier">Use Language Identifier</string>
     <string name="auto_translate_title">Auto-translate articles</string>
     <string name="auto_translate_on">Automatically translate articles to default language</string>
-    <string name="auto_translate_off">Do not automatically translate articles</string>
+     <string name="auto_translate_off">Do not automatically translate articles</string>
+     <string name="auto_translate_summary_title">Auto translate &amp; summarize</string>
+     <string name="auto_translate_summary_on">Automatically summarize and translate articles</string>
+     <string name="auto_translate_summary_off">Do not automatically summarize and translate articles</string>
 
     <string name="share">Share</string>
     <string name="mark_as_read">Mark as read</string>
@@ -305,7 +308,10 @@
  
     <!-- Reload Feed Dialog -->
     <string name="add_delay">Add delay (sec)</string>
-    <string name="translate">Translate</string>
+     <string name="translate">Translate</string>
+     <string name="translate_article">Translate Article</string>
+     <string name="summarize_article">Summarize Article</string>
+     <string name="translate_and_summarize">Translate &amp; Summarize</string>
 
     <!-- Tab and navigation -->
     <string name="tab_add">Add</string>
@@ -374,7 +380,10 @@
     <string name="show_original">Show Original</string>
     <string name="show_translation">Show Translation</string>
     <string name="re_extract_article">Re-extract article</string>
-    <string name="toggle_translation_desc">Toggle Translation</string>
+     <string name="toggle_translation_desc">Toggle Translation</string>
+     <string name="content_desc_translate">Translate article</string>
+     <string name="content_desc_summary">Summarize article</string>
+     <string name="content_desc_translate_summary">Translate and summarize article</string>
     <string name="default_translation_language">Default Translation Language</string>
     <string name="page_load_failed">Page Load Failed</string>
     <string name="translated_for">%1$d%% Translated for %2$s</string>
