@@ -82,9 +82,9 @@
             app:useSimpleSummaryProvider="true" />
 
         <Preference
-            app:key="api_key_setup"
-            app:summary="@string/api_key_setup_summary"
-            app:title="@string/api_key_setup_title"
+            app:key="api_keys"
+            app:title="@string/api_keys_title"
+            app:summary="@string/api_keys_summary"
             app:icon="@drawable/api_settings"
             app:iconSpaceReserved="false" />
 
@@ -103,13 +103,6 @@
             app:icon="@drawable/ic_trash"
             app:iconSpaceReserved="false"
             app:isPreferenceVisible="false" />
-
-        <EditTextPreference
-            app:icon="@drawable/api_settings"
-            app:key="groqApiKey"
-            app:summary="@string/api_setting_summary"
-            app:title="@string/api_setting_title"
-            android:dialogTitle="@string/api_setting_dialog_title" />
 
         <EditTextPreference
             app:icon="@drawable/ai_model"

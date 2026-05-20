@@ -3,10 +3,20 @@ package my.mmu.Kaixuanrssnewsreader.data.sharedpreferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import my.mmu.Kaixuanrssnewsreader.model.ApiKeyEntry;
 import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -18,6 +28,8 @@ public class SharedPreferencesRepository {
     private static final String KEY_API_PROVIDER = "apiProvider";
     private static final String KEY_ONBOARDING_COMPLETED = "onboarding_completed";
     private static final String KEY_API_KEY_SETUP_COMPLETED = "api_key_setup_completed";
+    private static final String MULTI_KEY_SUFFIX = "_api_keys";
+    private static final String ACTIVE_KEY_ID_SUFFIX = "_active_key_id";
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private final Context context;
@@ -265,13 +277,27 @@ public class SharedPreferencesRepository {
 
     public String getApiKey() {
         ApiProvider provider = getApiProvider();
-        return sharedPreferences.getString(provider.getApiKeyPreferenceKey(), "");
+        migrateSingleKeyIfNeeded(provider.getKey());
+        return getActiveApiKey(provider.getKey());
     }
 
     public void setApiKey(String apiKey) {
         ApiProvider provider = getApiProvider();
-        editor.putString(provider.getApiKeyPreferenceKey(), apiKey);
-        editor.apply();
+        migrateSingleKeyIfNeeded(provider.getKey());
+        List<ApiKeyEntry> keys = getApiKeys(provider.getKey());
+        String activeId = getActiveApiKeyId(provider.getKey());
+        if (activeId != null && !activeId.isEmpty()) {
+            for (int i = 0; i < keys.size(); i++) {
+                if (keys.get(i).getId().equals(activeId)) {
+                    keys.set(i, new ApiKeyEntry(activeId, keys.get(i).getLabel(), apiKey, keys.get(i).getCreatedAt()));
+                    saveApiKeys(provider.getKey(), keys);
+                    return;
+                }
+            }
+        }
+        if (!apiKey.isEmpty()) {
+            addApiKey(provider.getKey(), "Default", apiKey);
+        }
     }
 
     public String getModel() {
@@ -288,6 +314,111 @@ public class SharedPreferencesRepository {
     public boolean hasApiKey() {
         String apiKey = getApiKey();
         return apiKey != null && !apiKey.isEmpty() && !apiKey.contains("your-api-key-here");
+    }
+
+    public List<ApiKeyEntry> getApiKeys(String providerKey) {
+        migrateSingleKeyIfNeeded(providerKey);
+        String json = sharedPreferences.getString(providerKey + MULTI_KEY_SUFFIX, null);
+        List<ApiKeyEntry> result = new ArrayList<>();
+        if (json == null || json.isEmpty()) return result;
+        try {
+            JSONArray array = new JSONArray(json);
+            for (int i = 0; i < array.length(); i++) {
+                result.add(ApiKeyEntry.fromJson(array.getJSONObject(i)));
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing API keys for " + providerKey, e);
+        }
+        return result;
+    }
+
+    public void saveApiKeys(String providerKey, List<ApiKeyEntry> keys) {
+        JSONArray array = new JSONArray();
+        for (ApiKeyEntry entry : keys) {
+            try {
+                array.put(entry.toJson());
+            } catch (JSONException e) {
+                Log.e(TAG, "Error serializing API key entry", e);
+            }
+        }
+        editor.putString(providerKey + MULTI_KEY_SUFFIX, array.toString());
+        editor.apply();
+    }
+
+    public void addApiKey(String providerKey, String label, String apiKey) {
+        migrateSingleKeyIfNeeded(providerKey);
+        List<ApiKeyEntry> keys = getApiKeys(providerKey);
+        ApiKeyEntry newEntry = new ApiKeyEntry(label, apiKey);
+        keys.add(newEntry);
+        saveApiKeys(providerKey, keys);
+        if (keys.size() == 1) {
+            setActiveApiKeyId(providerKey, newEntry.getId());
+        }
+    }
+
+    public void removeApiKey(String providerKey, String keyId) {
+        List<ApiKeyEntry> keys = getApiKeys(providerKey);
+        String activeId = getActiveApiKeyId(providerKey);
+        boolean removingActive = keyId.equals(activeId);
+        keys.removeIf(entry -> entry.getId().equals(keyId));
+        saveApiKeys(providerKey, keys);
+        if (removingActive && !keys.isEmpty()) {
+            setActiveApiKeyId(providerKey, keys.get(0).getId());
+        } else if (keys.isEmpty()) {
+            editor.remove(providerKey + ACTIVE_KEY_ID_SUFFIX);
+            editor.apply();
+        }
+    }
+
+    public void setActiveApiKeyId(String providerKey, String keyId) {
+        editor.putString(providerKey + ACTIVE_KEY_ID_SUFFIX, keyId);
+        editor.apply();
+    }
+
+    public String getActiveApiKeyId(String providerKey) {
+        return sharedPreferences.getString(providerKey + ACTIVE_KEY_ID_SUFFIX, null);
+    }
+
+    public String getActiveApiKey(String providerKey) {
+        String activeId = getActiveApiKeyId(providerKey);
+        if (activeId == null || activeId.isEmpty()) {
+            List<ApiKeyEntry> keys = getApiKeys(providerKey);
+            if (!keys.isEmpty()) {
+                setActiveApiKeyId(providerKey, keys.get(0).getId());
+                return keys.get(0).getKey();
+            }
+            return "";
+        }
+        List<ApiKeyEntry> keys = getApiKeys(providerKey);
+        for (ApiKeyEntry entry : keys) {
+            if (entry.getId().equals(activeId)) {
+                return entry.getKey();
+            }
+        }
+        if (!keys.isEmpty()) {
+            setActiveApiKeyId(providerKey, keys.get(0).getId());
+            return keys.get(0).getKey();
+        }
+        return "";
+    }
+
+    private void migrateSingleKeyIfNeeded(String providerKey) {
+        String multiKeyJson = sharedPreferences.getString(providerKey + MULTI_KEY_SUFFIX, null);
+        if (multiKeyJson != null) return;
+        String singleKey = sharedPreferences.getString(providerKey + "ApiKey", null);
+        if (singleKey == null || singleKey.isEmpty()) return;
+        Log.d(TAG, "Migrating single API key to multi-key format for " + providerKey);
+        ApiKeyEntry entry = new ApiKeyEntry("Default", singleKey);
+        JSONArray array = new JSONArray();
+        try {
+            array.put(entry.toJson());
+        } catch (JSONException e) {
+            Log.e(TAG, "Error migrating API key", e);
+            return;
+        }
+        editor.putString(providerKey + MULTI_KEY_SUFFIX, array.toString());
+        editor.putString(providerKey + ACTIVE_KEY_ID_SUFFIX, entry.getId());
+        editor.apply();
     }
 
     public boolean hasModel() {

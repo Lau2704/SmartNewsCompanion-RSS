@@ -52,6 +52,11 @@
             android:exported="false"
             android:theme="@style/Theme.RSSNewsReader.NoActionBar" />
         <activity
+            android:name="my.mmu.Kaixuanrssnewsreader.ui.setting.ApiKeyManagerActivity"
+            android:parentActivityName="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
+            android:exported="false"
+            android:label="@string/api_key_manager_title" />
+        <activity
             android:name="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustPan"
