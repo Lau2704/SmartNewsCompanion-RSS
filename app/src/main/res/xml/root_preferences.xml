@@ -25,6 +25,17 @@
             app:summary="@string/entries_limit_summary"
             app:title="@string/entries_limit_title" />
 
+        <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
+            android:max="120"
+            app:defaultValue="10"
+            app:icon="@drawable/ic_hourglass"
+            app:key="extractionRetryDelay"
+            app:min="0"
+            app:seekBarIncrement="5"
+            app:showSeekBarValue="true"
+            app:summary="@string/extraction_retry_delay_summary"
+            app:title="@string/extraction_retry_delay_title" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -114,6 +114,10 @@ public class SharedPreferencesRepository {
         return sharedPreferences.getInt("confidenceThreshold", 50);
     }
 
+    public int getExtractionRetryDelay() {
+        return sharedPreferences.getInt("extractionRetryDelay", 10);
+    }
+
     public void setConfidenceThreshold(int confidenceThreshold) {
         editor.putInt("confidenceThreshold", confidenceThreshold);
         editor.apply();

@@ -250,18 +250,18 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
                 if (hasOriginalHtml && hasTranslatedHtml) {
                     statusView.setBackgroundResource(R.drawable.status_dot_green);
                     statusView.setVisibility(View.VISIBLE);
-                } else if (hasContent || priority > 0) {
+                } else if (hasOriginalHtml || hasContent || priority > 0) {
                     statusView.setBackgroundResource(R.drawable.status_dot_yellow);
                     statusView.setVisibility(View.VISIBLE);
-                }else {
+                } else {
                     statusView.setBackgroundResource(R.drawable.status_dot_red);
                     statusView.setVisibility(View.VISIBLE);
                 }
             } else {
-                if (hasContent) {
+                if (hasOriginalHtml) {
                     statusView.setBackgroundResource(R.drawable.status_dot_green);
                     statusView.setVisibility(View.VISIBLE);
-                } else if (priority > 0) {
+                } else if (hasContent || priority > 0) {
                     statusView.setBackgroundResource(R.drawable.status_dot_yellow);
                     statusView.setVisibility(View.VISIBLE);
                 } else {

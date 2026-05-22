@@ -150,6 +150,10 @@ public class TtsExtractor {
             }
         }else {
             Log.d(TAG, "No entry returned by getEmptyContentEntry()");
+
+            if (failedIds.isEmpty()) {
+                scheduleRetryForFailedEntries();
+            }
         }
     }
 
@@ -291,65 +295,67 @@ public class TtsExtractor {
                                         if (reader.peek() == JsonToken.STRING) {
                                             String html = reader.nextString();
                                             if (html != null) {
-                                                Readability4JExtended readability4J = new Readability4JExtended(currentLink, html);
-                                                Article article = readability4J.parse();
+                                                 Readability4JExtended readability4J = new Readability4JExtended(currentLink, html);
+                                                 Article article = readability4J.parse();
 
-                                                if (currentTitle != null && !currentTitle.isEmpty()) {
-                                                    content.append(currentTitle).append(delimiter);
-                                                }
+                                                 boolean hasBodyContent = false;
 
-                                                if (article.getContentWithUtf8Encoding() != null) {
-                                                    Document doc = Jsoup.parse(article.getContentWithUtf8Encoding());
-                                                    doc.select("img").removeAttr("width");
-                                                    doc.select("img").removeAttr("height");
-                                                    doc.select("img").removeAttr("sizes");
-                                                    doc.select("img").removeAttr("srcset");
-                                                    doc.select("h1").remove();
-                                                    doc.select("img").attr("style", "border-radius: 5px; width: 100%; margin-left:0");
-                                                    doc.select("figure").attr("style", "width: 100%; margin-left:0");
-                                                    doc.select("iframe").attr("style", "width: 100%; margin-left:0");
+                                                 if (article.getContentWithUtf8Encoding() != null) {
+                                                     Document doc = Jsoup.parse(article.getContentWithUtf8Encoding());
+                                                     doc.select("img").removeAttr("width");
+                                                     doc.select("img").removeAttr("height");
+                                                     doc.select("img").removeAttr("sizes");
+                                                     doc.select("img").removeAttr("srcset");
+                                                     doc.select("h1").remove();
+                                                     doc.select("img").attr("style", "border-radius: 5px; width: 100%; margin-left:0");
+                                                     doc.select("figure").attr("style", "width: 100%; margin-left:0");
+                                                     doc.select("iframe").attr("style", "width: 100%; margin-left:0");
 
-                                                    List<String> tags = Arrays.asList("h2", "h3", "h4", "h5", "h6", "p", "td", "pre", "th", "li", "figcaption", "blockquote", "section");
-                                                    for (Element element : doc.getAllElements()) {
-                                                        if (tags.contains(element.tagName())) {
-                                                            boolean sameContent = false;
-                                                            for (Element child : element.children()) {
-                                                                if (tags.contains(child.tagName())) {
-                                                                    sameContent = true;
-                                                                }
-                                                            }
-                                                            if (!sameContent) {
-                                                                String text = element.text().trim();
-                                                                if (!text.isEmpty() && text.length() > 1) {
-                                                                    if (currentTitle != null && !currentTitle.isEmpty()) {
-                                                                        content.append(delimiter).append(text);
-                                                                    } else {
-                                                                        content.append(text);
-                                                                    }
-                                                                } else {
-                                                                    element.remove();
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                                     List<String> tags = Arrays.asList("h2", "h3", "h4", "h5", "h6", "p", "td", "pre", "th", "li", "figcaption", "blockquote", "section");
+                                                     for (Element element : doc.getAllElements()) {
+                                                         if (tags.contains(element.tagName())) {
+                                                             boolean sameContent = false;
+                                                             for (Element child : element.children()) {
+                                                                 if (tags.contains(child.tagName())) {
+                                                                     sameContent = true;
+                                                                 }
+                                                             }
+                                                             if (!sameContent) {
+                                                                 String text = element.text().trim();
+                                                                 if (!text.isEmpty() && text.length() > 1) {
+                                                                     hasBodyContent = true;
+                                                                     if (currentTitle != null && !currentTitle.isEmpty()) {
+                                                                         content.append(delimiter).append(text);
+                                                                     } else {
+                                                                         content.append(text);
+                                                                     }
+                                                                 } else {
+                                                                     element.remove();
+                                                                 }
+                                                             }
+                                                         }
+                                                     }
 
-                                                    entryRepository.updateHtml(doc.html(), currentIdInProgress);
+                                                     if (hasBodyContent) {
+                                                         entryRepository.updateHtml(doc.html(), currentIdInProgress);
 
-                                                    if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
-                                                        entryRepository.updateOriginalHtml(doc.html(), currentIdInProgress);
-                                                        entryRepository.updateContent(content.toString(), currentIdInProgress);
-                                                    }
+                                                         if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
+                                                             entryRepository.updateOriginalHtml(doc.html(), currentIdInProgress);
+                                                             if (currentTitle != null && !currentTitle.isEmpty()) {
+                                                                 content.insert(0, currentTitle);
+                                                             }
+                                                             entryRepository.updateContent(content.toString(), currentIdInProgress);
+                                                         }
 
-                                                    if (sharedPreferencesRepository.getAutoTranslate()) {
-                                                        translateHtml(doc.html(), content.toString(), currentIdInProgress, currentTitle);
-                                                    }
+                                                         if (sharedPreferencesRepository.getAutoTranslate()) {
+                                                             translateHtml(doc.html(), content.toString(), currentIdInProgress, currentTitle);
+                                                         }
 
-                                                    if (content.toString().isEmpty()) {
-                                                        stopExtracting = true;
-                                                    } else {
-                                                        success = true;
-                                                    }
-                                                }
+                                                         success = true;
+                                                     } else {
+                                                         stopExtracting = true;
+                                                     }
+                                                 }
                                             }
                                         }
                                     } catch (Exception e) {
@@ -465,5 +471,32 @@ public class TtsExtractor {
 
     public String getCurrentLanguage() {
         return currentLanguage;
+    }
+
+    private void scheduleRetryForFailedEntries() {
+        List<Long> failedEntryIds = entryRepository.getFailedEntryIds();
+        if (failedEntryIds.isEmpty()) {
+            Log.d(TAG, "No failed entries to retry");
+            return;
+        }
+
+        int delaySeconds = sharedPreferencesRepository.getExtractionRetryDelay();
+        if (delaySeconds <= 0) {
+            Log.d(TAG, "Retry delay is 0, not retrying failed entries");
+            return;
+        }
+
+        Log.d(TAG, "Scheduling retry for " + failedEntryIds.size() + " failed entries in " + delaySeconds + "s");
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Log.d(TAG, "Retrying failed entries");
+            entryRepository.requeueMissingEntries();
+            for (Long id : failedEntryIds) {
+                if (!failedIds.contains(id)) {
+                    failedIds.add(id);
+                }
+            }
+            extractAllEntries();
+        }, delaySeconds * 1000L);
     }
 }

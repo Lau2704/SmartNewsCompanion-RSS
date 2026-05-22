@@ -1104,16 +1104,20 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
 
                     String html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
-                    if (html == null || html.trim().isEmpty()) {
-                        html = entry.getContent();
-                    }
                     content = entry.getContent();
                     boolean isHtmlAvailable = html != null && !html.trim().isEmpty();
+
+                    if (!isHtmlAvailable && content != null && !content.trim().isEmpty()) {
+                        isHtmlAvailable = true;
+                        html = content;
+                    }
 
                     if (!isHtmlAvailable) {
                         isWaitingForArticleContent = true;
                         makeSnackbar("Please wait, loading article...");
-                        Log.d(TAG, "loadEntryContent: Article content not available yet, waiting for fetch");
+                        Log.d(TAG, "loadEntryContent: Article content not available yet, triggering re-extraction");
+                        entryRepository.updatePriorityUnconditional(1, currentId);
+                        ttsExtractor.extractAllEntries();
                     } else {
                         isWaitingForArticleContent = false;
 

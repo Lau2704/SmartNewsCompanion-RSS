@@ -85,6 +85,10 @@ public class EntryRepository {
         entryDao.updatePriority(priority, id);
     }
 
+    public void updatePriorityUnconditional(int priority, long id) {
+        entryDao.updatePriorityUnconditional(priority, id);
+    }
+
     public EntryInfo getLastVisitedEntry() {
         long id = getLastVisitedEntryId();
         return entryDao.getEntryInfoById(id);
@@ -94,7 +98,15 @@ public class EntryRepository {
         Entry entry = entryDao.getEmptyEntryOrderByPrior();
 
         if (entry == null) {
+            entry = entryDao.getEntryMissingHtmlByPriority();
+        }
+
+        if (entry == null) {
             entry = entryDao.getEmptyEntry();
+        }
+
+        if (entry == null) {
+            entry = entryDao.getEntryMissingHtml();
         }
 
         return entry;
@@ -399,5 +411,9 @@ public class EntryRepository {
     public String getTranslatedTextById(long id) {
         Entry entry = entryDao.getEntryById(id);
         return (entry != null) ? entry.getTranslated() : null;
+    }
+
+    public List<Long> getFailedEntryIds() {
+        return entryDao.getFailedEntryIds();
     }
 }

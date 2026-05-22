@@ -141,6 +141,12 @@ public interface EntryDao {
     @Query("SELECT * FROM entry_table WHERE content is null")
     Entry getEmptyEntry();
 
+    @Query("SELECT * FROM entry_table WHERE original_html IS NULL AND priority != 0 ORDER BY priority ASC LIMIT 1")
+    Entry getEntryMissingHtmlByPriority();
+
+    @Query("SELECT * FROM entry_table WHERE original_html IS NULL")
+    Entry getEntryMissingHtml();
+
     @Query("SELECT id FROM entry_table WHERE feedId = :id")
     List<Long> getIdsByFeedId(long id);
 
@@ -155,6 +161,9 @@ public interface EntryDao {
 
     @Query("UPDATE entry_table SET priority = :priority WHERE id = :id AND content is null")
     void updatePriority(int priority, long id);
+
+    @Query("UPDATE entry_table SET priority = :priority WHERE id = :id")
+    void updatePriorityUnconditional(int priority, long id);
 
     @Query("UPDATE entry_table SET sentCountStopAt = :sentCount WHERE id = :id")
     void updateSentCount(int sentCount, long id);
@@ -221,4 +230,7 @@ public interface EntryDao {
 
     @Query("UPDATE entry_table SET translated = :translated WHERE id = :id")
     void updateTranslatedText(String translated, long id);
+
+    @Query("SELECT id FROM entry_table WHERE original_html IS NULL AND content IS NULL AND priority = 0 ORDER BY publishedDate DESC LIMIT 50")
+    List<Long> getFailedEntryIds();
 }

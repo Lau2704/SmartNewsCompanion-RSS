@@ -104,6 +104,8 @@
 
     <string name="entries_limit_title">Article limit for each feed</string>
     <string name="entries_limit_summary">Delete oldest unbookmarked articles after refresh (limit excludes bookmarked)</string>
+    <string name="extraction_retry_delay_title">Extraction retry delay (seconds)</string>
+    <string name="extraction_retry_delay_summary">Delay before retrying failed article extractions. Set to 0 to disable auto-retry.</string>
 
     <string name="display_summary_title">Auto-summarize articles</string>
     <string name="display_summary_on">Automatically generate summary for articles</string>
