@@ -77,7 +77,6 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private boolean isPausedManually;
     private boolean webViewConnected = false;
     private boolean uiControlPlayback = false;
-    private boolean isManualSkip = false;
     private boolean isArticleFinished = false;
     private boolean isSettingUpNewArticle = false;
     private MediaPlayer mediaPlayer; // Background music player
@@ -86,6 +85,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private int currentLoadedSentenceIndex = -1;
     
     private String currentUtteranceID = null;
+    private volatile String inFlightUtteranceId = null;
     private boolean hasSpokenAfterSetup = false;
     private PlaybackUiListener playbackUiListener;
     private int currentExtractProgress = 0;
@@ -104,13 +104,19 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         this.isPausedManually = sharedPreferencesRepository.getIsPausedManually();
         
         ttsMediaPlayer = new MediaPlayer();
+        ttsMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            Log.e(TAG, "ttsMediaPlayer error: what=" + what + " extra=" + extra + " at sentence " + sentenceCounter);
+            mp.reset();
+            if (!isArticleFinished && sentences != null && sentenceCounter < sentences.size() - 1) {
+                sentenceCounter++;
+                entryRepository.updateSentCount(sentenceCounter, currentId);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> speak(), 300);
+            }
+            return true;
+        });
         ttsMediaPlayer.setOnCompletionListener(mp -> {
             Log.d(TAG, "ttsMediaPlayer completed sentence: " + sentenceCounter);
-            if (isManualSkip) {
-                isManualSkip = false;
-                return;
-            }
-            
+
             if (isArticleFinished) return;
 
             if (sentences != null && sentenceCounter < sentences.size() - 1) {
@@ -251,13 +257,14 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             @Override
             public void onDone(String utteranceId) {
                 Log.d(TAG, "TTS onDone (Synthesis complete) - utteranceId: " + utteranceId);
-                
-                String expectedId = "utterance_" + currentId + "_" + sentenceCounter;
-                if (!expectedId.equals(utteranceId)) {
-                    Log.w(TAG, "Ignoring onDone for stale utterance: " + utteranceId + " (expected: " + expectedId + ")");
+
+                if (inFlightUtteranceId == null || !inFlightUtteranceId.equals(utteranceId)) {
+                    Log.w(TAG, "Ignoring stale onDone for: " + utteranceId + " (inFlight: " + inFlightUtteranceId + ")");
                     return;
                 }
-                
+
+                inFlightUtteranceId = null;
+
                 new Handler(Looper.getMainLooper()).post(() -> playTtsFile());
             }
 
@@ -266,13 +273,25 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 Log.e(TAG, "TTS ERROR - utteranceId: " + utteranceId);
                 Log.e(TAG, "TTS engine state - isInit: " + isInit + ", isSpeaking: " + (tts != null && tts.isSpeaking()));
 
+                if (inFlightUtteranceId != null && inFlightUtteranceId.equals(utteranceId)) {
+                    inFlightUtteranceId = null;
+
+                    if (!isArticleFinished && sentences != null && sentenceCounter < sentences.size() - 1) {
+                        Log.w(TAG, "Attempting recovery: skipping to next sentence after error");
+                        sentenceCounter++;
+                        entryRepository.updateSentCount(sentenceCounter, currentId);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> speak(), 300);
+                        return;
+                    }
+                }
+
                 if (tts != null) {
                     Log.e(TAG, "TTS engine info - Engines available: " + tts.getEngines());
                     Log.e(TAG, "Current language: " + language);
                 }
 
                 if (webViewCallback != null) {
-                    webViewCallback.makeSnackbar("TTS playback error. Please check TTS settings.");
+                    webViewCallback.makeSnackbar("TTS playback error. Retrying...");
                 }
             }
         });
@@ -334,6 +353,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void stopTtsPlayback() {
+        inFlightUtteranceId = null;
+
         if (ttsMediaPlayer != null) {
             if (ttsMediaPlayer.isPlaying()) ttsMediaPlayer.stop();
             ttsMediaPlayer.reset();
@@ -364,6 +385,8 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public void pauseTts(boolean fromUser) {
+        inFlightUtteranceId = null;
+
         if (ttsMediaPlayer != null && ttsMediaPlayer.isPlaying()) {
             ttsMediaPlayer.pause();
         }
@@ -391,6 +414,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         }
 
         boolean wasSpeaking = ttsMediaPlayer != null && ttsMediaPlayer.isPlaying();
+        inFlightUtteranceId = null;
         isPausedManually = !wasSpeaking && sharedPreferencesRepository.getIsPausedManually();
         sharedPreferencesRepository.setIsPausedManually(isPausedManually);
         Log.d(TAG, "Detected isPausedManually = " + isPausedManually);
@@ -755,6 +779,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 currentLoadedSentenceIndex = sentenceCounter;
 
                 String utteranceId = "utterance_" + currentId + "_" + sentenceCounter;
+                inFlightUtteranceId = utteranceId;
                 Bundle params = new Bundle();
                 params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC);
 
@@ -772,6 +797,17 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private void playTtsFile() {
         try {
             if (ttsMediaPlayer == null) return;
+
+            if (!ttsFile.exists() || ttsFile.length() == 0) {
+                Log.w(TAG, "TTS file missing or empty, skipping to next sentence");
+                if (!isArticleFinished && sentences != null && sentenceCounter < sentences.size() - 1) {
+                    sentenceCounter++;
+                    entryRepository.updateSentCount(sentenceCounter, currentId);
+                    speak();
+                }
+                return;
+            }
+
             Log.d(TAG, "Playing generated TTS file: " + ttsFile.getAbsolutePath());
             ttsMediaPlayer.reset();
             setMediaPlayerAttributes();
@@ -796,7 +832,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     public void fastForward() {
         if (tts != null && sentenceCounter < sentences.size() - 1) {
-            isManualSkip = true;
+            inFlightUtteranceId = null;
             sentenceCounter++;
             entryRepository.updateSentCount(sentenceCounter, currentId);
             
@@ -813,7 +849,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
 
     public void fastRewind() {
         if (tts != null && sentenceCounter > 0) {
-            isManualSkip = true;
+            inFlightUtteranceId = null;
             sentenceCounter--;
             entryRepository.updateSentCount(sentenceCounter, currentId);
             
