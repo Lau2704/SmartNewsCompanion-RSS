@@ -115,6 +115,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private boolean hasGeneratedSummary = false;
     private boolean hasTranslatedSummary = false;
     private boolean isWaitingForArticleContent = false;
+    private String currentHighlightText = null;
 
     private enum ActiveFab { NONE, TRANSLATE, SUMMARY, TRANSLATE_SUMMARY }
     private ActiveFab activeFab = ActiveFab.NONE;
@@ -977,6 +978,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         }
                                     }, 300);
 
+                                    webView.postDelayed(() -> {
+                                        if (webView != null && currentHighlightText != null && ttsPlayer != null && ttsPlayer.isPlaying()) {
+                                            webView.findAllAsync(currentHighlightText);
+                                        }
+                                    }, 500);
+
                                     syncLoadingWithTts();
                                 },
                                 throwable -> {
@@ -1009,6 +1016,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 hasGeneratedSummary = false;
                 hasTranslatedSummary = false;
                 activeFab = ActiveFab.NONE;
+                currentHighlightText = null;
             }
 
             Log.d(TAG, "Loading article with Intent ID: " + intentId);
@@ -1449,6 +1457,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         return;
                                     }
                                     webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
+
+                                    webView.postDelayed(() -> {
+                                        if (webView != null && currentHighlightText != null && ttsPlayer != null && ttsPlayer.isPlaying()) {
+                                            webView.findAllAsync(currentHighlightText);
+                                        }
+                                    }, 500);
                                 },
                                 throwable -> {
                                     Log.e(TAG, "Error loading HTML to WebView", throwable);
@@ -1663,6 +1677,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 if (webView != null) {
                     webView.clearMatches();
                 }
+                currentHighlightText = null;
                 switchReadMode();
                 return true;
 
@@ -1674,6 +1689,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     if (webView != null) {
                         webView.clearMatches();
                     }
+                    currentHighlightText = null;
                     if (highlightTextButton != null) {
                         highlightTextButton.setTitle(R.string.highlight_text_turn_on);
                     }
@@ -2038,6 +2054,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
             Log.d(TAG, "Highlighted text: " + text);
             String finalText = text.trim();
+            currentHighlightText = finalText;
             ContextCompat.getMainExecutor(getApplicationContext()).execute(() -> {
                 if (webView != null && !isDestroyed) {
                     webView.findAllAsync(finalText);

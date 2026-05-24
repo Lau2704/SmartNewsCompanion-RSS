@@ -741,6 +741,10 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
              setUiControlPlayback(true);
              setNewState(PlaybackStateCompat.STATE_PLAYING);
              if (playbackUiListener != null) playbackUiListener.onPlaybackStarted();
+
+             if (webViewCallback != null && sentenceCounter < sentences.size()) {
+                 webViewCallback.highlightText(sentences.get(sentenceCounter));
+             }
              return;
         }
 
