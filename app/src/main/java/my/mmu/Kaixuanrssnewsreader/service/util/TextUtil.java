@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
+import my.mmu.Kaixuanrssnewsreader.model.ApiKeyEntry;
 import my.mmu.Kaixuanrssnewsreader.model.ApiProvider;
 import my.mmu.Kaixuanrssnewsreader.service.util.LocalLlmEngine;
 import okhttp3.MediaType;
@@ -389,71 +390,12 @@ public class TextUtil {
                 return;
             }
 
-            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
-
-            if (provider.isLocal()) {
-                try {
-                    if (!localLlmEngine.isModelDownloaded()) {
-                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
-                        return;
-                    }
-                    if (!localLlmEngine.isModelLoaded()) {
-                        localLlmEngine.loadModel();
-                    }
-                    String systemPrompt = "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.";
-                    String result = localLlmEngine.complete(systemPrompt, text);
-                    emitter.onSuccess(result);
-                    return;
-                } catch (Exception e) {
-                    Log.e(TAG, "Local translation error", e);
-                    emitter.onError(e);
-                    return;
-                }
-            }
-
-            String apiKey = sharedPreferencesRepository.getApiKey();
-            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
-                return;
-            }
-
-            String model = sharedPreferencesRepository.getModel();
-            if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
-                return;
-            }
-
-            String url = provider.getEndpoint();
+            String systemPrompt = "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.";
 
             try {
-                String systemPrompt = "You are a professional translator. Translate the following text from " + sourceLanguage + " to " + targetLanguage + ". IMPORTANT: Return ONLY the translated text. Do not include the original text, any explanations, notes, or any other content.";
-
-                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, text, 4096);
-
-                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
-
-                Request.Builder requestBuilder = new Request.Builder()
-                        .url(url)
-                        .post(body);
-
-                addAuthHeaders(requestBuilder, provider, apiKey);
-                requestBuilder.addHeader("Content-Type", "application/json");
-
-                try (Response response = client.newCall(requestBuilder.build()).execute()) {
-                    if (!response.isSuccessful()) {
-                        String errorBody = response.body() != null ? response.body().string() : "";
-                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
-                        return;
-                    }
-
-                    String responseBody = response.body() != null ? response.body().string() : "";
-                    Log.d(TAG, "Full API Response length: " + responseBody.length());
-                    String translatedText = parseResponse(provider, responseBody);
-                    Log.d(TAG, "Translated text length: " + translatedText.length());
-                    emitter.onSuccess(translatedText);
-                }
+                String result = executeApiCallWithRetry(systemPrompt, text, 4096);
+                Log.d(TAG, "Translated text length: " + result.length());
+                emitter.onSuccess(result);
             } catch (Exception e) {
                 Log.e(TAG, "Translation error", e);
                 emitter.onError(e);
@@ -497,8 +439,6 @@ public class TextUtil {
                 return;
             }
 
-            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
-
             String systemPrompt = String.format(
                 "You are a professional news editor. Rewrite the following news article into a concise summary article of approximately %d words.\n\n"
                 + "Requirements:\n"
@@ -517,65 +457,9 @@ public class TextUtil {
 
             String contentToSummarize = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
 
-            if (provider.isLocal()) {
-                try {
-                    if (!localLlmEngine.isModelDownloaded()) {
-                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
-                        return;
-                    }
-                    if (!localLlmEngine.isModelLoaded()) {
-                        localLlmEngine.loadModel();
-                    }
-                    String result = localLlmEngine.complete(systemPrompt, contentToSummarize);
-                    emitter.onSuccess(result);
-                    return;
-                } catch (Exception e) {
-                    Log.e(TAG, "Local summarization error", e);
-                    emitter.onError(e);
-                    return;
-                }
-            }
-
-            String apiKey = sharedPreferencesRepository.getApiKey();
-            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
-                return;
-            }
-
-            String model = sharedPreferencesRepository.getModel();
-            if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
-                return;
-            }
-
-            String url = provider.getEndpoint();
-
             try {
-                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, contentToSummarize, 4096);
-
-                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
-
-                Request.Builder requestBuilder = new Request.Builder()
-                        .url(url)
-                        .post(body);
-
-                addAuthHeaders(requestBuilder, provider, apiKey);
-                requestBuilder.addHeader("Content-Type", "application/json");
-
-                try (Response response = client.newCall(requestBuilder.build()).execute()) {
-                    if (!response.isSuccessful()) {
-                        String errorBody = response.body() != null ? response.body().string() : "";
-                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
-                        return;
-                    }
-
-                    String responseBody = response.body() != null ? response.body().string() : "";
-                    Log.d(TAG, "Summary API Response length: " + responseBody.length());
-                    String summary = parseResponse(provider, responseBody);
-                    emitter.onSuccess(summary);
-                }
+                String result = executeApiCallWithRetry(systemPrompt, contentToSummarize, 4096);
+                emitter.onSuccess(result);
             } catch (Exception e) {
                 Log.e(TAG, "Summarization error", e);
                 emitter.onError(e);
@@ -589,8 +473,6 @@ public class TextUtil {
                 emitter.onError(new IllegalArgumentException("Invalid content for summarization"));
                 return;
             }
-
-            ApiProvider provider = sharedPreferencesRepository.getApiProvider();
 
             String systemPrompt;
             if (sourceLanguage != null && targetLanguage != null && sourceLanguage.equals(targetLanguage)) {
@@ -629,65 +511,9 @@ public class TextUtil {
 
             String contentToProcess = text.length() > 4000 ? text.substring(0, 4000) + "..." : text;
 
-            if (provider.isLocal()) {
-                try {
-                    if (!localLlmEngine.isModelDownloaded()) {
-                        emitter.onError(new IllegalStateException("Local model not downloaded. Please download the model from Settings first."));
-                        return;
-                    }
-                    if (!localLlmEngine.isModelLoaded()) {
-                        localLlmEngine.loadModel();
-                    }
-                    String result = localLlmEngine.complete(systemPrompt, contentToProcess);
-                    emitter.onSuccess(result);
-                    return;
-                } catch (Exception e) {
-                    Log.e(TAG, "Local summarize+translate error", e);
-                    emitter.onError(e);
-                    return;
-                }
-            }
-
-            String apiKey = sharedPreferencesRepository.getApiKey();
-            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
-                emitter.onError(new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings."));
-                return;
-            }
-
-            String model = sharedPreferencesRepository.getModel();
-            if (model == null || model.isEmpty()) {
-                emitter.onError(new IllegalArgumentException("Model is not configured. Please set a valid model in Settings."));
-                return;
-            }
-
-            String url = provider.getEndpoint();
-
             try {
-                JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, contentToProcess, 4096);
-
-                MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-                RequestBody body = RequestBody.create(requestBody.toString(), JSON);
-
-                Request.Builder requestBuilder = new Request.Builder()
-                        .url(url)
-                        .post(body);
-
-                addAuthHeaders(requestBuilder, provider, apiKey);
-                requestBuilder.addHeader("Content-Type", "application/json");
-
-                try (Response response = client.newCall(requestBuilder.build()).execute()) {
-                    if (!response.isSuccessful()) {
-                        String errorBody = response.body() != null ? response.body().string() : "";
-                        Log.e(TAG, "API Error - Code: " + response.code() + ", Body: " + errorBody);
-                        emitter.onError(new Exception(buildErrorMessage(provider, response.code()) + "\n\nDetails: " + errorBody));
-                        return;
-                    }
-
-                    String responseBody = response.body() != null ? response.body().string() : "";
-                    Log.d(TAG, "Summarize+Translate API Response length: " + responseBody.length());
-                    String result = parseResponse(provider, responseBody);
-                    emitter.onSuccess(result);
-                }
+                String result = executeApiCallWithRetry(systemPrompt, contentToProcess, 4096);
+                emitter.onSuccess(result);
             } catch (Exception e) {
                 Log.e(TAG, "Summarize+Translate error", e);
                 emitter.onError(e);
@@ -701,6 +527,86 @@ public class TextUtil {
 
     public boolean isLocalModelReady() {
         return localLlmEngine.isModelDownloaded();
+    }
+
+    private String executeApiCallWithRetry(String systemPrompt, String userContent, int maxTokens) throws Exception {
+        ApiProvider provider = sharedPreferencesRepository.getApiProvider();
+
+        if (provider.isLocal()) {
+            if (!localLlmEngine.isModelDownloaded()) {
+                throw new IllegalStateException("Local model not downloaded. Please download the model from Settings first.");
+            }
+            if (!localLlmEngine.isModelLoaded()) {
+                localLlmEngine.loadModel();
+            }
+            return localLlmEngine.complete(systemPrompt, userContent);
+        }
+
+        String model = sharedPreferencesRepository.getModel();
+        if (model == null || model.isEmpty()) {
+            throw new IllegalArgumentException("Model is not configured. Please set a valid model in Settings.");
+        }
+
+        String providerKey = provider.getKey();
+        List<ApiKeyEntry> allKeys = sharedPreferencesRepository.getApiKeys(providerKey);
+        int maxAttempts = allKeys.size();
+        if (maxAttempts == 0) {
+            throw new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings.");
+        }
+
+        Exception lastError = null;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            String apiKey = sharedPreferencesRepository.getActiveApiKey(providerKey);
+            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here")) {
+                if (attempt < maxAttempts - 1) {
+                    Log.w(TAG, "Invalid API key, rotating. Attempt " + (attempt + 1) + "/" + maxAttempts);
+                    sharedPreferencesRepository.rotateToNextApiKey(providerKey);
+                    continue;
+                }
+                throw new IllegalArgumentException("API key is not configured. Please set a valid API key in Settings.");
+            }
+
+            String url = provider.getEndpoint();
+            JSONObject requestBody = buildRequestBody(provider, model, systemPrompt, userContent, maxTokens);
+
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(requestBody.toString(), JSON);
+
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(url)
+                    .post(body);
+
+            addAuthHeaders(requestBuilder, provider, apiKey);
+            requestBuilder.addHeader("Content-Type", "application/json");
+
+            try (Response response = client.newCall(requestBuilder.build()).execute()) {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body() != null ? response.body().string() : "";
+                    Log.d(TAG, "API success on attempt " + (attempt + 1) + "/" + maxAttempts + ", response length: " + responseBody.length());
+                    return parseResponse(provider, responseBody);
+                }
+
+                int code = response.code();
+                String errorBody = response.body() != null ? response.body().string() : "";
+                Log.w(TAG, "API error " + code + " on attempt " + (attempt + 1) + "/" + maxAttempts);
+
+                if (isRetryableCode(code) && attempt < maxAttempts - 1) {
+                    Log.w(TAG, "Rotating to next API key for " + providerKey);
+                    sharedPreferencesRepository.rotateToNextApiKey(providerKey);
+                    lastError = new Exception(buildErrorMessage(provider, code) + "\n\nDetails: " + errorBody);
+                    continue;
+                }
+
+                throw new Exception(buildErrorMessage(provider, code) + "\n\nDetails: " + errorBody);
+            }
+        }
+
+        if (lastError != null) throw lastError;
+        throw new Exception("All " + maxAttempts + " API keys exhausted for " + providerKey + ". Please wait and try again, or add more keys in Settings.");
+    }
+
+    private boolean isRetryableCode(int code) {
+        return code == 401 || code == 402 || code == 403 || code == 429;
     }
 
     private JSONObject buildRequestBody(ApiProvider provider, String model, String systemPrompt, String userContent, int maxTokens) throws Exception {
@@ -770,6 +676,10 @@ public class TextUtil {
         String name = provider.getKey();
         if (code == 401) {
             return "Invalid API key. Please check your " + name + " API key in Settings.";
+        } else if (code == 402) {
+            return "API quota exceeded for " + name + ". Your plan may have run out of credits.";
+        } else if (code == 403) {
+            return "Access denied for " + name + ". Your API key may not have permission for this model.";
         } else if (code == 404) {
             return "Invalid model name. Please check the " + name + " model in Settings.";
         } else if (code == 429) {

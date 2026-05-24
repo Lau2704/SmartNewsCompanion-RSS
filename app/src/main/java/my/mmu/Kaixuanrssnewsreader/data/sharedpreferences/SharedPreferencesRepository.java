@@ -379,6 +379,28 @@ public class SharedPreferencesRepository {
         editor.apply();
     }
 
+    public boolean rotateToNextApiKey() {
+        ApiProvider provider = getApiProvider();
+        return rotateToNextApiKey(provider.getKey());
+    }
+
+    public boolean rotateToNextApiKey(String providerKey) {
+        List<ApiKeyEntry> keys = getApiKeys(providerKey);
+        if (keys.size() <= 1) return false;
+        String activeId = getActiveApiKeyId(providerKey);
+        int currentIndex = -1;
+        for (int i = 0; i < keys.size(); i++) {
+            if (keys.get(i).getId().equals(activeId)) {
+                currentIndex = i;
+                break;
+            }
+        }
+        int nextIndex = (currentIndex + 1) % keys.size();
+        setActiveApiKeyId(providerKey, keys.get(nextIndex).getId());
+        Log.d(TAG, "Rotated API key for " + providerKey + " from index " + currentIndex + " to " + nextIndex);
+        return true;
+    }
+
     public String getActiveApiKeyId(String providerKey) {
         return sharedPreferences.getString(providerKey + ACTIVE_KEY_ID_SUFFIX, null);
     }
