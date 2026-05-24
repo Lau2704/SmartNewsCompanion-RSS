@@ -12,8 +12,8 @@ android {
         applicationId "my.mmu.Kaixuanrssnewsreader"
         minSdk 26
         targetSdk 33
-        versionCode 9
-        versionName "0.7 - beta version"
+        versionCode 11
+        versionName "0.9 - beta version"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -98,10 +98,7 @@ dependencies {
     // Custom Tabs
     implementation 'androidx.browser:browser:1.8.0'
 
-    // Local LLM (Gemma 2 2B GGUF inference)
-    implementation 'io.github.ljcamargo:llamacpp-kotlin:0.1.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    // Local LLM (Gemma 4 2B GGUF inference) - native .so bundled in jniLibs/
 }
 
 configurations.all {
