@@ -44,9 +44,11 @@ public class TtsPlaylist {
 
     public List<MediaBrowserCompat.MediaItem> getMediaItems() {
         List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
-        result.add(
-                new MediaBrowserCompat.MediaItem(
-                        metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+        if (metadata != null) {
+            result.add(
+                    new MediaBrowserCompat.MediaItem(
+                            metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+        }
         return result;
     }
 
@@ -86,7 +88,8 @@ public class TtsPlaylist {
         }
 
         if (entryInfo == null) {
-            return new MediaMetadataCompat.Builder().build();
+            metadata = new MediaMetadataCompat.Builder().build();
+            return metadata;
         }
 
         metadata = new MediaMetadataCompat.Builder()

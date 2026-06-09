@@ -61,15 +61,6 @@
 
         <SwitchPreferenceCompat
             app:widgetLayout="@layout/preference_switch_m3"
-            app:defaultValue="false"
-            app:icon="@drawable/ic_summary"
-            app:key="displaySummary"
-            app:summaryOff="@string/display_summary_off"
-            app:summaryOn="@string/display_summary_on"
-            app:title="@string/display_summary_title" />
-
-        <SwitchPreferenceCompat
-            app:widgetLayout="@layout/preference_switch_m3"
             app:defaultValue="true"
             app:icon="@drawable/ic_marker"
             app:key="highlightText"
@@ -81,7 +72,7 @@
 
     <PreferenceCategory
         android:layout="@layout/text_preference_category"
-        app:title="@string/translation_header">
+        app:title="@string/ai_provider_header">
 
         <ListPreference
             app:key="apiProvider"
@@ -122,6 +113,21 @@
             app:title="@string/api_model_title"
             android:dialogTitle="@string/api_model_dialog_title" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:layout="@layout/text_preference_category"
+        app:title="@string/summarization_header">
+
+        <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_summary"
+            app:key="displaySummary"
+            app:summaryOff="@string/display_summary_off"
+            app:summaryOn="@string/display_summary_on"
+            app:title="@string/display_summary_title" />
+
         <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="500"
             app:defaultValue="150"
@@ -132,6 +138,21 @@
             app:showSeekBarValue="true"
             app:summary="@string/summary_length_summary"
             app:title="@string/summary_length_title" />
+
+        <SwitchPreferenceCompat
+            app:widgetLayout="@layout/preference_switch_m3"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_translate_summary"
+            app:key="autoTranslateSummary"
+            app:summaryOff="@string/auto_translate_summary_off"
+            app:summaryOn="@string/auto_translate_summary_on"
+            app:title="@string/auto_translate_summary_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:layout="@layout/text_preference_category"
+        app:title="@string/translation_header">
 
         <ListPreference
             app:entries="@array/defaultTranslationLanguage"
@@ -149,15 +170,6 @@
             app:summaryOff="@string/auto_translate_off"
             app:summaryOn="@string/auto_translate_on"
             app:title="@string/auto_translate_title" />
-
-        <SwitchPreferenceCompat
-            app:widgetLayout="@layout/preference_switch_m3"
-            app:defaultValue="false"
-            app:icon="@drawable/ic_translate_summary"
-            app:key="autoTranslateSummary"
-            app:summaryOff="@string/auto_translate_summary_off"
-            app:summaryOn="@string/auto_translate_summary_on"
-            app:title="@string/auto_translate_summary_title" />
 
         <my.mmu.Kaixuanrssnewsreader.ui.setting.SliderPreference
             android:max="100"

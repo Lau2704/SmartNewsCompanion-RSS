@@ -460,6 +460,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         hasGeneratedSummary = true;
                         sharedPreferencesRepository.setSummary(currentId, summary, langToSummarize);
                         switchToSummaryView();
+                        preSummarizeAdjacentEntries();
                     },
                     error -> {
                         Log.e(TAG, "Summarization failed", error);
@@ -510,6 +511,67 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             performAutoSummary();
         } else {
             Log.d(TAG, "loadSavedSummaryOrGenerate: No saved summary and auto-summary disabled, not generating");
+        }
+    }
+
+    private void resetSummaryState() {
+        originalHtmlForSummary = null;
+        summaryHtml = null;
+        translatedSummaryHtml = null;
+        hasGeneratedSummary = false;
+        hasTranslatedSummary = false;
+        isSummaryView = false;
+        activeFab = ActiveFab.NONE;
+        currentHighlightText = null;
+    }
+
+    private void preSummarizeAdjacentEntries() {
+        if (!sharedPreferencesRepository.getDisplaySummary() && !sharedPreferencesRepository.getAutoTranslateSummary()) return;
+
+        List<Long> adjacentIds = playlistRepository.getPreviousAndNextEntryIds(currentId);
+        int summaryLength = sharedPreferencesRepository.getSummaryLength();
+
+        for (Long entryId : adjacentIds) {
+            String existingSummary = sharedPreferencesRepository.getSummary(entryId);
+            if (existingSummary != null && !existingSummary.isEmpty()) continue;
+
+            String content = webViewViewModel.getContentById(entryId);
+            if (content == null || content.trim().isEmpty()) continue;
+
+            final long targetEntryId = entryId;
+
+            if (sharedPreferencesRepository.getAutoTranslateSummary()) {
+                String targetLang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+                if (targetLang == null || targetLang.isEmpty()) {
+                    targetLang = java.util.Locale.getDefault().getLanguage();
+                }
+
+                compositeDisposable.add(
+                    textUtil.summarizeAndTranslateText(content, summaryLength, "en", targetLang)
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(
+                            result -> {
+                                String lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+                                sharedPreferencesRepository.setTranslatedSummary(targetEntryId, result, lang);
+                                sharedPreferencesRepository.setSummary(targetEntryId, result, lang);
+                                Log.d(TAG, "Pre-summarized+translated adjacent entry: " + targetEntryId);
+                            },
+                            error -> Log.w(TAG, "Failed to pre-summarize+translate entry " + targetEntryId, error)
+                        )
+                );
+            } else {
+                compositeDisposable.add(
+                    textUtil.summarizeText(content, summaryLength)
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(
+                            summary -> {
+                                sharedPreferencesRepository.setSummary(targetEntryId, summary);
+                                Log.d(TAG, "Pre-summarized adjacent entry: " + targetEntryId);
+                            },
+                            error -> Log.w(TAG, "Failed to pre-summarize entry " + targetEntryId, error)
+                        )
+                );
+            }
         }
     }
 
@@ -771,6 +833,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         translatedSummaryHtml = formatSummaryAsHtml(result);
                         hasTranslatedSummary = true;
                         switchToTranslatedSummaryView();
+                        preSummarizeAdjacentEntries();
                     },
                     error -> {
                         Log.e(TAG, "Translate+Summary failed", error);
@@ -1010,13 +1073,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             long intentId = getIntent().getLongExtra("entry_id", -1);
 
             if (intentId != currentId) {
-                originalHtmlForSummary = null;
-                summaryHtml = null;
-                translatedSummaryHtml = null;
-                hasGeneratedSummary = false;
-                hasTranslatedSummary = false;
-                activeFab = ActiveFab.NONE;
-                currentHighlightText = null;
+                resetSummaryState();
             }
 
             Log.d(TAG, "Loading article with Intent ID: " + intentId);
@@ -1976,6 +2033,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         bookmark = metadata.getString("bookmark");
         currentLink = metadata.getString("link");
         currentId = Long.parseLong(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
+        resetSummaryState();
         updateToggleTranslationVisibility();
         feedId = metadata.getLong("feedId");
 
@@ -2022,6 +2080,23 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     htmlToLoad -> {
                                         if (htmlToLoad != null) {
                                             loadHtmlIntoWebView(htmlToLoad);
+
+                                            Entry entry = webViewViewModel.getEntryById(currentId);
+                                            if (entry != null) {
+                                                boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
+
+                                                if (!hasTranslation) {
+                                                    if (sharedPreferencesRepository.getAutoTranslateSummary()) {
+                                                        setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
+                                                        performTranslateAndSummary();
+                                                    } else if (sharedPreferencesRepository.getAutoTranslate()) {
+                                                        setActiveFab(ActiveFab.TRANSLATE);
+                                                        translate();
+                                                    }
+                                                }
+
+                                                loadSavedSummaryOrGenerate();
+                                            }
                                         } else {
                                             isWaitingForArticleContent = true;
                                             makeSnackbar("Please wait, loading article...");
@@ -2499,6 +2574,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             bookmark = metadata.getString("bookmark");
             currentLink = metadata.getString("link");
             currentId = Long.parseLong(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
+            resetSummaryState();
             updateToggleTranslationVisibility();
             feedId = metadata.getLong("feedId");
 

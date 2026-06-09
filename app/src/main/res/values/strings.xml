@@ -16,10 +16,12 @@
 
     <!-- Preference -->
     <string name="interface_header">Interface</string>
-    <string name="translation_header">Language</string>
+    <string name="translation_header">Translation</string>
     <string name="language_identifier_header">Language Identifier</string>
     <string name="text_to_speech_header">Text-to-Speech</string>
     <string name="sync_header">Sync</string>
+    <string name="ai_provider_header">AI Provider</string>
+    <string name="summarization_header">Summarization</string>
 
     <string name="app_language_title">App language</string>
     <string name="app_language_summary">Change the display language of the app</string>
