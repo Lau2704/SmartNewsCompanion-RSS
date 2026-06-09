@@ -45,9 +45,12 @@ public class TtsPlaylist {
     public List<MediaBrowserCompat.MediaItem> getMediaItems() {
         List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
         if (metadata != null) {
-            result.add(
-                    new MediaBrowserCompat.MediaItem(
-                            metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+            String mediaId = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+            if (mediaId != null && !mediaId.isEmpty()) {
+                result.add(
+                        new MediaBrowserCompat.MediaItem(
+                                metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+            }
         }
         return result;
     }

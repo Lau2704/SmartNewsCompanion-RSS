@@ -1309,14 +1309,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             // If HTML is missing, we might still want to try TTS extract from the raw link?
             // But usually extractAllEntries handles it.
             // If we are here, it means DB has entry but no HTML.
-            // Maybe trigger extraction?
-            if (isReadingMode) {
-                 // In reading mode, TtsExtractor callback is set by WebClient.
-                 // But we need to load URL to trigger it.
-                 // If html is null, loadUrl fallback?
-                 Log.d(TAG, "Loading URL directly as HTML is missing.");
-                 webView.loadUrl(entryInfo.getEntryLink());
-            }
+            Log.d(TAG, "Loading URL directly as HTML is missing.");
+            webView.loadUrl(entryInfo.getEntryLink());
+            browserButton.setVisible(true);
+            showOfflineButton = true;
         }
 
                     sharedPreferencesRepository.setCurrentReadingEntryId(currentId);
@@ -1330,10 +1326,30 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private void loadFromBrowserMode(EntryInfo entryInfo) {
         browserButton.setVisible(false);
         offlineButton.setVisible(true);
+        loading.setVisibility(View.GONE);
+        reloadButton.setVisible(true);
+        bookmarkButton.setVisible(true);
+        highlightTextButton.setVisible(true);
+
+        if (entryInfo.getBookmark() == null || entryInfo.getBookmark().equals("N")) {
+            bookmarkButton.setIcon(R.drawable.ic_bookmark_outline);
+        } else {
+            bookmarkButton.setIcon(R.drawable.ic_bookmark_filled);
+        }
+
+        if (!isReadingMode && functionButtons != null) {
+            functionButtons.setVisibility(View.VISIBLE);
+            functionButtons.setAlpha(1.0f);
+        }
+
+        sharedPreferencesRepository.setCurrentReadingEntryId(currentId);
         webView.loadUrl(entryInfo.getEntryLink());
+        observeLiveEntry();
+        observeAutoTranslation();
     }
 
             private void observeLiveEntry() {
+                webViewViewModel.getLiveEntry().removeObservers(this);
                 webViewViewModel.triggerEntryRefresh(currentId);
                 webViewViewModel.getLiveEntry().observe(this, entry -> {
                     if (entry == null) {
@@ -1361,6 +1377,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 isWaitingForArticleContent = false;
                                 makeSnackbar("Article loaded successfully");
 
+                                loadHtmlIntoWebView(html);
+
                                 boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
 
                                 if (!hasTranslation) {
@@ -1376,6 +1394,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 }
 
                                 loadSavedSummaryOrGenerate();
+
+                                String contentToRead = isTranslatedView ? entry.getTranslated() : entry.getContent();
+                                if (contentToRead != null && !contentToRead.trim().isEmpty()) {
+                                    String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+                                    ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -1383,6 +1407,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     }
                 });
 
+                webViewViewModel.getOriginalHtmlLiveData().removeObservers(this);
                 webViewViewModel.getOriginalHtmlLiveData().observe(this, originalHtml -> {
                     try {
                         updateToggleStateAndWebView(originalHtml, webViewViewModel.getTranslatedHtmlLiveData().getValue());
@@ -1390,6 +1415,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         Log.e(TAG, "Error updating toggle state", e);
                     }
                 });
+                webViewViewModel.getTranslatedHtmlLiveData().removeObservers(this);
                 webViewViewModel.getTranslatedHtmlLiveData().observe(this, translatedHtml -> {
                     try {
                         updateToggleStateAndWebView(webViewViewModel.getOriginalHtmlLiveData().getValue(), translatedHtml);
@@ -1946,6 +1972,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             ttsPlayer.setupMediaPlayer(false);
         }
 
+        if (switchReadModeButton != null) {
+            switchReadModeButton.setVisible(false);
+        }
         if (switchPlayModeButton != null) {
             switchPlayModeButton.setVisible(true);
         }
@@ -1966,6 +1995,9 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
         }
 
+        if (switchPlayModeButton != null) {
+            switchPlayModeButton.setVisible(false);
+        }
         if (switchReadModeButton != null) {
             switchReadModeButton.setVisible(true);
         }
