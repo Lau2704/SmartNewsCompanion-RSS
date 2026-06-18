@@ -115,18 +115,17 @@ public class MediaBrowserHelper {
         if (callback != null) {
             mCallbackList.add(callback);
 
-            // Update with the latest metadata/playback state.
-//            if (mMediaController != null) {
-//                final MediaMetadataCompat metadata = mMediaController.getMetadata();
-//                if (metadata != null) {
-//                    callback.onMetadataChanged(metadata);
-//                }
-//
-//                final PlaybackStateCompat playbackState = mMediaController.getPlaybackState();
-//                if (playbackState != null) {
-//                    callback.onPlaybackStateChanged(playbackState);
-//                }
-//            }
+            if (mMediaController != null) {
+                final MediaMetadataCompat metadata = mMediaController.getMetadata();
+                if (metadata != null) {
+                    callback.onMetadataChanged(metadata);
+                }
+
+                final PlaybackStateCompat playbackState = mMediaController.getPlaybackState();
+                if (playbackState != null) {
+                    callback.onPlaybackStateChanged(playbackState);
+                }
+            }
         }
     }
 
@@ -152,10 +151,17 @@ public class MediaBrowserHelper {
             mMediaController.registerCallback(mMediaControllerCallback);
             Log.d(TAG, "MediaController registered with callback");
 
-//            mMediaControllerCallback.onMetadataChanged(mMediaController.getMetadata());
-//            mMediaControllerCallback.onPlaybackStateChanged(mMediaController.getPlaybackState());
+            MediaMetadataCompat metadata = mMediaController.getMetadata();
+            if (metadata != null) {
+                mMediaControllerCallback.onMetadataChanged(metadata);
+            }
 
-//            MediaBrowserHelper.this.onConnected(mMediaController);
+            PlaybackStateCompat playbackState = mMediaController.getPlaybackState();
+            if (playbackState != null) {
+                mMediaControllerCallback.onPlaybackStateChanged(playbackState);
+            }
+
+            MediaBrowserHelper.this.onConnected(mMediaController);
 
             Log.d(TAG, "Subscribing to root: " + mMediaBrowser.getRoot());
             mMediaBrowser.subscribe(mMediaBrowser.getRoot(), mMediaBrowserSubscriptionCallback);

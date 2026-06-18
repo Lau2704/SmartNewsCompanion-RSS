@@ -340,6 +340,12 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.bottomNavigation, navController);
 
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            if (destination.getLabel() != null) {
+                binding.toolbar.setTitle(destination.getLabel());
+            }
+        });
+
         RecyclerView recyclerView = binding.navigationFeedsRecycler;
         recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
         adapter = new NavigationFeedItemAdapter(new NavigationFeedItemAdapter.FeedItemClickInterface() {
@@ -350,7 +356,9 @@ public class MainActivity extends AppCompatActivity {
                 args.putLong("id", id);
                 args.putString("title", feedTitle);
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false)
+                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.allEntriesFragment, args, navOptions);
             }
@@ -358,16 +366,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
-            boolean handled = true;
-
-            if (itemId == R.id.allEntriesFragment && navController.getCurrentDestination().getId() != R.id.allEntriesFragment) {
-                navController.popBackStack(R.id.allEntriesFragment, false);
-            } else {
-                handled = NavigationUI.onNavDestinationSelected(item, navController);
-            }
-
-            return handled;
+            return NavigationUI.onNavDestinationSelected(item, navController);
         });
 
         binding.allFeedsButton.setOnClickListener(new View.OnClickListener() {
@@ -378,7 +377,9 @@ public class MainActivity extends AppCompatActivity {
                 args.putInt("id", 0);
                 args.putString("title", "All feeds");
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false)
+                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.allEntriesFragment, args, navOptions);
             }
@@ -388,7 +389,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false)
+                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.feedFragment, null, navOptions);
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -426,7 +429,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false)
+                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.settingsFragment, null, navOptions);
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -437,7 +442,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false)
+                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.helpFragment, null, navOptions);
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -461,7 +468,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (getIntent() != null && getIntent().getBooleanExtra("navigate_to_settings", false)) {
             NavOptions navOptions = new NavOptions.Builder()
-                    .setPopUpTo(R.id.allEntriesFragment, false)
+                    .setPopUpTo(R.id.allEntriesFragment, false, true)
+                    .setLaunchSingleTop(true)
+                    .setRestoreState(true)
                     .build();
             navController.navigate(R.id.settingsFragment, null, navOptions);
         }

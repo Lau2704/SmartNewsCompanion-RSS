@@ -477,6 +477,8 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
     }
 
     private void setupPlaylistControlBar(@NonNull View view) {
+        controlBarDisposables = new CompositeDisposable();
+
         View controlBarInclude = view.findViewById(R.id.playlistControlBarInclude);
         if (controlBarInclude == null) return;
 
@@ -556,7 +558,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         if (playlistControlBar == null) return;
 
         long currentId = ttsPlayer.getCurrentId();
-        if (currentId <= 0 && currentPlaybackState == PlaybackStateCompat.STATE_NONE) {
+        if (currentId <= 0) {
             playlistControlBar.setVisibility(View.GONE);
             return;
         }
