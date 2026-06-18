@@ -404,6 +404,12 @@ public class TextUtil {
     }
 
     public Single<String> identifyLanguageRx(String sentence) {
+        if (sentence == null || sentence.trim().isEmpty()) {
+            return Single.just("und");
+        }
+
+        String sample = sentence.length() > 500 ? sentence.substring(0, 500) : sentence;
+
         float confidenceThreshold = (float) sharedPreferencesRepository.getConfidenceThreshold() / 100;
 
         LanguageIdentificationOptions options = new LanguageIdentificationOptions.Builder()
@@ -412,12 +418,18 @@ public class TextUtil {
 
         LanguageIdentifier languageIdentifier = LanguageIdentification.getClient(options);
 
-        return Single.fromCallable(() -> languageIdentifier.identifyLanguage(sentence))
+        return Single.fromCallable(() -> languageIdentifier.identifyLanguage(sample))
                 .subscribeOn(Schedulers.io())
                 .map(languageCodeTask -> {
                     try {
                         String languageCode = Tasks.await(languageCodeTask);
                         if ("und".equals(languageCode)) {
+                            Log.i(TAG, "Primary identification returned 'und', trying possible languages...");
+                            String fallback = identifyPossibleLanguages(languageIdentifier, sample);
+                            if (fallback != null) {
+                                Log.i(TAG, "Fallback identified language: " + fallback);
+                                return fallback;
+                            }
                             Log.i(TAG, "Unable to identify language.");
                             return "und";
                         } else {
@@ -430,6 +442,31 @@ public class TextUtil {
                     }
                 })
                 .onErrorReturnItem("und");
+    }
+
+    private String identifyPossibleLanguages(LanguageIdentifier languageIdentifier, String sample) {
+        try {
+            java.util.List<com.google.mlkit.nl.languageid.IdentifiedLanguage> possible =
+                    Tasks.await(languageIdentifier.identifyPossibleLanguages(sample));
+            for (com.google.mlkit.nl.languageid.IdentifiedLanguage dl : possible) {
+                String code = dl.getLanguageTag();
+                float confidence = dl.getConfidence();
+                if (!"und".equals(code) && !"en".equals(code)) {
+                    Log.d(TAG, "Possible language candidate: " + code + " confidence=" + confidence);
+                    return code;
+                }
+            }
+            if (!possible.isEmpty()) {
+                String bestCode = possible.get(0).getLanguageTag();
+                if (!"und".equals(bestCode)) {
+                    Log.d(TAG, "Using best possible language: " + bestCode);
+                    return bestCode;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in identifyPossibleLanguages", e);
+        }
+        return null;
     }
 
     public Single<String> summarizeText(String text, int targetWords) {

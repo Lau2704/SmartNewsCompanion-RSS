@@ -925,6 +925,21 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        long newEntryId = intent.getLongExtra("entry_id", -1);
+        boolean newReadMode = intent.getBooleanExtra("read", false);
+        Log.d(TAG, "onNewIntent: newEntryId=" + newEntryId + ", currentId=" + currentId + ", readMode=" + newReadMode);
+        if (newEntryId != -1 && newEntryId != currentId) {
+            isReadingMode = newReadMode;
+            cachedEntryInfo = null;
+            resetSummaryState();
+            loadEntryContent();
+        }
+    }
+
+    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         int keyCode = event.getKeyCode();
 
@@ -2219,7 +2234,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         String feedLang = (cachedEntryInfo != null && cachedEntryInfo.getFeedLanguage() != null && !cachedEntryInfo.getFeedLanguage().trim().isEmpty())
                 ? cachedEntryInfo.getFeedLanguage()
-                : defaultLang;
+                : null;
 
         Log.d(TAG, "getLanguageForCurrentView: Using FEED lang=" + feedLang + " (isTranslated=" + isTranslated + ")");
         return feedLang;

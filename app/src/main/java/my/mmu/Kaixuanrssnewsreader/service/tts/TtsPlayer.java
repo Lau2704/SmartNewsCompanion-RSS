@@ -26,6 +26,8 @@ import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepos
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewListener;
 
+import com.google.android.gms.tasks.Tasks;
+import com.google.mlkit.nl.languageid.IdentifiedLanguage;
 import com.google.mlkit.nl.languageid.LanguageIdentification;
 import com.google.mlkit.nl.languageid.LanguageIdentificationOptions;
 import com.google.mlkit.nl.languageid.LanguageIdentifier;
@@ -464,7 +466,13 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         if (content != null && !content.trim().isEmpty()) {
             new Thread(() -> {
                 try {
-                    extractToTts(content, language);
+                    String resolvedLanguage = language;
+                    if (resolvedLanguage == null || resolvedLanguage.isEmpty()) {
+                        resolvedLanguage = identifyLanguageSync(content);
+                        this.language = resolvedLanguage;
+                        Log.d(TAG, "[extract] Auto-identified language: " + resolvedLanguage);
+                    }
+                    extractToTts(content, resolvedLanguage);
                     countDownLatch.await();
 
                     if (isInit) {
@@ -634,18 +642,64 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         });
     }
 
+    private String identifyLanguageSync(String content) {
+        if (content == null || content.trim().isEmpty()) return "en";
+
+        String sample = content.length() > 500 ? content.substring(0, 500) : content;
+        float threshold = (float) sharedPreferencesRepository.getConfidenceThreshold() / 100;
+
+        LanguageIdentifier identifier = LanguageIdentification.getClient(
+                new LanguageIdentificationOptions.Builder()
+                        .setConfidenceThreshold(threshold)
+                        .build());
+
+        try {
+            String langCode = Tasks.await(identifier.identifyLanguage(sample));
+            if (!"und".equals(langCode)) {
+                Log.d(TAG, "identifyLanguageSync: " + langCode);
+                return langCode;
+            }
+            List<IdentifiedLanguage> possible = Tasks.await(identifier.identifyPossibleLanguages(sample));
+            for (IdentifiedLanguage il : possible) {
+                String code = il.getLanguageTag();
+                if (!"und".equals(code) && !"en".equals(code)) {
+                    Log.d(TAG, "identifyLanguageSync fallback: " + code + " confidence=" + il.getConfidence());
+                    return code;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "identifyLanguageSync failed", e);
+        }
+        return "en";
+    }
+
     private void identifyLanguage(String sentence, boolean fromService) {
+        String sample = (sentence != null && sentence.length() > 500) ? sentence.substring(0, 500) : sentence;
+
         float confidenceThreshold = (float) sharedPreferencesRepository.getConfidenceThreshold() / 100;
 
         LanguageIdentifier languageIdentifier = LanguageIdentification.getClient(
                 new LanguageIdentificationOptions.Builder()
                         .setConfidenceThreshold(confidenceThreshold)
                         .build());
-        languageIdentifier.identifyLanguage(sentence)
+        languageIdentifier.identifyLanguage(sample)
                 .addOnSuccessListener(languageCode -> {
                     if (languageCode.equals("und")) {
-                        Log.i(TAG, "Can't identify language.");
-                        setLanguage(Locale.ENGLISH, fromService);
+                        Log.i(TAG, "Primary identification returned 'und', trying possible languages...");
+                        languageIdentifier.identifyPossibleLanguages(sample)
+                                .addOnSuccessListener(possible -> {
+                                    for (IdentifiedLanguage il : possible) {
+                                        String code = il.getLanguageTag();
+                                        if (!"und".equals(code) && !"en".equals(code)) {
+                                            Log.i(TAG, "Fallback language: " + code);
+                                            setLanguage(new Locale(code), fromService);
+                                            return;
+                                        }
+                                    }
+                                    Log.i(TAG, "Can't identify language.");
+                                    setLanguage(Locale.ENGLISH, fromService);
+                                })
+                                .addOnFailureListener(e -> setLanguage(Locale.ENGLISH, fromService));
                     } else {
                         Log.i(TAG, "Language: " + languageCode);
                         setLanguage(new Locale(languageCode), fromService);
@@ -653,7 +707,6 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Language identification failed (likely due to missing GMS or network): " + e.getMessage());
-                    // Fallback to English so the app doesn't hang
                     setLanguage(Locale.ENGLISH, fromService);
                 });
     }
@@ -663,17 +716,18 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             Log.w(TAG, "TTS is null, cannot set language to: " + locale);
             return;
         }
-        
+
         if (locale == null) {
             Log.w(TAG, "Locale is null, cannot set language");
             return;
         }
-        
+
         synchronized (this) {
-            // Check if the TTS engine is available
+            locale = resolveSupportedLocale(locale);
+
             int engineCheck = tts.isLanguageAvailable(locale);
             Log.d(TAG, "Language availability check for " + locale + ": " + engineCheck);
-            
+
             int result = tts.setLanguage(locale);
 
             Log.d(TAG, "setLanguage() called with: " + locale.toString());
@@ -684,10 +738,9 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 if (webViewCallback != null) {
                     webViewCallback.makeSnackbar("Language not installed. Required language: " + locale.getDisplayLanguage());
                 }
-                // Try to set to English as fallback
                 int fallbackCheck = tts.isLanguageAvailable(Locale.ENGLISH);
                 Log.d(TAG, "English availability: " + fallbackCheck);
-                
+
                 int fallbackResult = tts.setLanguage(Locale.ENGLISH);
                 if (fallbackResult == TextToSpeech.LANG_MISSING_DATA || fallbackResult == TextToSpeech.LANG_NOT_SUPPORTED) {
                     Log.e(TAG, "Even English language is not supported");
@@ -708,6 +761,41 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
                 Log.d(TAG, "Language set. Waiting for speak() to be called.");
             }
         }
+    }
+
+    private Locale resolveSupportedLocale(Locale locale) {
+        if (tts == null || locale == null) return locale;
+
+        int avail = tts.isLanguageAvailable(locale);
+        if (avail != TextToSpeech.LANG_NOT_SUPPORTED && avail != TextToSpeech.LANG_MISSING_DATA) {
+            return locale;
+        }
+
+        String lang = locale.getLanguage();
+        Locale[] variants = null;
+
+        if ("zh".equals(lang)) {
+            variants = new Locale[]{
+                new Locale("zh", "CN"),
+                new Locale("zh", "TW"),
+                new Locale("zh", "HK"),
+                new Locale("zh", "Hans"),
+                new Locale("zh", "Hant")
+            };
+        }
+
+        if (variants != null) {
+            for (Locale candidate : variants) {
+                int candidateAvail = tts.isLanguageAvailable(candidate);
+                if (candidateAvail != TextToSpeech.LANG_NOT_SUPPORTED && candidateAvail != TextToSpeech.LANG_MISSING_DATA) {
+                    Log.d(TAG, "Resolved locale variant: " + candidate + " for " + locale);
+                    return candidate;
+                }
+            }
+        }
+
+        Log.w(TAG, "No supported variant found for: " + locale);
+        return locale;
     }
 
     private void setMediaPlayerAttributes() {

@@ -356,9 +356,8 @@ public class MainActivity extends AppCompatActivity {
                 args.putLong("id", id);
                 args.putString("title", feedTitle);
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setPopUpTo(R.id.allEntriesFragment, false)
                         .setLaunchSingleTop(true)
-                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.allEntriesFragment, args, navOptions);
             }
@@ -374,12 +373,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 drawerLayout.closeDrawer(GravityCompat.START);
                 Bundle args = new Bundle();
-                args.putInt("id", 0);
+                args.putLong("id", 0L);
                 args.putString("title", "All feeds");
                 NavOptions navOptions = new NavOptions.Builder()
-                        .setPopUpTo(R.id.allEntriesFragment, false, true)
+                        .setPopUpTo(R.id.allEntriesFragment, false)
                         .setLaunchSingleTop(true)
-                        .setRestoreState(true)
                         .build();
                 navController.navigate(R.id.allEntriesFragment, args, navOptions);
             }

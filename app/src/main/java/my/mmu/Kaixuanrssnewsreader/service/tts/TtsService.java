@@ -149,9 +149,6 @@ public class TtsService extends MediaBrowserServiceCompat {
 
                 EntryInfo entryInfo = entryRepository.getEntryInfoById(currentReadingId);
                 String feedLanguage = entryInfo.getFeedLanguage();
-                if (feedLanguage == null || feedLanguage.isEmpty()) {
-                    feedLanguage = "en";
-                }
 
                 String targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
                 if (targetLanguage == null || targetLanguage.isEmpty()) {

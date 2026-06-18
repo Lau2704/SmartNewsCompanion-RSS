@@ -37,6 +37,7 @@
             android:name="my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity"
             android:parentActivityName="my.mmu.Kaixuanrssnewsreader.ui.main.MainActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
         <activity
             android:name="my.mmu.Kaixuanrssnewsreader.ui.loginwebview.LoginWebViewActivity"
