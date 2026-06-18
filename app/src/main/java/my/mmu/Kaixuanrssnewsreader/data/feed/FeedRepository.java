@@ -8,10 +8,13 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.Entry;
 import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.history.History;
 import my.mmu.Kaixuanrssnewsreader.data.history.HistoryRepository;
+import my.mmu.Kaixuanrssnewsreader.model.FeedSourceType;
+import my.mmu.Kaixuanrssnewsreader.service.rss.FeedSourceResolver;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssFeed;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssItem;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssReader;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssWorkManager;
+import my.mmu.Kaixuanrssnewsreader.service.rss.WebPageScraper;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsExtractor;
 
@@ -160,16 +163,20 @@ public class FeedRepository {
             imageUrl = "https://www.google.com/s2/favicons?sz=64&domain_url=" + feed.getLink();
         }
         Feed newFeed = new Feed(feed.getTitle(), feed.getLink(), feed.getDescription(), imageUrl, feed.getLanguage());
+        if (feed.getFeedType() != null) {
+            newFeed.setFeedType(feed.getFeedType());
+        }
 
         feedDao.insert(newFeed);
         long feedId = feedDao.getIdByLink(feed.getLink());
 
         List<Entry> entriesToPreload = new ArrayList<>();
         for (RssItem rssItem : feed.getRssItems()) {
+            if (!rssItem.isValid()) continue;
             Entry entry = new Entry(feedId, rssItem.getTitle(), rssItem.getLink(), rssItem.getDescription(), rssItem.getImageUrl(), rssItem.getCategory(), rssItem.getPubDate());
 
             long insertedId = entryRepository.insert(feedId, entry);
-            if (insertedId > 0 && rssItem.getPriority() > 0) { // Check for successful insertion
+            if (insertedId > 0 && rssItem.getPriority() > 0) {
                 entry.setPriority(rssItem.getPriority());
                 entriesToPreload.add(entry);
             }
@@ -230,49 +237,61 @@ public class FeedRepository {
 
     public String refreshEntries() {
         List<Feed> feeds = getAllStaticFeeds();
-        ExecutorService executorService = Executors.newFixedThreadPool(4); // Use 4 threads for parallel fetching
-        AtomicInteger counter = new AtomicInteger(0); // Use AtomicInteger for thread-safe increments
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        AtomicInteger counter = new AtomicInteger(0);
 
         for (Feed feed : feeds) {
             executorService.submit(() -> {
                 try {
-                    Log.d(TAG, "Fetching feed: " + feed.getLink());
-                    RssReader rssReader = new RssReader(feed.getLink());
-                    RssFeed rssFeed = rssReader.getFeed();
+                    Log.d(TAG, "Refreshing feed: " + feed.getLink() + " type=" + feed.getFeedType());
+                    RssFeed rssFeed;
 
-                    List<History> histories = new ArrayList<>();
-                    for (RssItem rssItem : rssFeed.getRssItems()) {
-                        Entry entry = new Entry(feed.getId(), rssItem.getTitle(), rssItem.getLink(), rssItem.getDescription(),
-                                rssItem.getImageUrl(), rssItem.getCategory(), rssItem.getPubDate());
-                        long insertedId = entryRepository.insert(feed.getId(), entry);
-                        if (insertedId > 0) {
-                            counter.incrementAndGet(); // Increment the counter atomically
-                            entryRepository.updatePriority(1, insertedId);
-                        } else {
-                            histories.add(new History(entry.getFeedId(), new Date(), entry.getTitle(), entry.getLink()));
-                        }
+                    if (FeedSourceType.WEB.equals(feed.getFeedType())) {
+                        WebPageScraper scraper = new WebPageScraper();
+                        rssFeed = scraper.scrape(feed.getLink());
+                    } else {
+                        RssReader rssReader = new RssReader(feed.getLink());
+                        rssFeed = rssReader.getFeed();
                     }
 
-                    entryRepository.limitEntriesByFeedId(feed.getId());
-                    if (!histories.isEmpty()) {
-                        historyRepository.updateHistoriesByFeedId(feed.getId(), histories);
-                    }
-                    Log.d(TAG, "Successfully fetched and processed feed: " + feed.getTitle());
+                    insertEntriesForFeed(feed, rssFeed, counter);
+                    Log.d(TAG, "Successfully refreshed feed: " + feed.getTitle());
                 } catch (Exception e) {
-                    Log.e(TAG, "Error fetching or processing feed: " + feed.getTitle(), e);
+                    Log.e(TAG, "Error refreshing feed: " + feed.getTitle(), e);
                 }
             });
         }
 
         executorService.shutdown();
         try {
-            executorService.awaitTermination(10, TimeUnit.MINUTES); // Wait for all threads to finish
+            executorService.awaitTermination(10, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             Log.e(TAG, "Error awaiting termination of executor service.", e);
         }
 
         entryRepository.requeueMissingEntries();
-        return "New entries: " + counter.get(); // Use AtomicInteger's get method
+        return "New entries: " + counter.get();
+    }
+
+    private void insertEntriesForFeed(Feed feed, RssFeed rssFeed, AtomicInteger counter) {
+        List<History> histories = new ArrayList<>();
+        for (RssItem rssItem : rssFeed.getRssItems()) {
+            if (!rssItem.isValid()) continue;
+            Entry entry = new Entry(feed.getId(), rssItem.getTitle(), rssItem.getLink(), rssItem.getDescription(),
+                    rssItem.getImageUrl(), rssItem.getCategory(), rssItem.getPubDate());
+            long insertedId = entryRepository.insert(feed.getId(), entry);
+            if (insertedId > 0) {
+                counter.incrementAndGet();
+                entryRepository.updatePriority(1, insertedId);
+            } else {
+                histories.add(new History(entry.getFeedId(), new Date(), entry.getTitle(), entry.getLink()));
+            }
+        }
+
+        entryRepository.limitEntriesByFeedId(feed.getId());
+        if (!histories.isEmpty()) {
+            historyRepository.updateHistoriesByFeedId(feed.getId(), histories);
+        }
     }
 
 

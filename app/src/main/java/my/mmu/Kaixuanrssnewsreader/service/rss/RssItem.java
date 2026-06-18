@@ -54,6 +54,10 @@ public class RssItem {
         return pubDate;
     }
 
+    public boolean hasPubDate() {
+        return pubDate != null;
+    }
+
     public void setPubDate(String pubDate) {
         if (pubDate == null || pubDate.isEmpty()) {
             return;
@@ -64,10 +68,27 @@ public class RssItem {
             "EEE, dd MMM yyyy HH:mm:ss z",
             "EEE, dd MMM yyyy HH:mm:ss",
             "dd MMM yyyy HH:mm:ss Z",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
             "yyyy-MM-dd'T'HH:mm:ss'Z'",
             "yyyy-MM-dd'T'HH:mm:ssZ",
-            "yyyy-MM-dd'T'HH:mm:ssXXX",
-            "yyyy-MM-dd HH:mm:ss Z"
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd HH:mm:ss Z",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd",
+            "yyyy/MM/dd HH:mm:ss",
+            "yyyy/MM/dd",
+            "MMMM d, yyyy",
+            "MMM d, yyyy",
+            "EEEE, MMMM d, yyyy",
+            "dd MMM yyyy HH:mm:ss",
+            "dd MMM yyyy",
+            "dd MMMM yyyy HH:mm:ss",
+            "dd MMMM yyyy",
+            "dd/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy",
+            "MM/dd/yyyy HH:mm:ss",
+            "MM/dd/yyyy"
         };
 
         for (String format : dateFormats) {

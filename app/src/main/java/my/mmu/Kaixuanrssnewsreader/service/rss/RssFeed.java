@@ -9,6 +9,7 @@ public class RssFeed {
     private String description;
     private String language;
     private String imageUrl;
+    private String feedType;
     private ArrayList<RssItem> rssItems;
 
     public RssFeed() {
@@ -65,5 +66,13 @@ public class RssFeed {
 
     public void setRssItems(ArrayList<RssItem> rssItems) {
         this.rssItems = rssItems;
+    }
+
+    public String getFeedType() {
+        return feedType;
+    }
+
+    public void setFeedType(String feedType) {
+        this.feedType = feedType;
     }
 }

@@ -231,6 +231,9 @@ public interface EntryDao {
     @Query("UPDATE entry_table SET translated = :translated WHERE id = :id")
     void updateTranslatedText(String translated, long id);
 
+    @Query("UPDATE entry_table SET publishedDate = :date WHERE id = :id")
+    void updatePublishedDate(Date date, long id);
+
     @Query("SELECT id FROM entry_table WHERE original_html IS NULL AND content IS NULL AND priority = 0 ORDER BY publishedDate DESC LIMIT 50")
     List<Long> getFailedEntryIds();
 }

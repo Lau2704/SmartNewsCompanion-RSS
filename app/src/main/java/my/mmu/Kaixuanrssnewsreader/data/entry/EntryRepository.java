@@ -416,4 +416,8 @@ public class EntryRepository {
     public List<Long> getFailedEntryIds() {
         return entryDao.getFailedEntryIds();
     }
+
+    public void updatePublishedDate(Date date, long id) {
+        entryDao.updatePublishedDate(date, id);
+    }
 }

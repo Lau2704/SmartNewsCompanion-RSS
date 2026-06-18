@@ -20,7 +20,7 @@ import my.mmu.Kaixuanrssnewsreader.data.playlist.PlaylistDao;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@Database(entities = {Feed.class, Entry.class, Playlist.class, History.class}, version = 5)
+@Database(entities = {Feed.class, Entry.class, Playlist.class, History.class}, version = 6)
 @androidx.room.TypeConverters({TypeConverters.class})
 // make this abstract to let room do the implementation
 public abstract class AppDatabase extends RoomDatabase {
@@ -77,6 +77,19 @@ public abstract class AppDatabase extends RoomDatabase {
                 Log.d("DatabaseMigration", "Migration from v4 to v5 completed successfully.");
             } catch (Exception e) {
                 Log.e("DatabaseMigration", "Migration v4 to v5 failed: " + e.getMessage());
+            }
+        }
+    };
+
+    // Migration from version 5 to 6
+    public static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            try {
+                database.execSQL("ALTER TABLE feed_table ADD COLUMN feedType TEXT NOT NULL DEFAULT 'RSS'");
+                Log.d("DatabaseMigration", "Migration from v5 to v6 completed successfully.");
+            } catch (Exception e) {
+                Log.e("DatabaseMigration", "Migration v5 to v6 failed: " + e.getMessage());
             }
         }
     };

@@ -156,9 +156,13 @@ public class MainActivity extends AppCompatActivity {
                                             if (ttsSpeechRateString != null) {
                                                 ttsSpeechRate = Float.parseFloat(ttsSpeechRateString);
                                             }
+                                            String feedType = parser.getAttributeValue(null, "feedType");
 
                                             if (link != null && !link.isEmpty()) {
-                                                Feed feed = new Feed(title, link, description, imageUrl, language.isEmpty() ? null : language, delayTime, ttsSpeechRate);
+                                                Feed feed = new Feed(title, link, description, imageUrl, language != null && !language.isEmpty() ? language : null, delayTime, ttsSpeechRate);
+                                                if (feedType != null && !feedType.isEmpty()) {
+                                                    feed.setFeedType(feedType);
+                                                }
                                                 mainActivityViewModel.addFeedUsingOPML(feed);
                                                 feedId = mainActivityViewModel.getFeedIdByLink(link);
                                             }
@@ -248,6 +252,7 @@ public class MainActivity extends AppCompatActivity {
                                 serializer.attribute(null, "xmlUrl", feed.getLink() != null ? feed.getLink() : "");
                                 serializer.attribute(null, "delayTime", Integer.toString(feed.getDelayTime()));
                                 serializer.attribute(null, "ttsSpeechRate", Float.toString(feed.getTtsSpeechRate()));
+                                serializer.attribute(null, "feedType", feed.getFeedType() != null ? feed.getFeedType() : "RSS");
                                 serializer.attribute(null, "type", "rss");
                                 List<Entry> entries = mainActivityViewModel.getAllStaticEntries(feed.getId());
                                 for (Entry entry : entries) {

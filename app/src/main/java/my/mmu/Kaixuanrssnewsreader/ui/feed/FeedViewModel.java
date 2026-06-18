@@ -11,6 +11,7 @@ import my.mmu.Kaixuanrssnewsreader.data.entry.EntryRepository;
 import my.mmu.Kaixuanrssnewsreader.data.feed.Feed;
 import my.mmu.Kaixuanrssnewsreader.data.feed.FeedRepository;
 import my.mmu.Kaixuanrssnewsreader.data.history.HistoryRepository;
+import my.mmu.Kaixuanrssnewsreader.service.rss.FeedSourceResolver;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssFeed;
 import my.mmu.Kaixuanrssnewsreader.service.rss.RssReader;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsExtractor;
@@ -103,10 +104,21 @@ public class FeedViewModel extends ViewModel {
             @Override
             public void run() throws Throwable {
                 if (!feedRepository.checkFeedExist(link)) {
-                    RssReader rssReader = new RssReader(link);
-                    rssFeed = rssReader.getFeed();
-                    rssFeed.setLink(link);
-                    Log.d("Test Url",link);
+                    FeedSourceResolver resolver = new FeedSourceResolver();
+                    FeedSourceResolver.Result result = resolver.resolve(link);
+                    rssFeed = result.getFeed();
+
+                    String resolvedLink = rssFeed.getLink();
+                    if (!resolvedLink.equals(link) && feedRepository.checkFeedExist(resolvedLink)) {
+                        toastMessage.postValue(R.string.feed_already_added);
+                        rssFeed = null;
+                        return;
+                    }
+
+                    if (rssFeed.getFeedType() == null) {
+                        rssFeed.setFeedType("RSS");
+                    }
+                    Log.d(TAG, "Resolved feed: type=" + rssFeed.getFeedType() + " url=" + resolvedLink);
                 } else {
                     toastMessage.postValue(R.string.feed_already_added);
                 }
@@ -130,6 +142,7 @@ public class FeedViewModel extends ViewModel {
 
                     @Override
                     public void onError(@NonNull Throwable e) {
+                        Log.e(TAG, "Feed resolution failed: " + e.getMessage());
                         toastMessage.postValue(R.string.feed_broken_inaccessible);
                         isLoading.postValue(false);
                     }

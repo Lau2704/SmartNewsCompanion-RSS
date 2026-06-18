@@ -33,11 +33,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.StringReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -298,6 +301,8 @@ public class TtsExtractor {
                                                  Readability4JExtended readability4J = new Readability4JExtended(currentLink, html);
                                                  Article article = readability4J.parse();
 
+                                                 Date extractedPublishedDate = extractDateFromHtml(html);
+
                                                  boolean hasBodyContent = false;
 
                                                  if (article.getContentWithUtf8Encoding() != null) {
@@ -336,10 +341,15 @@ public class TtsExtractor {
                                                          }
                                                      }
 
-                                                     if (hasBodyContent) {
-                                                         entryRepository.updateHtml(doc.html(), currentIdInProgress);
+                                                    if (hasBodyContent) {
+                                                        entryRepository.updateHtml(doc.html(), currentIdInProgress);
 
-                                                         if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
+                                                        if (extractedPublishedDate != null) {
+                                                            entryRepository.updatePublishedDate(extractedPublishedDate, currentIdInProgress);
+                                                            Log.d(TAG, "Updated publishedDate for entry " + currentIdInProgress + " to " + extractedPublishedDate);
+                                                        }
+
+                                                        if (entryRepository.getOriginalHtmlById(currentIdInProgress) == null) {
                                                              entryRepository.updateOriginalHtml(doc.html(), currentIdInProgress);
                                                              if (currentTitle != null && !currentTitle.isEmpty()) {
                                                                  content.insert(0, currentTitle);
@@ -471,6 +481,85 @@ public class TtsExtractor {
 
     public String getCurrentLanguage() {
         return currentLanguage;
+    }
+
+    private Date extractDateFromHtml(String html) {
+        if (html == null || html.isEmpty()) return null;
+        try {
+            Document doc = Jsoup.parse(html);
+
+            String[] dateSelectors = {
+                "meta[property=article:published_time]",
+                "meta[property=og:article:published_time]",
+                "meta[name=published]",
+                "meta[name=date]",
+                "meta[name=pubdate]",
+                "meta[name=publish-date]",
+                "meta[name=publishdate]",
+                "meta[itemprop=datePublished]",
+                "meta[name=dc.date]",
+                "meta[name=DC.date]",
+                "meta[name=DC.date.issued]",
+                "time[datetime]"
+            };
+
+            for (String selector : dateSelectors) {
+                Element el = doc.selectFirst(selector);
+                if (el != null) {
+                    String dateStr = el.tagName().equals("time")
+                            ? el.attr("datetime")
+                            : el.attr("content");
+                    if (dateStr != null && !dateStr.trim().isEmpty()) {
+                        Date parsed = parseDate(dateStr.trim());
+                        if (parsed != null) return parsed;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to extract date from HTML", e);
+        }
+        return null;
+    }
+
+    private Date parseDate(String dateStr) {
+        String[] formats = {
+            "EEE, dd MMM yyyy HH:mm:ss Z",
+            "EEE, dd MMM yyyy HH:mm:ss z",
+            "EEE, dd MMM yyyy HH:mm:ss",
+            "dd MMM yyyy HH:mm:ss Z",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd HH:mm:ss Z",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd",
+            "yyyy/MM/dd HH:mm:ss",
+            "yyyy/MM/dd",
+            "MMMM d, yyyy",
+            "MMM d, yyyy",
+            "dd MMM yyyy HH:mm:ss",
+            "dd MMM yyyy",
+            "dd MMMM yyyy HH:mm:ss",
+            "dd MMMM yyyy",
+            "dd/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy",
+            "MM/dd/yyyy HH:mm:ss",
+            "MM/dd/yyyy"
+        };
+
+        for (String format : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.ENGLISH);
+                sdf.setLenient(false);
+                Date parsed = sdf.parse(dateStr);
+                if (parsed != null) return parsed;
+            } catch (ParseException e) {
+                continue;
+            }
+        }
+        return null;
     }
 
     private void scheduleRetryForFailedEntries() {

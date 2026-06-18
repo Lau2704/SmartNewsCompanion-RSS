@@ -395,12 +395,12 @@
     <string name="selected_count">%1$d selected</string>
 
     <!-- Add feed page -->
-    <string name="paste_rss_url_hint">Paste the RSS URL here</string>
+    <string name="paste_rss_url_hint">Paste an RSS or website URL here</string>
     <string name="add_feed_button">Add feed</string>
 
     <!-- Feed operation toasts -->
     <string name="feed_already_added">This feed has been added before</string>
-    <string name="feed_broken_inaccessible">Failed: This feed seems to be broken or inaccessible now</string>
+    <string name="feed_broken_inaccessible">Failed: Could not find an RSS feed or article list at this URL</string>
     <string name="feed_added_success">Feed has been successfully added</string>
     <string name="feed_broken">Failed: This feed seems to be broken</string>
     <string name="feed_content_removed">The extracted content for this feed has been removed</string>

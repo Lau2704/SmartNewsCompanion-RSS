@@ -26,9 +26,10 @@ import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
 import com.google.android.material.button.MaterialButton;
 import com.bumptech.glide.Glide;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.load.DataSource;
@@ -285,36 +286,8 @@ public class EntryItemAdapter extends ListAdapter<EntryInfo, EntryItemAdapter.En
     }
 
     public String covertTimeToText(Date date) {
-
-        String convTime = null;
-        String suffix = context.getString(R.string.time_ago);
-        Date nowTime = new Date();
-
-        long dateDiff = nowTime.getTime() - date.getTime();
-
-        long second = TimeUnit.MILLISECONDS.toSeconds(dateDiff);
-        long minute = TimeUnit.MILLISECONDS.toMinutes(dateDiff);
-        long hour = TimeUnit.MILLISECONDS.toHours(dateDiff);
-        long day = TimeUnit.MILLISECONDS.toDays(dateDiff);
-
-        if (second < 60) {
-            convTime = second + " " + context.getString(R.string.time_seconds) + " " + suffix;
-        } else if (minute < 60) {
-            convTime = minute + " " + context.getString(R.string.time_minutes) + " " + suffix;
-        } else if (hour < 24) {
-            convTime = hour + " " + context.getString(R.string.time_hours) + " " + suffix;
-        } else if (day >= 7) {
-            if (day > 360) {
-                convTime = (day / 360) + " " + context.getString(R.string.time_years) + " " + suffix;
-            } else if (day > 30) {
-                convTime = (day / 30) + " " + context.getString(R.string.time_months) + " " + suffix;
-            } else {
-                convTime = (day / 7) + " " + context.getString(R.string.time_week) + " " + suffix;
-            }
-        } else {
-            convTime = day + " " + context.getString(R.string.time_days) + " " + suffix;
-        }
-
-        return convTime;
+        if (date == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("d MMM yyyy", Locale.getDefault());
+        return sdf.format(date);
     }
 }

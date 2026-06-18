@@ -1,11 +1,14 @@
 package my.mmu.Kaixuanrssnewsreader.data.feed;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import java.util.Objects;
+
+import my.mmu.Kaixuanrssnewsreader.model.FeedSourceType;
 
 @Entity(tableName = "feed_table")
 public class Feed {
@@ -21,6 +24,9 @@ public class Feed {
     private String language;
     @ColumnInfo(defaultValue = "0")
     private boolean isPreloaded;
+    @NonNull
+    @ColumnInfo(defaultValue = "RSS")
+    private String feedType = FeedSourceType.RSS;
 
     public Feed(String title, String link, String description, String imageUrl, String language) {
         this.title = title;
@@ -105,17 +111,26 @@ public class Feed {
         this.language = language;
     }
 
+    @NonNull
+    public String getFeedType() {
+        return feedType;
+    }
+
+    public void setFeedType(@NonNull String feedType) {
+        this.feedType = feedType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Feed feed = (Feed) o;
-        return id == feed.id && Objects.equals(title, feed.title) && Objects.equals(link, feed.link) && Objects.equals(description, feed.description) && Objects.equals(imageUrl, feed.imageUrl) && Objects.equals(language, feed.language) && Objects.equals(ttsSpeechRate, feed.ttsSpeechRate);
+        return id == feed.id && Objects.equals(title, feed.title) && Objects.equals(link, feed.link) && Objects.equals(description, feed.description) && Objects.equals(imageUrl, feed.imageUrl) && Objects.equals(language, feed.language) && Objects.equals(ttsSpeechRate, feed.ttsSpeechRate) && Objects.equals(feedType, feed.feedType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, link, description, imageUrl, language);
+        return Objects.hash(id, title, link, description, imageUrl, language, feedType);
     }
 
     public boolean isPreloaded() {
