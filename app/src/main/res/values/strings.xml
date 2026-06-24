@@ -448,6 +448,7 @@
     <string name="feed_description_hint">Description</string>
     <string name="feed_language_hint">Language</string>
     <string name="feed_speech_rate_hint">Speech Rate</string>
+    <string name="language_current_tts_not_installed">current TTS not installed</string>
 
     <!-- WebView menu -->
     <string name="show_original">Show Original</string>

@@ -18,12 +18,12 @@ import androidx.appcompat.app.AppCompatDialogFragment;
 import my.mmu.Kaixuanrssnewsreader.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -36,6 +36,7 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
     private RadioGroup radioGroup;
     private FeedSettingDialogListener listener;
     private Map<String, Integer> languagesMap;
+    private Set<String> installedLanguageCodes;
     private TextToSpeech tts;
 
     public LanguageSelectionDialog(FeedSettingDialogListener listener, Context context) {
@@ -43,7 +44,6 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
 
         tts = new TextToSpeech(context, status -> {
             Log.d(TAG, "TTS init status: " + status);
-            // Show dialog regardless of success/fail so user isn't blocked
             if (listener != null) {
                 listener.showDialog();
             }
@@ -57,74 +57,60 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
         View view = inflater.inflate(R.layout.dialog_languageselection, null);
         radioGroup = view.findViewById(R.id.languageRadioGroup);
 
-        Set<Locale> availableLanguages = null;
-        try {
-            if (tts != null) {
-                availableLanguages = tts.getAvailableLanguages();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error getting available languages", e);
+        buildInstalledLanguageSet();
+
+        String[] names = getResources().getStringArray(R.array.defaultTranslationLanguage);
+        String[] codes = getResources().getStringArray(R.array.defaultTranslationLanguage_values);
+        String notInstalledSuffix = " (" + getString(R.string.language_current_tts_not_installed) + ")";
+
+        String savedLanguage = null;
+        if (getArguments() != null) {
+            savedLanguage = getArguments().getString("language");
         }
 
-        if (availableLanguages == null || availableLanguages.isEmpty()) {
-            availableLanguages = new HashSet<>();
-            availableLanguages.add(Locale.ENGLISH);
-            availableLanguages.add(Locale.US);
-            availableLanguages.add(Locale.getDefault());
+        languagesMap = new HashMap<>();
+        int idCounter = 0;
+        int checkId = 0;
+
+        idCounter++;
+        int identifierId = idCounter;
+        languagesMap.put(languageIdentifierTAG, identifierId);
+        RadioButton identifierRadioButton = new RadioButton(requireContext());
+        identifierRadioButton.setText(R.string.languageIdentifier);
+        identifierRadioButton.setId(identifierId);
+        identifierRadioButton.setLayoutParams(new RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, RadioGroup.LayoutParams.MATCH_PARENT));
+        radioGroup.addView(identifierRadioButton);
+
+        for (int i = 0; i < codes.length && i < names.length; i++) {
+            idCounter++;
+            String code = codes[i];
+            String name = names[i];
+            languagesMap.put(code, idCounter);
+
+            boolean installed = isInstalled(code);
+            boolean isSaved = code.equals(savedLanguage);
+
+            RadioButton radioButton = new RadioButton(requireContext());
+            radioButton.setText(name + (installed ? "" : notInstalledSuffix));
+            radioButton.setId(idCounter);
+            radioButton.setEnabled(installed || isSaved);
+            radioButton.setLayoutParams(new RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, RadioGroup.LayoutParams.MATCH_PARENT));
+            radioGroup.addView(radioButton);
+
+            if (isSaved) {
+                checkId = idCounter;
+            }
+        }
+
+        if (savedLanguage == null) {
+            checkId = identifierId;
+        }
+        if (checkId != 0) {
+            radioGroup.check(checkId);
         }
 
         if (tts != null) {
             tts.shutdown();
-        }
-        languagesMap = new TreeMap<>();
-        int checkId = 0;
-
-        int i = 0;
-        for (Locale locale : availableLanguages) {
-            i++;
-            languagesMap.put(locale.getLanguage(), i);
-        }
-
-        if (getArguments() != null) {
-            String language = getArguments().getString("language");
-            if (language != null) {
-                Integer id = languagesMap.get(language);
-                if (id != null) {
-                    checkId = id;
-                } else {
-                    i++;
-                    languagesMap.put(language, i);
-                    checkId = i;
-                }
-                i++;
-            }
-            else {
-                i++;
-                checkId = i;
-            }
-        }
-
-        // for Language Identifier
-        RadioButton identifierRadioButton = new RadioButton(requireContext());
-        identifierRadioButton.setText(R.string.languageIdentifier);
-        identifierRadioButton.setId(i);
-        identifierRadioButton.setLayoutParams(new RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, RadioGroup.LayoutParams.MATCH_PARENT));
-        radioGroup.addView(identifierRadioButton);
-
-        for (Map.Entry<String, Integer> entry : languagesMap.entrySet()) {
-            Locale locale = new Locale(entry.getKey());
-            RadioButton radioButton = new RadioButton(requireContext());
-            radioButton.setText(locale.getDisplayName());
-            radioButton.setId(entry.getValue());
-            radioButton.setLayoutParams(new RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, RadioGroup.LayoutParams.MATCH_PARENT));
-            radioGroup.addView(radioButton);
-        }
-
-        // Insert language identifier into map
-        languagesMap.put(languageIdentifierTAG, i);
-
-        if (checkId != 0) {
-            radioGroup.check(checkId);
         }
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
@@ -147,6 +133,30 @@ public class LanguageSelectionDialog extends AppCompatDialogFragment {
                 });
 
         return builder.create();
+    }
+
+    private void buildInstalledLanguageSet() {
+        installedLanguageCodes = new HashSet<>();
+        if (tts == null) {
+            return;
+        }
+        try {
+            Set<Locale> available = tts.getAvailableLanguages();
+            if (available != null) {
+                for (Locale locale : available) {
+                    String lang = locale.getLanguage();
+                    if (lang != null && !lang.isEmpty()) {
+                        installedLanguageCodes.add(lang);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting available languages", e);
+        }
+    }
+
+    private boolean isInstalled(String code) {
+        return installedLanguageCodes != null && installedLanguageCodes.contains(code);
     }
 
     private String getKey(int id) {
