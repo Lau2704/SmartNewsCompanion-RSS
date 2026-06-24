@@ -74,6 +74,11 @@ public class WebViewViewModel extends ViewModel {
         translatedHtmlLiveData.postValue(html);
     }
 
+    public void clearHtmlLiveData() {
+        originalHtmlLiveData.postValue(null);
+        translatedHtmlLiveData.postValue(null);
+    }
+
     public void setOriginalHtml(String html) {
         originalHtmlLiveData.postValue(html);
     }

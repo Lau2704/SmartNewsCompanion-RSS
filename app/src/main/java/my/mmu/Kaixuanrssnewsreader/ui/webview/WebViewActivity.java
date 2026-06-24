@@ -120,6 +120,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private enum ActiveFab { NONE, TRANSLATE, SUMMARY, TRANSLATE_SUMMARY }
     private ActiveFab activeFab = ActiveFab.NONE;
 
+    private int loadEpoch = 0;
+    private long intendedEntryId = -1;
+    private boolean userSkipPending = false;
+
     // JavaScript failure detection
     private int pageLoadRetryCount = 0;
     private static final int MAX_RETRY_ATTEMPTS = 3;
@@ -595,6 +599,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void switchToSummaryView() {
+        if (currentId != intendedEntryId) {
+            Log.d(TAG, "switchToSummaryView: ignoring, currentId=" + currentId + " != intended=" + intendedEntryId);
+            return;
+        }
         if (summaryHtml != null) {
             webView.loadDataWithBaseURL("file///android_res/", summaryHtml, "text/html", "UTF-8", null);
             isSummaryView = true;
@@ -617,6 +625,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void switchToTranslatedSummaryView() {
+        if (currentId != intendedEntryId) {
+            Log.d(TAG, "switchToTranslatedSummaryView: ignoring, currentId=" + currentId + " != intended=" + intendedEntryId);
+            return;
+        }
         if (translatedSummaryHtml != null) {
             webView.loadDataWithBaseURL("file///android_res/", translatedSummaryHtml, "text/html", "UTF-8", null);
             isSummaryView = true;
@@ -1007,6 +1019,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         final long targetEntryId = currentId;
+        final int token = loadEpoch;
         compositeDisposable.add(
                 Single.fromCallable(() -> {
                     EntryInfo entryInfo = webViewViewModel.getEntryInfoById(targetEntryId);
@@ -1034,8 +1047,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         Log.e(TAG, "WebView is null, cannot load HTML");
                                         return;
                                     }
-                                    if (targetEntryId != currentId) {
-                                        Log.d(TAG, "Skipping HTML load for stale article. targetEntryId=" + targetEntryId + ", currentId=" + currentId);
+                                    if (token != loadEpoch || targetEntryId != currentId) {
+                                        Log.d(TAG, "Skipping stale HTML load. token=" + token + ", epoch=" + loadEpoch + ", targetEntryId=" + targetEntryId + ", currentId=" + currentId);
                                         return;
                                     }
                                     String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
@@ -1089,6 +1102,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
             if (intentId != currentId) {
                 resetSummaryState();
+                loadEpoch++;
+                intendedEntryId = intentId;
+                webViewViewModel.clearHtmlLiveData();
+                isWaitingForArticleContent = false;
+                currentHighlightText = null;
+                if (webView != null) {
+                    webView.clearMatches();
+                }
             }
 
             Log.d(TAG, "Loading article with Intent ID: " + intentId);
@@ -1449,12 +1470,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
 
-        boolean hasOriginal = originalHtml != null && !originalHtml.trim().isEmpty();
-        boolean hasTranslated = translatedHtml != null && !translatedHtml.trim().isEmpty();
+        String dbOriginal = webViewViewModel.getOriginalHtmlById(currentId);
+        String dbTranslated = webViewViewModel.getHtmlById(currentId);
+        String htmlToLoad = isTranslatedView
+                ? (dbTranslated != null ? dbTranslated : translatedHtml)
+                : (dbOriginal != null ? dbOriginal : originalHtml);
 
-        String htmlToLoad = isTranslatedView ? translatedHtml : originalHtml;
-
-        Log.d(TAG, "LiveEntry - Current Mode: " + (isTranslatedView ? "Translated" : "Original"));
+        Log.d(TAG, "updateToggleStateAndWebView: Current Mode: " + (isTranslatedView ? "Translated" : "Original") + ", currentId=" + currentId);
 
         if (htmlToLoad != null && !htmlToLoad.trim().isEmpty()) {
             loadHtmlToWebView(htmlToLoad);
@@ -1519,6 +1541,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         }
 
         final long targetEntryId = currentId;
+        final int token = loadEpoch;
         compositeDisposable.add(
                 Single.fromCallable(() -> {
                     EntryInfo entryInfo = webViewViewModel.getEntryInfoById(targetEntryId);
@@ -1542,8 +1565,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 processedHtml -> {
-                                    if (targetEntryId != currentId) {
-                                        Log.d(TAG, "Skipping HTML load for stale article. targetEntryId=" + targetEntryId + ", currentId=" + currentId);
+                                    if (token != loadEpoch || targetEntryId != currentId) {
+                                        Log.d(TAG, "Skipping stale HTML load (toggle). token=" + token + ", epoch=" + loadEpoch + ", targetEntryId=" + targetEntryId + ", currentId=" + currentId);
                                         return;
                                     }
                                     String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
@@ -1954,6 +1977,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 @Override
                 public void onClick(View view) {
                     if (ttsPlaylist != null && ttsPlaylist.skipNext()) {
+                        userSkipPending = true;
                         setupReadingWebView();
                     } else {
                         View rootView = findViewById(R.id.webView_view);
@@ -1970,6 +1994,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 @Override
                 public void onClick(View view) {
                     if (ttsPlaylist != null && ttsPlaylist.skipPrevious()) {
+                        userSkipPending = true;
                         setupReadingWebView();
                     } else {
                         View rootView = findViewById(R.id.webView_view);
@@ -2043,12 +2068,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         });
 
         skipNextButton.setOnClickListener(view -> {
+            userSkipPending = true;
             if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
                 mMediaBrowserHelper.getTransportControls().skipToNext();
             }
         });
         
         skipPreviousButton.setOnClickListener(view -> {
+            userSkipPending = true;
             if (mMediaBrowserHelper != null && mMediaBrowserHelper.getTransportControls() != null) {
                 mMediaBrowserHelper.getTransportControls().skipToPrevious();
             }
@@ -2080,6 +2107,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         bookmark = metadata.getString("bookmark");
         currentLink = metadata.getString("link");
         currentId = Long.parseLong(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
+        intendedEntryId = currentId;
+        loadEpoch++;
         resetSummaryState();
         updateToggleTranslationVisibility();
         feedId = metadata.getLong("feedId");
@@ -2605,6 +2634,24 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             if (metadata == null) {
                 return;
             }
+
+            long incomingId;
+            try {
+                incomingId = Long.parseLong(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
+            } catch (Exception e) {
+                Log.w(TAG, "onMetadataChanged: invalid media id, ignoring");
+                return;
+            }
+
+            if (!userSkipPending && incomingId != intendedEntryId) {
+                Log.d(TAG, "onMetadataChanged: ignoring stale metadata id=" + incomingId + " (intended=" + intendedEntryId + ")");
+                return;
+            }
+
+            userSkipPending = false;
+            intendedEntryId = incomingId;
+            loadEpoch++;
+
             clearHistory = true;
             runOnUiThread(() -> {
                 loading.setVisibility(View.VISIBLE);
