@@ -19,6 +19,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -529,6 +530,13 @@ public class TextUtil {
                     targetWords
                 );
             } else {
+                String targetLanguageName = targetLanguage;
+                if (targetLanguage != null && !targetLanguage.isEmpty()) {
+                    String display = new Locale(targetLanguage).getDisplayLanguage(Locale.ENGLISH);
+                    if (display != null && !display.isEmpty() && !display.equalsIgnoreCase(targetLanguage)) {
+                        targetLanguageName = display;
+                    }
+                }
                 systemPrompt = String.format(
                     "You are a professional news editor and translator. Summarize the following news article into a concise summary of approximately %d words, written entirely in %s.\n\n"
                     + "Requirements:\n"
@@ -540,9 +548,10 @@ public class TextUtil {
                     + "- Write in a neutral, journalistic tone\n"
                     + "- Preserve all specific names, numbers, dates, and locations from the original\n"
                     + "- Do NOT add any information not present in the original article\n"
-                    + "- Write the ENTIRE summary in %s\n\n"
-                    + "IMPORTANT: Return ONLY the summary article in %s. No labels, prefixes, explanations, or meta-commentary.",
-                    targetWords, targetLanguage, targetLanguage, targetLanguage
+                    + "- Write the ENTIRE summary in %s, including the headline\n"
+                    + "- Do NOT write any part of the summary in the original language\n\n"
+                    + "IMPORTANT: Return ONLY the summary article, written completely in %s. No labels, prefixes, explanations, or meta-commentary.",
+                    targetWords, targetLanguageName, targetLanguageName, targetLanguageName
                 );
             }
 

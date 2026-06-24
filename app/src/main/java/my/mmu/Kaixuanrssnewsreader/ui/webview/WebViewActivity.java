@@ -696,33 +696,51 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void onTranslateFabClicked() {
-        if (activeFab == ActiveFab.TRANSLATE) {
-            isTranslatedView = false;
-            sharedPreferencesRepository.setIsTranslatedView(currentId, false);
-            if (isSummaryView) {
-                switchToArticleView();
-            } else {
-                setActiveFab(ActiveFab.NONE);
-                String htmlToLoad = webViewViewModel.getOriginalHtmlById(currentId);
-                if (htmlToLoad != null) {
-                    loadHtmlIntoWebView(htmlToLoad);
-                }
-                Entry entry = webViewViewModel.getEntryById(currentId);
-                if (entry != null) {
-                    String contentToRead = entry.getContent();
-                    if (contentToRead != null && !contentToRead.isEmpty()) {
-                        String lang = getLanguageForCurrentView(currentId, false, "en");
-                        ttsPlayer.extract(currentId, feedId, contentToRead, lang);
-                    }
-                }
-            }
+        if (activeFab == ActiveFab.TRANSLATE_SUMMARY) {
+            isSummaryView = false;
+            sharedPreferencesRepository.setIsSummaryView(currentId, false);
+            showTranslatedArticleOrTranslate();
             return;
         }
+
+        if (activeFab == ActiveFab.TRANSLATE) {
+            showOriginalArticle();
+            return;
+        }
+
         if (isSummaryView) {
             isSummaryView = false;
             sharedPreferencesRepository.setIsSummaryView(currentId, false);
         }
+        showTranslatedArticleOrTranslate();
+    }
 
+    private void showOriginalArticle() {
+        isTranslatedView = false;
+        sharedPreferencesRepository.setIsTranslatedView(currentId, false);
+        isSummaryView = false;
+        sharedPreferencesRepository.setIsSummaryView(currentId, false);
+        setActiveFab(ActiveFab.NONE);
+
+        String htmlToLoad = webViewViewModel.getOriginalHtmlById(currentId);
+        if (htmlToLoad == null) {
+            htmlToLoad = originalHtmlForSummary;
+        }
+        if (htmlToLoad != null) {
+            loadHtmlIntoWebView(htmlToLoad, true);
+        }
+
+        Entry entry = webViewViewModel.getEntryById(currentId);
+        if (entry != null) {
+            String contentToRead = entry.getContent();
+            if (contentToRead != null && !contentToRead.isEmpty()) {
+                String lang = getLanguageForCurrentView(currentId, false, "en");
+                ttsPlayer.extract(currentId, feedId, contentToRead, lang);
+            }
+        }
+    }
+
+    private void showTranslatedArticleOrTranslate() {
         Entry entry = webViewViewModel.getEntryById(currentId);
         if (entry != null) {
             boolean hasTranslation = entry.getOriginalHtml() != null
@@ -734,7 +752,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 setActiveFab(ActiveFab.TRANSLATE);
                 String htmlToLoad = entry.getHtml();
                 if (htmlToLoad != null) {
-                    loadHtmlIntoWebView(htmlToLoad);
+                    loadHtmlIntoWebView(htmlToLoad, true);
                 }
                 String contentToRead = entry.getTranslated();
                 if (contentToRead != null && !contentToRead.isEmpty()) {
@@ -752,7 +770,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private void onSummaryFabClicked() {
         if (activeFab == ActiveFab.SUMMARY) {
-            switchToArticleView();
+            showOriginalArticle();
             return;
         }
         if (activeFab == ActiveFab.TRANSLATE_SUMMARY) {
@@ -772,7 +790,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
     private void onTranslateSummaryFabClicked() {
         if (activeFab == ActiveFab.TRANSLATE_SUMMARY) {
-            switchToArticleView();
+            showOriginalArticle();
             return;
         }
         if (activeFab == ActiveFab.SUMMARY) {
@@ -1014,12 +1032,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void loadHtmlIntoWebView(String html) {
+        loadHtmlIntoWebView(html, false);
+    }
+
+    private void loadHtmlIntoWebView(String html, boolean force) {
         if (html == null || html.trim().isEmpty()) {
             return;
         }
 
         final long targetEntryId = currentId;
         final int token = loadEpoch;
+        final boolean forceLoad = force;
         compositeDisposable.add(
                 Single.fromCallable(() -> {
                     EntryInfo entryInfo = webViewViewModel.getEntryInfoById(targetEntryId);
@@ -1051,13 +1074,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         Log.d(TAG, "Skipping stale HTML load. token=" + token + ", epoch=" + loadEpoch + ", targetEntryId=" + targetEntryId + ", currentId=" + currentId);
                                         return;
                                     }
-                                    String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
-                                    boolean shouldKeepSummaryView = sharedPreferencesRepository.getIsSummaryView(targetEntryId)
-                                            && savedSummary != null
-                                            && !savedSummary.isEmpty();
-                                    if (shouldKeepSummaryView) {
-                                        Log.d(TAG, "Skipping normal HTML load because summary view is active for entryId=" + targetEntryId);
-                                        return;
+                                    if (!forceLoad) {
+                                        String savedSummary = sharedPreferencesRepository.getSummary(targetEntryId);
+                                        boolean shouldKeepSummaryView = sharedPreferencesRepository.getIsSummaryView(targetEntryId)
+                                                && savedSummary != null
+                                                && !savedSummary.isEmpty();
+                                        if (shouldKeepSummaryView) {
+                                            Log.d(TAG, "Skipping normal HTML load because summary view is active for entryId=" + targetEntryId);
+                                            return;
+                                        }
                                     }
                                     webView.loadDataWithBaseURL("file///android_res/", processedHtml, "text/html", "UTF-8", null);
 
