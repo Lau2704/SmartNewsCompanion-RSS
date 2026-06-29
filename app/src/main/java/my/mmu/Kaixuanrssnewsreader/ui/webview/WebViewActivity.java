@@ -2668,8 +2668,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 return;
             }
 
-            if (!userSkipPending && incomingId != intendedEntryId) {
-                Log.d(TAG, "onMetadataChanged: ignoring stale metadata id=" + incomingId + " (intended=" + intendedEntryId + ")");
+            long playingId = ttsPlaylist.getPlayingId();
+
+            if (incomingId == intendedEntryId && (playingId == 0 || incomingId == playingId)) {
+                Log.d(TAG, "onMetadataChanged: same article already shown, skipping reload (id=" + incomingId + ")");
+                return;
+            }
+
+            if (playingId != 0 && incomingId != playingId) {
+                Log.d(TAG, "onMetadataChanged: ignoring stale metadata id=" + incomingId + " (playing=" + playingId + ")");
                 return;
             }
 
