@@ -222,14 +222,18 @@ public class EntryInfo {
     public static class LatestComparator implements Comparator<EntryInfo> {
         @Override
         public int compare(EntryInfo entryInfo, EntryInfo t1) {
-            return t1.getEntryPublishedDate().compareTo(entryInfo.getEntryPublishedDate());
+            int byDate = t1.getEntryPublishedDate().compareTo(entryInfo.getEntryPublishedDate());
+            if (byDate != 0) return byDate;
+            return Long.compare(t1.getEntryId(), entryInfo.getEntryId());
         }
     }
 
     public static class OldestComparator implements Comparator<EntryInfo> {
         @Override
         public int compare(EntryInfo entryInfo, EntryInfo t1) {
-            return entryInfo.getEntryPublishedDate().compareTo(t1.getEntryPublishedDate());
+            int byDate = entryInfo.getEntryPublishedDate().compareTo(t1.getEntryPublishedDate());
+            if (byDate != 0) return byDate;
+            return Long.compare(entryInfo.getEntryId(), t1.getEntryId());
         }
     }
 

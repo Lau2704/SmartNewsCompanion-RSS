@@ -51,7 +51,6 @@ import my.mmu.Kaixuanrssnewsreader.service.tts.TtsService;
 import my.mmu.Kaixuanrssnewsreader.databinding.FragmentAllEntriesBinding;
 
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
-import my.mmu.Kaixuanrssnewsreader.service.util.AutoTranslator;
 import my.mmu.Kaixuanrssnewsreader.service.util.TextUtil;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.MediaBrowserHelper;
 import my.mmu.Kaixuanrssnewsreader.ui.webview.WebViewActivity;
@@ -90,7 +89,6 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
     private List<EntryInfo> selectedEntries = new ArrayList<>();
     private TextView selectedCountTextView;
     private ActionBar actionBar;
-    private AutoTranslator autoTranslator;
 
     @Inject
     TtsPlaylist ttsPlaylist;
@@ -136,33 +134,6 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         entriesRecycler.setHasFixedSize(true);
         boolean autoTranslate = sharedPreferencesRepository.getAutoTranslate();
         adapter = new EntryItemAdapter(this, autoTranslate);
-        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeChanged(int positionStart, int itemCount) {
-            }
-
-            @Override
-            public void onItemRangeChanged(int positionStart, int itemCount, @Nullable Object payload) {
-            }
-
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                entriesRecycler.scrollToPosition(0);
-
-            }
-
-            @Override
-            public void onItemRangeRemoved(int positionStart, int itemCount) {
-                entriesRecycler.scrollToPosition(0);
-
-            }
-
-            @Override
-            public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
-                entriesRecycler.scrollToPosition(0);
-
-            }
-        });
         entriesRecycler.setAdapter(adapter);
 
         sortBy = allEntriesViewModel.getSortBy();
@@ -254,19 +225,6 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                 title = newTitle;
                 binding.filterTitle.setText(title);
                 allEntriesViewModel.getEntriesByFeed(feedId, filterBy);
-
-                allEntriesViewModel.getAllEntries().observe(getViewLifecycleOwner(), entries -> {
-                    this.entries = entries;
-                    adapter.submitList(entries);
-
-                    if (autoTranslator != null) {
-                        autoTranslator.runAutoTranslation(() -> {
-                            adapter.submitList(new ArrayList<>(entries));
-                        });
-                    } else {
-                        Log.e("AutoTranslator", "autoTranslator is null when attempting to translate");
-                    }
-                });
             }
         } else {
             title = getString(R.string.all_feeds_title);
@@ -544,40 +502,42 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         });
 
         controlBarPlaylistBtn.setOnClickListener(v -> {
-            long playingId = ttsPlayer.getCurrentId();
-            PlaylistBottomSheet bottomSheet = PlaylistBottomSheet.newInstance(playingId);
-            bottomSheet.show(getChildFragmentManager(), PlaylistBottomSheet.TAG);
+        long playingId = ttsPlaylist.getPlayingId();
+        PlaylistBottomSheet bottomSheet = PlaylistBottomSheet.newInstance(playingId);
+        bottomSheet.show(getChildFragmentManager(), PlaylistBottomSheet.TAG);
         });
 
-        if (ttsPlayer.getCurrentId() > 0) {
-            refreshControlBarState();
-        }
+        refreshControlBarState();
     }
 
     private void refreshControlBarState() {
         if (playlistControlBar == null) return;
 
-        long currentId = ttsPlayer.getCurrentId();
+        playlistControlBar.setVisibility(View.VISIBLE);
+
+        long currentId = ttsPlaylist.getPlayingId();
         if (currentId <= 0) {
-            playlistControlBar.setVisibility(View.GONE);
+            if (controlBarTitle != null) {
+                controlBarTitle.setText(R.string.control_bar_empty_title);
+            }
+            if (controlBarSubtitle != null) {
+                controlBarSubtitle.setText(R.string.control_bar_empty_subtitle);
+            }
+            updatePlayPauseIcon(PlaybackStateCompat.STATE_PAUSED);
             return;
         }
 
-        playlistControlBar.setVisibility(View.VISIBLE);
-
-        if (currentId > 0) {
-            controlBarDisposables.add(
-                    Single.fromCallable(() -> entryRepository.getEntryInfoById(currentId))
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(entryInfo -> {
-                                if (controlBarTitle != null && entryInfo != null) {
-                                    controlBarTitle.setText(entryInfo.getEntryTitle());
-                                    controlBarSubtitle.setText(entryInfo.getFeedTitle());
-                                }
-                            }, throwable -> Log.e(TAG, "Failed to load control bar info", throwable))
-            );
-        }
+        controlBarDisposables.add(
+                Single.fromCallable(() -> entryRepository.getEntryInfoById(currentId))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(entryInfo -> {
+                            if (controlBarTitle != null && entryInfo != null) {
+                                controlBarTitle.setText(entryInfo.getEntryTitle());
+                                controlBarSubtitle.setText(entryInfo.getFeedTitle());
+                            }
+                        }, throwable -> Log.e(TAG, "Failed to load control bar info", throwable))
+        );
 
         updatePlayPauseIcon(ttsPlayer.isSpeaking()
                 ? PlaybackStateCompat.STATE_PLAYING

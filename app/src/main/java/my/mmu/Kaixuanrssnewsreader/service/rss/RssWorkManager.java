@@ -25,7 +25,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class RssWorkManager {
 
     private static final String TAG = "RssWorkManager";
-    public static final String refreshWorkerName = "RefreshWorker";
+    public static final String WORK_NAME = "rssWork";
+    private static final int MIN_INTERVAL_MINUTES = 15;
 
     private Context context;
     private SharedPreferencesRepository sharedPreferencesRepository;
@@ -37,31 +38,36 @@ public class RssWorkManager {
     }
 
     public void enqueueRssWorker() {
-        if (!isWorkScheduled()) {
-            Constraints constraints = new Constraints.Builder()
-                 .setRequiredNetworkType(NetworkType.CONNECTED)
-                   .build();
+        int interval = sharedPreferencesRepository.getJobPeriodic();
 
-            int interval = sharedPreferencesRepository.getJobPeriodic();
-
-            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(RssWorker.class, 15, TimeUnit.MINUTES)
-                    .setConstraints(constraints)
-                    .build();
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork("rssWork", ExistingPeriodicWorkPolicy.KEEP, request);
-            Log.d(TAG, "RssWorker scheduled.");
-        } else {
-            Log.d(TAG, "RssWorker is already scheduled.");
+        if (interval <= 0) {
+            Log.d(TAG, "Update interval disabled (0). Cancelling any scheduled RssWorker.");
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME);
+            return;
         }
+
+        int minutes = Math.max(MIN_INTERVAL_MINUTES, interval);
+
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(RssWorker.class, minutes, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .build();
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request);
+        Log.d(TAG, "RssWorker scheduled every " + minutes + " minutes.");
     }
 
     public void dequeueRssWorker() {
-        WorkManager.getInstance(context).cancelUniqueWork(refreshWorkerName);
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME);
     }
 
     public boolean isWorkScheduled() {
         try {
             List<WorkInfo> workInfos = WorkManager.getInstance(context)
-                    .getWorkInfosForUniqueWork(refreshWorkerName)
+                    .getWorkInfosForUniqueWork(WORK_NAME)
                     .get();
 
             for (WorkInfo workInfo : workInfos) {

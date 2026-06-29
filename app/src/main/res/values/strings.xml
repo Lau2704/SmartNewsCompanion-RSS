@@ -487,5 +487,7 @@
     <!-- Playlist Control Bar -->
     <string name="playlist_queue">Playlist Queue</string>
     <string name="no_playlist_entries">No articles in queue</string>
+    <string name="control_bar_empty_title">No media</string>
+    <string name="control_bar_empty_subtitle">Play an article to start</string>
 
 </resources>
