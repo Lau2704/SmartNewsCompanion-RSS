@@ -42,6 +42,7 @@ public class SharedPreferencesRepository {
     private static final String KEY_SUMMARY_LANG_PREFIX = "summary_lang_";
     private static final String KEY_TRANSLATED_SUMMARY_PREFIX = "translated_summary_";
     private static final String KEY_TRANSLATED_SUMMARY_LANG_PREFIX = "translated_summary_lang_";
+    private static final String KEY_TRANSLATED_TITLE_PREFIX = "translated_title_";
     private static final String KEY_ACTIVE_FAB_PREFIX = "active_fab_";
 
     @Inject
@@ -493,6 +494,15 @@ public class SharedPreferencesRepository {
 
     public String getTranslatedSummaryLanguage(long entryId) {
         return sharedPreferences.getString(KEY_TRANSLATED_SUMMARY_LANG_PREFIX + entryId, null);
+    }
+
+    public void setTranslatedTitle(long entryId, String title) {
+        editor.putString(KEY_TRANSLATED_TITLE_PREFIX + entryId, title);
+        editor.apply();
+    }
+
+    public String getTranslatedTitle(long entryId) {
+        return sharedPreferences.getString(KEY_TRANSLATED_TITLE_PREFIX + entryId, "");
     }
 
     public boolean getAutoTranslateSummary() {

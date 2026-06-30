@@ -59,6 +59,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -491,7 +492,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             hasGeneratedSummary = true;
 
             if (savedTranslatedSummary != null && !savedTranslatedSummary.isEmpty()) {
-                translatedSummaryHtml = formatSummaryAsHtml(savedTranslatedSummary);
+                translatedSummaryHtml = formatSummaryAsHtml(savedTranslatedSummary, sharedPreferencesRepository.getTranslatedTitle(currentId), "Summary & Translate");
                 hasTranslatedSummary = true;
             }
 
@@ -580,11 +581,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private String formatSummaryAsHtml(String summary) {
+        return formatSummaryAsHtml(summary, null, "Summary");
+    }
+
+    private String formatSummaryAsHtml(String summary, String titleOverride, String headingLabel) {
         EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
         String htmlHeader = "";
         if (entryInfo != null) {
+            String title = (titleOverride != null && !titleOverride.isEmpty())
+                    ? titleOverride : entryInfo.getEntryTitle();
             htmlHeader = webViewViewModel.getHtml(
-                    entryInfo.getEntryTitle(),
+                    title,
                     entryInfo.getFeedTitle(),
                     entryInfo.getEntryPublishedDate(),
                     entryInfo.getFeedImageUrl()
@@ -593,7 +600,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         String style = webViewViewModel.getStyle();
         return "<html><head>" + style + "</head><body>" + htmlHeader + 
                "<div class=\"article-summary\">" + 
-               "<h2>Summary</h2>" + 
+               "<h2>" + headingLabel + "</h2>" + 
                "<p>" + summary.replace("\n", "<br>") + "</p>" + 
                "</div></body></html>";
     }
@@ -640,8 +647,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
             String translatedSummaryText = sharedPreferencesRepository.getTranslatedSummary(currentId);
             if (translatedSummaryText != null && !translatedSummaryText.isEmpty()) {
+                String cachedTitle = sharedPreferencesRepository.getTranslatedTitle(currentId);
                 EntryInfo entryInfo = webViewViewModel.getEntryInfoById(currentId);
-                String entryTitle = entryInfo != null ? entryInfo.getEntryTitle() : null;
+                String entryTitle = (cachedTitle != null && !cachedTitle.isEmpty())
+                        ? cachedTitle
+                        : (entryInfo != null ? entryInfo.getEntryTitle() : null);
                 String contentWithTitle = (entryTitle != null ? entryTitle + ". " : "") + translatedSummaryText;
                 String lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
                 Log.d(TAG, "switchToTranslatedSummaryView: Re-extracting TTS, language: " + lang);
@@ -850,17 +860,30 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         int summaryLength = sharedPreferencesRepository.getSummaryLength();
         String sourceLang = feedLanguage != null ? feedLanguage : "en";
 
+        EntryInfo entryInfoForTitle = webViewViewModel.getEntryInfoById(currentId);
+        final String entryTitle = (entryInfoForTitle != null && entryInfoForTitle.getEntryTitle() != null)
+                ? entryInfoForTitle.getEntryTitle() : "";
+
+        Single<String> summarySingle = textUtil.summarizeAndTranslateText(contentToSummarize, summaryLength, sourceLang, targetLanguage);
+        Single<String> titleSingle = entryTitle.isEmpty()
+                ? Single.just("")
+                : textUtil.translateText(sourceLang, targetLanguage, entryTitle).onErrorReturnItem(entryTitle);
+
         compositeDisposable.add(
-            textUtil.summarizeAndTranslateText(contentToSummarize, summaryLength, sourceLang, targetLanguage)
+            Single.zip(summarySingle, titleSingle, (result, translatedTitle) -> {
+                        String lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+                        sharedPreferencesRepository.setTranslatedSummary(currentId, result, lang);
+                        sharedPreferencesRepository.setTranslatedTitle(currentId, translatedTitle);
+                        return translatedTitle;
+                    })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> loading.setVisibility(View.GONE))
                 .subscribe(
-                    result -> {
+                    translatedTitle -> {
                         loading.setVisibility(View.GONE);
-                        String lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
-                        sharedPreferencesRepository.setTranslatedSummary(currentId, result, lang);
-                        translatedSummaryHtml = formatSummaryAsHtml(result);
+                        String savedResult = sharedPreferencesRepository.getTranslatedSummary(currentId);
+                        translatedSummaryHtml = formatSummaryAsHtml(savedResult, translatedTitle, "Summary & Translate");
                         hasTranslatedSummary = true;
                         switchToTranslatedSummaryView();
                         preSummarizeAdjacentEntries();
@@ -1049,10 +1072,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     Document doc = Jsoup.parse(html);
                     doc.head().append(webViewViewModel.getStyle());
 
+                    String headerTitle = entryInfo != null ? entryInfo.getEntryTitle() : "";
+                    Element translatedTitleEl = doc.selectFirst("p.translated-title");
+                    if (translatedTitleEl != null && !translatedTitleEl.text().isEmpty()) {
+                        headerTitle = translatedTitleEl.text();
+                        translatedTitleEl.remove();
+                    }
+
                     if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
                         doc.selectFirst("body").prepend(
                                 webViewViewModel.getHtml(
-                                        entryInfo.getEntryTitle(),
+                                        headerTitle,
                                         entryInfo.getFeedTitle(),
                                         entryInfo.getEntryPublishedDate(),
                                         entryInfo.getFeedImageUrl()
@@ -1285,7 +1315,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         String contentToRead;
         if (isSummaryView && "TRANSLATE_SUMMARY".equals(savedActiveFab) && hasTransSummary) {
-            String entryTitle = entry.getTitle();
+            String cachedTitle = sharedPreferencesRepository.getTranslatedTitle(currentId);
+            String entryTitle = (cachedTitle != null && !cachedTitle.isEmpty()) ? cachedTitle : entry.getTitle();
             contentToRead = (entryTitle != null ? entryTitle + ". " : "") + savedTranslatedSummary;
             Log.d(TAG, "Using translated summary for TTS");
         } else if (isSummaryView && hasSummary) {
@@ -1573,10 +1604,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     Document doc = Jsoup.parse(html);
                     doc.head().append(webViewViewModel.getStyle());
 
+                    String headerTitle = entryInfo != null ? entryInfo.getEntryTitle() : "";
+                    Element translatedTitleEl = doc.selectFirst("p.translated-title");
+                    if (translatedTitleEl != null && !translatedTitleEl.text().isEmpty()) {
+                        headerTitle = translatedTitleEl.text();
+                        translatedTitleEl.remove();
+                    }
+
                     if (entryInfo != null && !doc.html().contains("class=\"entry-header\"")) {
                         doc.selectFirst("body").prepend(
                                 webViewViewModel.getHtml(
-                                        entryInfo.getEntryTitle(),
+                                        headerTitle,
                                         entryInfo.getFeedTitle(),
                                         entryInfo.getEntryPublishedDate(),
                                         entryInfo.getFeedImageUrl()
