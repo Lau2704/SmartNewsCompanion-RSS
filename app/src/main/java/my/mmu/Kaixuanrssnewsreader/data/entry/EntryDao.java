@@ -156,7 +156,7 @@ public interface EntryDao {
     @Query("DELETE FROM entry_table WHERE visitedDate is not null AND bookmark is not 'Y'")
     void deleteAllVisitedEntries();
 
-    @Query("UPDATE entry_table SET priority = 0 WHERE priority != 0")
+    @Query("UPDATE entry_table SET priority = 0 WHERE priority != 0 AND content IS NOT NULL AND original_html IS NOT NULL")
     void clearPriority();
 
     @Query("UPDATE entry_table SET priority = :priority WHERE id = :id AND content is null")
