@@ -1143,6 +1143,12 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         Log.d(TAG, "updateToggleTranslationVisibility: isTranslatedView=" + isTranslatedView);
     }
 
+    private void applyBrowserButtonVisibility() {
+        if (browserButton == null) return;
+        boolean webviewMode = currentId > 0 && sharedPreferencesRepository.getWebViewMode(currentId);
+        browserButton.setVisible(!webviewMode);
+    }
+
     private void initializePlaybackModes() {
         if (isReadingMode) {
             switchReadMode();
@@ -1214,6 +1220,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
                         currentId = entryInfo.getEntryId();
                         feedId = entryInfo.getFeedId();
+                        currentLink = entryInfo.getEntryLink();
 
                         // Update playlist so metadata calls are correct
                         ttsPlaylist.updatePlayingId(currentId);
@@ -1364,6 +1371,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         final String finalContentToRead = contentToRead;
 
         if (canExtractTts) {
+            applyBrowserButtonVisibility();
             if (isSummaryView && "TRANSLATE_SUMMARY".equals(savedActiveFab) && translatedSummaryHtml != null) {
                 Log.d(TAG, "Loading translated summary view into WebView");
                 webView.loadDataWithBaseURL("file///android_res/", translatedSummaryHtml, "text/html", "UTF-8", null);
@@ -1403,7 +1411,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             // If we are here, it means DB has entry but no HTML.
             Log.d(TAG, "Loading URL directly as HTML is missing.");
             webView.loadUrl(entryInfo.getEntryLink());
-            browserButton.setVisible(true);
+            applyBrowserButtonVisibility();
             showOfflineButton = true;
         }
 
@@ -1416,6 +1424,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void loadFromBrowserMode(EntryInfo entryInfo) {
+        currentLink = entryInfo.getEntryLink();
         browserButton.setVisible(false);
         offlineButton.setVisible(true);
         loading.setVisibility(View.GONE);
@@ -1486,6 +1495,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 }
 
                                 loadSavedSummaryOrGenerate();
+
+                                if (entry.getContent() != null && !entry.getContent().trim().isEmpty()) {
+                                    content = entry.getContent();
+                                }
 
                                 String contentToRead = isTranslatedView ? entry.getTranslated() : entry.getContent();
                                 if (contentToRead != null && !contentToRead.trim().isEmpty()) {
@@ -1678,6 +1691,14 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 return true;
 
             case R.id.openInBrowser:
+                if (currentLink == null || currentLink.trim().isEmpty()) {
+                    EntryInfo info = webViewViewModel.getLastVisitedEntry();
+                    currentLink = info != null ? info.getEntryLink() : null;
+                }
+                if (currentLink == null || currentLink.trim().isEmpty()) {
+                    makeSnackbar("Article link is not available.");
+                    return true;
+                }
                 browserButton.setVisible(false);
                 offlineButton.setVisible(true);
                 sharedPreferencesRepository.setWebViewMode(currentId, true);
@@ -1691,7 +1712,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 rebuildHtml(entryInfo, html -> {
                     loadEntryContent();
                     offlineButton.setVisible(false);
-                    browserButton.setVisible(true);
+                    applyBrowserButtonVisibility();
                     hideFakeLoading();
                 });
                 return true;
@@ -2244,7 +2265,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                         offlineButton.setVisible(false);
                                         reloadButton.setVisible(true);
                                         bookmarkButton.setVisible(true);
-                                        browserButton.setVisible(true);
+                                        applyBrowserButtonVisibility();
                                         highlightTextButton.setVisible(true);
                                         updateToggleTranslationVisibility();
                                     },
@@ -2297,8 +2318,8 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 if (bookmarkButton != null) {
                     bookmarkButton.setVisible(true);
                 }
-                if (browserButton != null && !sharedPreferencesRepository.getWebViewMode(currentId)) {
-                    browserButton.setVisible(true);
+                if (browserButton != null) {
+                    applyBrowserButtonVisibility();
                 }
                 if (highlightTextButton != null) {
                     highlightTextButton.setVisible(true);
