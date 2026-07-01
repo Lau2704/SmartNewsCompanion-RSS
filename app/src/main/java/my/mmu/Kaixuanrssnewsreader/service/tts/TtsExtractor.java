@@ -74,6 +74,9 @@ public class TtsExtractor {
     private final HashMap<Long, Integer> retryCountMap = new HashMap<>();
     private final int MAX_RETRIES = 5;
     private long lastExtractStart = 0;
+    private static final long STALE_THRESHOLD_MS = 60000;
+    private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
+    private Runnable watchdogRunnable;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Inject
@@ -106,6 +109,22 @@ public class TtsExtractor {
             extractionInProgress = false;
         }
 
+        if (extractionInProgress && currentIdInProgress != -1
+                && lastExtractStart > 0
+                && System.currentTimeMillis() - lastExtractStart > STALE_THRESHOLD_MS) {
+            Log.w(TAG, "Stale extraction detected (" + (System.currentTimeMillis() - lastExtractStart)
+                    + "ms for id=" + currentIdInProgress + "), force-resetting");
+            if (!failedIds.contains(currentIdInProgress)) {
+                failedIds.add(currentIdInProgress);
+            }
+            if (watchdogRunnable != null) {
+                watchdogHandler.removeCallbacks(watchdogRunnable);
+                watchdogRunnable = null;
+            }
+            currentIdInProgress = -1;
+            extractionInProgress = false;
+        }
+
         Entry entry = entryRepository.getEmptyContentEntry();
 
         if (entry == null && !failedIds.isEmpty()) {
@@ -135,21 +154,40 @@ public class TtsExtractor {
                 ContextCompat.getMainExecutor(context).execute(new Runnable() {
                     @Override
                     public void run() {
+                        if (webView == null) {
+                            Log.w(TAG, "WebView not yet initialised, deferring extraction");
+                            currentIdInProgress = -1;
+                            extractionInProgress = false;
+                            if (watchdogRunnable != null) {
+                                watchdogHandler.removeCallbacks(watchdogRunnable);
+                                watchdogRunnable = null;
+                            }
+                            watchdogHandler.postDelayed(() -> extractAllEntries(), 2000);
+                            return;
+                        }
                         webView.loadUrl(currentLink);
-                        Log.d("Test url",currentLink);
+                        Log.d("Test url", currentLink);
                     }
                 });
                 lastExtractStart = System.currentTimeMillis();
 
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (extractionInProgress && System.currentTimeMillis() - lastExtractStart > 30000) {
-                        Log.w(TAG, "[Timeout] Extraction stuck >30s, resetting manually");
-                        failedIds.add(currentIdInProgress);
+                if (watchdogRunnable != null) {
+                    watchdogHandler.removeCallbacks(watchdogRunnable);
+                }
+                final long watchdogStart = lastExtractStart;
+                watchdogRunnable = () -> {
+                    if (extractionInProgress && System.currentTimeMillis() - watchdogStart >= 29000) {
+                        Log.w(TAG, "[Timeout] Extraction stuck >29s, resetting manually");
+                        if (!failedIds.contains(currentIdInProgress)) {
+                            failedIds.add(currentIdInProgress);
+                        }
                         currentIdInProgress = -1;
                         extractionInProgress = false;
+                        watchdogRunnable = null;
                         extractAllEntries();
                     }
-                }, 30000);
+                };
+                watchdogHandler.postDelayed(watchdogRunnable, 30000);
             }
         }else {
             Log.d(TAG, "No entry returned by getEmptyContentEntry()");
@@ -158,6 +196,27 @@ public class TtsExtractor {
                 scheduleRetryForFailedEntries();
             }
         }
+    }
+
+    public void cancelExtractionForEntry(long entryId) {
+        if (currentIdInProgress != entryId && currentIdInProgress != -1) {
+            Log.d(TAG, "cancelExtractionForEntry: skipping, currentIdInProgress="
+                    + currentIdInProgress + " != " + entryId);
+            return;
+        }
+        Log.d(TAG, "cancelExtractionForEntry: cancelling in-flight extraction for entryId=" + entryId);
+        if (watchdogRunnable != null) {
+            watchdogHandler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
+        final WebView view = webView;
+        if (view != null) {
+            ContextCompat.getMainExecutor(context).execute(view::stopLoading);
+        }
+        currentIdInProgress = -1;
+        extractionInProgress = false;
+        webViewCallback = null;
+        ttsCallback = null;
     }
 
     private void translateHtml(String html, String content, final long currentIdInProgress, String currentTitle) {
@@ -448,8 +507,6 @@ public class TtsExtractor {
 
     public void setCurrentLanguage(String lang, boolean lock) {
         Log.d("TtsExtractor", "[setCurrentLanguage] REQUESTED lang = " + lang + ", lock = " + lock + " | current = " + currentLanguage + ", isLocked = " + isLockedByTtsPlayer);
-
-        Log.d("TtsExtractor", Log.getStackTraceString(new Throwable()));
 
         if (!isLockedByTtsPlayer || lock) {
             Log.d("TtsExtractor", "Language set to: " + lang + " | lock=" + lock);

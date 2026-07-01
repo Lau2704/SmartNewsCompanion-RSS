@@ -2352,6 +2352,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         webViewViewModel.resetEntry(currentId);
         webViewViewModel.clearLiveEntryCache(currentId);
+        ttsExtractor.cancelExtractionForEntry(currentId);
         if (getIntent().getBooleanExtra("forceOriginal", false)) {
             sharedPreferencesRepository.setIsTranslatedView(currentId, false);
         }
@@ -2381,6 +2382,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         webViewViewModel.resetEntry(currentId);
         webViewViewModel.clearLiveEntryCache(currentId);
+        ttsExtractor.cancelExtractionForEntry(currentId);
 
         isTranslatedView = false;
         sharedPreferencesRepository.setIsTranslatedView(currentId, false);
