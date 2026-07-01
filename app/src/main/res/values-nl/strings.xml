@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Artikelen automatisch vertalen</string>
     <string name="auto_translate_on">Artikelen automatisch vertalen naar de standaardtaal</string>
     <string name="auto_translate_off">Artikelen niet automatisch vertalen</string>
+    <string name="auto_feature_warning_title">Voordat u dit inschakelt</string>
+    <string name="auto_feature_warning_message">Zorg er eerst voor dat uw artikelen in hun oorspronkelijke versie zijn voordat u dit inschakelt.\n\nLet op: als u eerder Automatisch vertalen, Automatisch samenvatten of Automatisch vertalen+samenvatten op een artikel hebt gebruikt, werkt deze functie mogelijk niet correct en verbruikt extra tokens, of levert slechte resultaten op.\n\nOm dit op te lossen, haal/vernieuw het artikel op zodat de originele broninhoud opnieuw wordt geladen vóór automatische verwerking.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Delen</string>
     <string name="mark_as_read">Markeren als gelezen</string>
     <string name="mark_as_unread">Markeren als ongelezen</string>

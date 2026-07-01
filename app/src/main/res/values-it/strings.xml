@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Traduzione automatica degli articoli</string>
     <string name="auto_translate_on">Traduci automaticamente gli articoli nella lingua predefinita</string>
     <string name="auto_translate_off">Non tradurre automaticamente gli articoli</string>
+    <string name="auto_feature_warning_title">Prima di attivare questo</string>
+    <string name="auto_feature_warning_message">Assicurati che i tuoi articoli siano nella loro versione originale prima di attivare questo.\n\nNota: se in precedenza hai attivato Traduzione automatica, Riepilogo automatico o Traduzione+Riepilogo automatico su un articolo, questa funzione potrebbe non funzionare correttamente e consumerà token aggiuntivi, o produrrà risultati scadenti.\n\nPer risolvere, recupera/aggiorna l\'articolo in modo che ricarichi il contenuto sorgente originale prima dell\'elaborazione automatica.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Condividi</string>
     <string name="mark_as_read">Segna come letto</string>
     <string name="mark_as_unread">Segna come non letto</string>

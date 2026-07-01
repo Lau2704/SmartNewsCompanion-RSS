@@ -59,6 +59,9 @@
     <string name="auto_translate_title">Terjemah artikel secara automatik</string>
     <string name="auto_translate_on">Terjemah artikel ke bahasa lalai secara automatik</string>
     <string name="auto_translate_off">Jangan terjemah artikel secara automatik</string>
+    <string name="auto_feature_warning_title">Sebelum mengaktifkan ini</string>
+    <string name="auto_feature_warning_message">Sila pastikan artikel anda dalam versi asal sebelum mengaktifkan.\n\nNota: jika anda sebelum ini pernah mencetuskan Auto-terjemah, Auto-ringkasan, atau Auto-terjemah+ringkasan pada sesebuah artikel, ciri ini mungkin tidak berfungsi dengan betul dan akan menggunakan token tambahan, atau menghasilkan hasil yang lemah.\n\nUntuk memperbaikinya, dapatkan/muat semula artikel supaya memuat semula kandungan sumber asal sebelum pemprosesan automatik.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Kongsi</string>
     <string name="mark_as_read">Tandakan sebagai dibaca</string>
     <string name="mark_as_unread">Tandakan sebagai belum dibaca</string>

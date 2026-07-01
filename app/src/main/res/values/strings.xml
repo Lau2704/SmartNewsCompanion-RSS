@@ -251,6 +251,9 @@
      <string name="auto_translate_summary_title">Auto translate &amp; summarize</string>
      <string name="auto_translate_summary_on">Automatically summarize and translate articles</string>
      <string name="auto_translate_summary_off">Do not automatically summarize and translate articles</string>
+     <string name="auto_feature_warning_title">Before you enable this</string>
+     <string name="auto_feature_warning_message">Please make sure your articles are in their original version before enabling.\n\nNote: if you have previously triggered Auto-translate, Auto-summarize, or Auto translate &amp; summarize on an article, this feature may not work correctly and will consume extra tokens, or produce poor results.\n\nTo fix this, refetch/refresh the article so it reloads the original source content before auto-processing.</string>
+     <string name="auto_feature_warning_ok">OK</string>
 
     <string name="share">Share</string>
     <string name="mark_as_read">Mark as read</string>

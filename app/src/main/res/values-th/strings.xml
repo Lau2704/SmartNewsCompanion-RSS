@@ -58,6 +58,9 @@
     <string name="auto_translate_title">แปลบทความอัตโนมัติ</string>
     <string name="auto_translate_on">แปลบทความเป็นภาษาเริ่มต้นโดยอัตโนมัติ</string>
     <string name="auto_translate_off">ไม่แปลบทความโดยอัตโนมัติ</string>
+    <string name="auto_feature_warning_title">ก่อนเปิดใช้งานสิ่งนี้</string>
+    <string name="auto_feature_warning_message">กรุณาตรวจสอบให้แน่ใจก่อนว่าบทความของคุณเป็นเวอร์ชันต้นฉบับก่อนเปิดใช้งาน\n\nหมายเหตุ: หากคุณเคยเรียกใช้ แปลอัตโนมัติ, สรุปอัตโนมัติ หรือ แปล+สรุปอัตโนมัติ ในบทความใดๆ มาก่อน ฟีเจอร์นี้อาจทำงานไม่ถูกต้องและจะใช้โทเค็นเพิ่มเติม หรืออาจให้ผลลัพธ์ที่แย่\n\nเพื่อแก้ไข ให้ดึง/รีเฟรชบทความใหม่เพื่อโหลดเนื้อหาต้นฉบับก่อนประมวลผลอัตโนมัติ</string>
+    <string name="auto_feature_warning_ok">ตกลง</string>
     <string name="share">แชร์</string>
     <string name="mark_as_read">ทำเครื่องหมายว่าอ่านแล้ว</string>
     <string name="mark_as_unread">ทำเครื่องหมายว่ายังไม่ได้อ่าน</string>

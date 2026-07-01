@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
@@ -163,16 +164,19 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 case "autoTranslate":
                     if (sharedPreferences.getBoolean("autoTranslate", false)) {
                         disableOtherAutoSettings("autoTranslate");
+                        showAutoFeatureWarningDialog("autoTranslate");
                     }
                     break;
                 case "displaySummary":
                     if (sharedPreferences.getBoolean("displaySummary", false)) {
                         disableOtherAutoSettings("displaySummary");
+                        showAutoFeatureWarningDialog("displaySummary");
                     }
                     break;
                 case "autoTranslateSummary":
                     if (sharedPreferences.getBoolean("autoTranslateSummary", false)) {
                         disableOtherAutoSettings("autoTranslateSummary");
+                        showAutoFeatureWarningDialog("autoTranslateSummary");
                     }
                     break;
             }
@@ -594,6 +598,58 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             if (pref != null) pref.setChecked(false);
         }
         ed.apply();
+    }
+
+    private void showAutoFeatureWarningDialog(final String key) {
+        Context ctx = getContext();
+        if (ctx == null) return;
+
+        final AlertDialog[] holder = new AlertDialog[1];
+        final CountDownTimer timer = new CountDownTimer(5000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Button ok = holder[0].getButton(AlertDialog.BUTTON_POSITIVE);
+                if (ok != null) {
+                    ok.setText(getString(R.string.auto_feature_warning_ok)
+                            + " (" + (millisUntilFinished / 1000) + ")");
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                Button ok = holder[0].getButton(AlertDialog.BUTTON_POSITIVE);
+                if (ok != null) {
+                    ok.setEnabled(true);
+                    ok.setText(R.string.auto_feature_warning_ok);
+                }
+            }
+        };
+
+        AlertDialog dialog = new AlertDialog.Builder(ctx)
+                .setTitle(R.string.auto_feature_warning_title)
+                .setMessage(R.string.auto_feature_warning_message)
+                .setPositiveButton(R.string.auto_feature_warning_ok, null)
+                .setNegativeButton(android.R.string.cancel, (d, w) -> revertAutoSetting(key))
+                .setCancelable(false)
+                .create();
+        holder[0] = dialog;
+
+        dialog.setOnDismissListener(d -> timer.cancel());
+        dialog.setOnShowListener(d -> {
+            Button ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            ok.setEnabled(false);
+            ok.setOnClickListener(v -> dialog.dismiss());
+            timer.start();
+        });
+        dialog.show();
+    }
+
+    private void revertAutoSetting(String key) {
+        SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+        if (prefs == null) return;
+        prefs.edit().putBoolean(key, false).apply();
+        SwitchPreferenceCompat pref = findPreference(key);
+        if (pref != null) pref.setChecked(false);
     }
 
     @Override

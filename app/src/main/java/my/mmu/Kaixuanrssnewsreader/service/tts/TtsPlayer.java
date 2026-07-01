@@ -459,11 +459,6 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
             Log.d(TAG, "[extract] Locked language = " + language + " in TtsExtractor");
         }
 
-        if (language != null && !language.isEmpty() && ttsExtractor != null) {
-            ttsExtractor.setCurrentLanguage(language, true);
-            Log.d(TAG, "[extract] Locked language = " + language + " in TtsExtractor");
-        }
-
         if (content != null && !content.trim().isEmpty()) {
             new Thread(() -> {
                 try {

@@ -59,6 +59,9 @@
     <string name="auto_translate_title">自動翻譯文章</string>
     <string name="auto_translate_on">自動將文章翻譯為預設語言</string>
     <string name="auto_translate_off">不自動翻譯文章</string>
+    <string name="auto_feature_warning_title">啟用此功能前</string>
+    <string name="auto_feature_warning_message">請先確保您的文章為原始版本後再啟用。\n\n注意：如果您之前對某篇文章觸發過自動翻譯、自動摘要或自動翻譯+摘要中的任意功能，此功能可能無法正常運作，並會消耗更多 token，或產生較差的結果。\n\n要解決此問題，請先重新取得/重新整理文章，使其在自動處理前重新載入原始來源內容。</string>
+    <string name="auto_feature_warning_ok">確定</string>
     <string name="share">分享</string>
     <string name="mark_as_read">標記為已讀</string>
     <string name="mark_as_unread">標記為未讀</string>

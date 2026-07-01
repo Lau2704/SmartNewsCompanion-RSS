@@ -59,6 +59,9 @@
     <string name="auto_translate_title">Artikel automatisch ubersetzen</string>
     <string name="auto_translate_on">Artikel automatisch in die Standardsprache ubersetzen</string>
     <string name="auto_translate_off">Artikel nicht automatisch ubersetzen</string>
+    <string name="auto_feature_warning_title">Bevor Sie dies aktivieren</string>
+    <string name="auto_feature_warning_message">Bitte stellen Sie sicher, dass Ihre Artikel in ihrer Originalversion vorliegen, bevor Sie dies aktivieren.\n\nHinweis: Wenn Sie zuvor bereits Automatisches Übersetzen, Automatisches Zusammenfassen oder Automatisches Übersetzen+Zusammenfassen für einen Artikel ausgeführt haben, funktioniert diese Funktion möglicherweise nicht richtig und verbraucht zusätzliche Token oder liefert schlechte Ergebnisse.\n\nUm das zu beheben, rufen Sie den Artikel erneut ab/aktualisieren Sie ihn, damit der originale Quellinhalt neu geladen wird, bevor die automatische Verarbeitung erfolgt.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Teilen</string>
     <string name="mark_as_read">Als gelesen markieren</string>
     <string name="mark_as_unread">Als ungelesen markieren</string>

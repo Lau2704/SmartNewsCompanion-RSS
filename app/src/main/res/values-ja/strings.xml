@@ -58,6 +58,9 @@
     <string name="auto_translate_title">記事の自動翻訳</string>
     <string name="auto_translate_on">記事をデフォルト言語に自動的に翻訳する</string>
     <string name="auto_translate_off">記事を自動的に翻訳しない</string>
+    <string name="auto_feature_warning_title">これを有効にする前に</string>
+    <string name="auto_feature_warning_message">まず、記事が元のバージョンであることを確認してから有効にしてください。\n\n注意: 以前に記事に対して「自動翻訳」「自動要約」「自動翻訳＋要約」のいずれかを実行したことがある場合、この機能は正しく動作せず、余分なトークンを消費したり、不十分な結果になったりする可能性があります。\n\nこれを解決するには、自動処理の前に記事を再取得・更新して、元のソースコンテンツを再読み込みしてください。</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">共有</string>
     <string name="mark_as_read">既読にする</string>
     <string name="mark_as_unread">未読にする</string>

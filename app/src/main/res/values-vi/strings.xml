@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Tự động dịch bài viết</string>
     <string name="auto_translate_on">Tự động dịch bài viết sang ngôn ngữ mặc định</string>
     <string name="auto_translate_off">Không tự động dịch bài viết</string>
+    <string name="auto_feature_warning_title">Trước khi bật tính năng này</string>
+    <string name="auto_feature_warning_message">Vui lòng đảm bảo các bài viết đang ở phiên bản gốc trước khi bật.\n\nLưu ý: nếu bạn đã từng kích hoạt Tự động dịch, Tự động tóm tắt, hoặc Tự động dịch+tóm tắt trên một bài viết, tính năng này có thể không hoạt động chính xác và sẽ tiêu tốn thêm token, hoặc tạo kết quả kém.\n\nĐể khắc phục, hãy lấy/làm mới bài viết để nó tải lại nội dung nguồn gốc trước khi xử lý tự động.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Chia sẻ</string>
     <string name="mark_as_read">Đánh dấu đã đọc</string>
     <string name="mark_as_unread">Đánh dấu chưa đọc</string>

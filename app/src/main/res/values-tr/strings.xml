@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Makaleleri otomatik çevir</string>
     <string name="auto_translate_on">Makaleleri varsayılan dile otomatik olarak çevir</string>
     <string name="auto_translate_off">Makaleleri otomatik olarak çevirme</string>
+    <string name="auto_feature_warning_title">Bunu etkinleştirmeden önce</string>
+    <string name="auto_feature_warning_message">Lütfen bunu etkinleştirmeden önce makalelerinizin orijinal sürümünde olduğundan emin olun.\n\nNot: Daha önce bir makalede Otomatik çeviri, Otomatik özetleme veya Otomatik çeviri+özetleme işlevlerinden birini tetiklediyseniz, bu özellik düzgün çalışmayabilir ve ekstra belirgeç tüketir ya da kötü sonuçlar üretir.\n\nBunu düzeltmek için, otomatik işlemden önce makaleyi yeniden getir/yenile, böylece orijinal kaynak içeriği yeniden yüklenir.</string>
+    <string name="auto_feature_warning_ok">Tamam</string>
     <string name="share">Paylaş</string>
     <string name="mark_as_read">Okundu olarak işaretle</string>
     <string name="mark_as_unread">Okunmadı olarak işaretle</string>

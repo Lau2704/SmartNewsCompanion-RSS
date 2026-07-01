@@ -59,6 +59,9 @@
     <string name="auto_translate_title">Traduire automatiquement les articles</string>
     <string name="auto_translate_on">Traduire automatiquement les articles dans la langue par defaut</string>
     <string name="auto_translate_off">Ne pas traduire automatiquement les articles</string>
+    <string name="auto_feature_warning_title">Avant d\'activer ceci</string>
+    <string name="auto_feature_warning_message">Veuillez vous assurer que vos articles sont dans leur version d\'origine avant d\'activer ceci.\n\nRemarque : si vous avez précédemment déclenché Traduction automatique, Résumé automatique ou Traduction+Résumé automatique sur un article, cette fonctionnalité peut ne pas fonctionner correctement et consommera des jetons supplémentaires, ou produira de mauvais résultats.\n\nPour y remédier, rechargez/actualisez l\'article afin qu\'il recharge le contenu source d\'origine avant le traitement automatique.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Partager</string>
     <string name="mark_as_read">Marquer comme lu</string>
     <string name="mark_as_unread">Marquer comme non lu</string>

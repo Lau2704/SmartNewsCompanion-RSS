@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Automatyczne tłumaczenie artykułów</string>
     <string name="auto_translate_on">Automatycznie tłumacz artykuły na język domyślny</string>
     <string name="auto_translate_off">Nie tłumacz automatycznie artykułów</string>
+    <string name="auto_feature_warning_title">Zanim to włączysz</string>
+    <string name="auto_feature_warning_message">Upewnij się najpierw, że Twoje artykuły są w oryginalnej wersji, zanim to włączysz.\n\nUwaga: jeśli wcześniej uruchomiłeś na artykule którąkolwiek z funkcji: Automatyczne tłumaczenie, Automatyczne podsumowanie lub Automatyczne tłumaczenie+podsumowanie, ta funkcja może nie działać poprawnie i zużyje dodatkowe tokeny lub da słabe wyniki.\n\nAby to naprawić, pobierz/odśwież artykuł, aby ponownie załadować oryginalną treść źródłową przed automatycznym przetwarzaniem.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Udostępnij</string>
     <string name="mark_as_read">Oznacz jako przeczytane</string>
     <string name="mark_as_unread">Oznacz jako nieprzeczytane</string>

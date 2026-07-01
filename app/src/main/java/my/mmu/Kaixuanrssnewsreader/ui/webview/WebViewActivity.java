@@ -499,15 +499,23 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             }
 
             String savedActiveFab = sharedPreferencesRepository.getActiveFab(currentId);
-            if ("SUMMARY".equals(savedActiveFab)) {
-                isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
-                if (isSummaryView) {
-                    switchToSummaryView();
-                }
-            } else if ("TRANSLATE_SUMMARY".equals(savedActiveFab)) {
+            boolean neverToggled = "NONE".equals(savedActiveFab);
+            boolean autoSummaryOn = sharedPreferencesRepository.getDisplaySummary();
+            boolean autoTranslateSummaryOn = sharedPreferencesRepository.getAutoTranslateSummary();
+
+            if ("TRANSLATE_SUMMARY".equals(savedActiveFab)
+                    || (autoTranslateSummaryOn && neverToggled && hasTranslatedSummary)) {
                 if (hasTranslatedSummary) {
                     isSummaryView = true;
                     switchToTranslatedSummaryView();
+                }
+            } else if (autoTranslateSummaryOn && neverToggled) {
+                performTranslateAndSummary();
+            } else if ("SUMMARY".equals(savedActiveFab)
+                    || (autoSummaryOn && neverToggled)) {
+                isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
+                if (isSummaryView || (autoSummaryOn && neverToggled)) {
+                    switchToSummaryView();
                 }
             }
         } else if (sharedPreferencesRepository.getAutoTranslateSummary()) {
@@ -2194,6 +2202,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         updateToggleTranslationVisibility();
         feedId = metadata.getLong("feedId");
 
+        String metaLang = metadata.getString("language");
+        feedLanguage = (metaLang != null && !metaLang.isEmpty()) ? metaLang : "en";
+        cachedEntryInfo = null;
+        targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
+
         if (bookmark == null || bookmark.equals("N")) {
             bookmarkButton.setIcon(R.drawable.ic_bookmark_outline);
         } else {
@@ -2762,6 +2775,11 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             resetSummaryState();
             updateToggleTranslationVisibility();
             feedId = metadata.getLong("feedId");
+
+            String metaLang = metadata.getString("language");
+            feedLanguage = (metaLang != null && !metaLang.isEmpty()) ? metaLang : "en";
+            cachedEntryInfo = null;
+            targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
 
             if (bookmark == null || bookmark.equals("N")) {
                 bookmarkButton.setIcon(R.drawable.ic_bookmark_outline);

@@ -58,6 +58,9 @@
     <string name="auto_translate_title">ترجمة المقالات تلقائيًا</string>
     <string name="auto_translate_on">ترجمة المقالات تلقائيًا إلى اللغة الافتراضية</string>
     <string name="auto_translate_off">عدم ترجمة المقالات تلقائيًا</string>
+    <string name="auto_feature_warning_title">قبل تفعيل هذا</string>
+    <string name="auto_feature_warning_message">يرجى التأكد من أن مقالاتك في نسختها الأصلية قبل التفعيل.\n\nملاحظة: إذا قمت مسبقًا بتشغيل أي من الميزات التالية على مقال: الترجمة التلقائية، أو التلخيص التلقائي، أو الترجمة والتلخيص التلقائيان، فقد لا تعمل هذه الميزة بشكل صحيح وستستهلك رموزًا إضافية، أو ستنتج نتائج ضعيفة.\n\nلإصلاح ذلك، أعد جلب/تحديث المقال بحيث يعيد تحميل المحتوى المصدر الأصلي قبل المعالجة التلقائية.</string>
+    <string name="auto_feature_warning_ok">موافق</string>
     <string name="share">مشاركة</string>
     <string name="mark_as_read">وضع علامة كمقروء</string>
     <string name="mark_as_unread">وضع علامة كغير مقروء</string>

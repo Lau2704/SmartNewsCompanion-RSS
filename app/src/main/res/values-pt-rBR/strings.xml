@@ -58,6 +58,9 @@
     <string name="auto_translate_title">Traduzir artigos automaticamente</string>
     <string name="auto_translate_on">Traduzir automaticamente os artigos para o idioma padrão</string>
     <string name="auto_translate_off">Não traduzir automaticamente os artigos</string>
+    <string name="auto_feature_warning_title">Antes de ativar isso</string>
+    <string name="auto_feature_warning_message">Certifique-se primeiro de que seus artigos estão na versão original antes de ativar isso.\n\nNota: se anteriormente você acionou qualquer dos recursos Traduzir automaticamente, Resumir automaticamente ou Traduzir+Resumir automaticamente em um artigo, esse recurso pode não funcionar corretamente e consumirá tokens adicionais, ou produzirá resultados ruins.\n\nPara corrigir, busque/atualize o artigo para que ele recarregue o conteúdo original antes do processamento automático.</string>
+    <string name="auto_feature_warning_ok">OK</string>
     <string name="share">Compartilhar</string>
     <string name="mark_as_read">Marcar como lido</string>
     <string name="mark_as_unread">Marcar como não lido</string>

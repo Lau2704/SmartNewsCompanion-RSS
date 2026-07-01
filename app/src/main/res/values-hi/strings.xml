@@ -58,6 +58,9 @@
     <string name="auto_translate_title">लेखों का स्वतः अनुवाद</string>
     <string name="auto_translate_on">लेखों का स्वचालित रूप से डिफ़ॉल्ट भाषा में अनुवाद करें</string>
     <string name="auto_translate_off">लेखों का स्वचालित रूप से अनुवाद न करें</string>
+    <string name="auto_feature_warning_title">इसे सक्षम करने से पहले</string>
+    <string name="auto_feature_warning_message">कृपया सक्षम करने से पहले सुनिश्चित करें कि आपके लेख अपने मूल संस्करण में हैं।\n\nनोट: यदि आपने पहले किसी लेख पर स्वचालित अनुवाद, स्वचालित सारांश, या स्वचालित अनुवाद+सारांश में से कोई भी सुविधा चलाई है, तो यह सुविधा ठीक से काम नहीं कर सकती और अतिरिक्त टोकन की खपत करेगी या खराब परिणाम देगी।\n\nइसे ठीक करने के लिए, लेख को पुनः प्राप्त/ताज़ा करें ताकि स्वचालित प्रसंस्करण से पहले वह मूल स्रोत सामग्री को पुनः लोड करे।</string>
+    <string name="auto_feature_warning_ok">ठीक है</string>
     <string name="share">साझा करें</string>
     <string name="mark_as_read">पढ़ा हुआ चिह्नित करें</string>
     <string name="mark_as_unread">अनपढ़ चिह्नित करें</string>
