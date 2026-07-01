@@ -128,7 +128,6 @@ public class TtsService extends MediaBrowserServiceCompat {
                     ttsPlayer.initTts(TtsService.this, new TtsPlayerListener(), callback);
                 }
                 long currentReadingId = sharedPreferencesRepository.getCurrentReadingEntryId();
-                boolean isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentReadingId);
 
                 Entry entry = entryRepository.getEntryById(currentReadingId);
                 if (entry == null) {
@@ -136,26 +135,30 @@ public class TtsService extends MediaBrowserServiceCompat {
                     return;
                 }
 
-                String original = entry.getContent();
-                String translated = entry.getTranslated();
-
-                Log.d(TAG, "isTranslatedView = " + isTranslatedView);
-                Log.d(TAG, "original length = " + (original == null ? "null" : original.length()));
-                Log.d(TAG, "translated length = " + (translated == null ? "null" : translated.length()));
-
-                String content = (isTranslatedView && translated != null && !translated.trim().isEmpty())
-                        ? translated
-                        : original;
-
                 EntryInfo entryInfo = entryRepository.getEntryInfoById(currentReadingId);
-                String feedLanguage = entryInfo.getFeedLanguage();
+                String feedLanguage = entryInfo != null ? entryInfo.getFeedLanguage() : null;
 
                 String targetLanguage = sharedPreferencesRepository.getDefaultTranslationLanguage();
                 if (targetLanguage == null || targetLanguage.isEmpty()) {
                     targetLanguage = "zh";
                 }
 
-                String languageToUse = isTranslatedView ? targetLanguage : feedLanguage;
+                TtsContentSelection selection = TtsContentSelection.select(
+                        currentReadingId,
+                        entry,
+                        entry.getTitle(),
+                        feedLanguage,
+                        targetLanguage,
+                        sharedPreferencesRepository);
+
+                String content = selection.content;
+                String languageToUse = selection.language;
+                String contentMode = selection.mode;
+
+                Log.d(TAG, "onPrepare: contentMode=" + contentMode
+                        + ", isSummaryView=" + sharedPreferencesRepository.getIsSummaryView(currentReadingId)
+                        + ", isTranslatedView=" + sharedPreferencesRepository.getIsTranslatedView(currentReadingId));
+                Log.d(TAG, "content length = " + (content == null ? "null" : content.length()));
 
                 preparedData = ttsPlaylist.getCurrentMetadata();
                 if (!mediaSession.isActive()) {
@@ -172,13 +175,14 @@ public class TtsService extends MediaBrowserServiceCompat {
                     return;
                 }
 
-                if (ttsPlayer.isSameArticleState(mediaId, languageToUse)) {
-                    Log.d(TAG, "Service: TTS is already prepared for " + mediaId + ". Skipping re-extraction.");
+                if (ttsPlayer.isSameArticleState(mediaId, languageToUse, contentMode)) {
+                    Log.d(TAG, "Service: TTS is already prepared for " + mediaId + " (" + contentMode + "). Skipping re-extraction.");
                     return;
                 }
 
                 ttsPlayer.stopTtsPlayback();
 
+                ttsPlayer.setCurrentContentMode(contentMode);
                 ttsPlayer.extract(mediaId, feedId, content, languageToUse);
 
                 Log.d(TAG, "Extraction started for mediaId=" + mediaId + ", feedId=" + feedId + ", language=" + languageToUse);

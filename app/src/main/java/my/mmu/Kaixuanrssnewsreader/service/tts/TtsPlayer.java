@@ -73,6 +73,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     private long currentId = 0;
     private long feedId = 0;
     private String language;
+    private String currentContentMode = "";
     private boolean isInit = false;
     private boolean isPreparing = false;
     private boolean actionNeeded = false;
@@ -1236,10 +1237,28 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
     }
 
     public boolean isSameArticleState(long entryId, String targetLanguage) {
+        return isSameArticleState(entryId, targetLanguage, null);
+    }
+
+    public boolean isSameArticleState(long entryId, String targetLanguage, String contentMode) {
         boolean sameId = currentId == entryId;
         boolean sameLang = (language == null && targetLanguage == null) || (language != null && language.equals(targetLanguage));
+        boolean sameMode;
+        if (contentMode == null) {
+            sameMode = true;
+        } else {
+            sameMode = currentContentMode != null && currentContentMode.equals(contentMode);
+        }
         boolean hasContent = (sentences != null && !sentences.isEmpty());
-        return sameId && sameLang && (isSettingUpNewArticle || hasContent);
+        return sameId && sameLang && sameMode && (isSettingUpNewArticle || hasContent);
+    }
+
+    public void setCurrentContentMode(String mode) {
+        this.currentContentMode = mode != null ? mode : "";
+    }
+
+    public String getCurrentContentMode() {
+        return currentContentMode;
     }
 
     public void resetForNewArticle(long entryId, long feedId) {
@@ -1247,6 +1266,7 @@ public class TtsPlayer extends PlayerAdapter implements TtsPlayerListener {
         this.currentId = entryId;
         this.feedId = feedId;
         this.language = null;
+        this.currentContentMode = "";
         if (sentences != null) {
             sentences.clear();
         }

@@ -40,6 +40,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import my.mmu.Kaixuanrssnewsreader.R;
 import my.mmu.Kaixuanrssnewsreader.data.sharedpreferences.SharedPreferencesRepository;
 import my.mmu.Kaixuanrssnewsreader.model.EntryInfo;
+import my.mmu.Kaixuanrssnewsreader.service.tts.TtsContentSelection;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsExtractor;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlayer;
 import my.mmu.Kaixuanrssnewsreader.service.tts.TtsPlaylist;
@@ -102,7 +103,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     private boolean isReadingMode;
     private boolean showOfflineButton;
     private boolean clearHistory;
-    private boolean isTranslatedView = true;
+    private boolean isTranslatedView = false;
     private MaterialToolbar toolbar;
     private FloatingActionButton translateFab;
     private FloatingActionButton summaryFab;
@@ -298,6 +299,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     String content = translatedContentHolder[0];
                                     if (content != null && !content.isEmpty()) {
                                         ttsExtractor.setCurrentLanguage(lang, true);
+                                        ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_TRANSLATED);
                                         ttsPlayer.extract(currentId, feedId, content, lang);
                                     }
                                 },
@@ -626,6 +628,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 String contentWithTitle = (entryTitle != null ? entryTitle + ". " : "") + summaryText;
                 String lang = feedLanguage != null ? feedLanguage : "en";
                 Log.d(TAG, "switchToSummaryView: Re-extracting TTS with summary content, language: " + lang);
+                ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_SUMMARY);
                 ttsPlayer.extract(currentId, feedId, contentWithTitle, lang);
             }
         }
@@ -655,6 +658,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 String contentWithTitle = (entryTitle != null ? entryTitle + ". " : "") + translatedSummaryText;
                 String lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
                 Log.d(TAG, "switchToTranslatedSummaryView: Re-extracting TTS, language: " + lang);
+                ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_TRANSLATED_SUMMARY);
                 ttsPlayer.extract(currentId, feedId, contentWithTitle, lang);
             }
         }
@@ -684,6 +688,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             if (contentToRead != null && !contentToRead.isEmpty()) {
                 String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
                 Log.d(TAG, "switchToArticleView: Re-extracting TTS");
+                ttsPlayer.setCurrentContentMode(isTranslatedView ? TtsContentSelection.MODE_TRANSLATED : TtsContentSelection.MODE_ORIGINAL);
                 ttsPlayer.extract(currentId, feedId, contentToRead, lang);
             }
         }
@@ -745,6 +750,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             String contentToRead = entry.getContent();
             if (contentToRead != null && !contentToRead.isEmpty()) {
                 String lang = getLanguageForCurrentView(currentId, false, "en");
+                ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_ORIGINAL);
                 ttsPlayer.extract(currentId, feedId, contentToRead, lang);
             }
         }
@@ -768,6 +774,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 if (contentToRead != null && !contentToRead.isEmpty()) {
                     String lang = getLanguageForCurrentView(currentId, true, "en");
                     ttsExtractor.setCurrentLanguage(lang, true);
+                    ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_TRANSLATED);
                     ttsPlayer.extract(currentId, feedId, contentToRead, lang);
                 }
                 return;
@@ -950,6 +957,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
                 String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
 
+                ttsPlayer.setCurrentContentMode(TtsContentSelection.MODE_TRANSLATED);
                 ttsPlayer.extract(currentId, feedId, translatedText, lang);
                 Log.d(TAG, "LiveData.observe fired, isTranslatedView = " + isTranslatedView);
             }
@@ -1255,13 +1263,13 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     }
                     isTranslatedView = false;
 
-                    if (entry.getTranslated() != null && entry.getHtml() != null) {
-                        isTranslatedView = true;
-                        Log.d(TAG, "loadEntryContent: Article has translated HTML available, setting isTranslatedView=true");
-                    } else if (sharedPreferencesRepository.hasTranslationToggle(currentId)) {
+                    if (sharedPreferencesRepository.hasTranslationToggle(currentId)) {
                         isTranslatedView = sharedPreferencesRepository.getIsTranslatedView(currentId);
                         Log.d(TAG, "loadEntryContent: Using saved preference isTranslatedView=" + isTranslatedView);
-                    }else {
+                    } else if (entry.getTranslated() != null && entry.getHtml() != null && !entry.getTranslated().isEmpty()) {
+                        isTranslatedView = true;
+                        Log.d(TAG, "loadEntryContent: No saved toggle, article has translated HTML available, setting isTranslatedView=true");
+                    } else {
                         Log.d(TAG, "loadEntryContent: Article not translated, isTranslatedView=false");
                     }
                     Log.d(TAG, "loadEntryContent: FINAL isTranslatedView = " + isTranslatedView);
@@ -1320,31 +1328,18 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         isSummaryView = sharedPreferencesRepository.getIsSummaryView(currentId);
 
-        String contentToRead;
-        if (isSummaryView && "TRANSLATE_SUMMARY".equals(savedActiveFab) && hasTransSummary) {
-            String cachedTitle = sharedPreferencesRepository.getTranslatedTitle(currentId);
-            String entryTitle = (cachedTitle != null && !cachedTitle.isEmpty()) ? cachedTitle : entry.getTitle();
-            contentToRead = (entryTitle != null ? entryTitle + ". " : "") + savedTranslatedSummary;
-            Log.d(TAG, "Using translated summary for TTS");
-        } else if (isSummaryView && hasSummary) {
-            String entryTitle = entry.getTitle();
-            contentToRead = (entryTitle != null ? entryTitle + ". " : "") + savedSummary;
-            Log.d(TAG, "Using summary for TTS with title: " + entryTitle);
-        } else {
-            contentToRead = isTranslatedView
-                    ? entry.getTranslated()
-                    : entry.getContent();
-        }
+        TtsContentSelection selection = TtsContentSelection.select(
+                currentId,
+                entry,
+                entry.getTitle(),
+                feedLanguage,
+                targetLanguage,
+                sharedPreferencesRepository);
 
-        String lang;
-        if (isSummaryView && "TRANSLATE_SUMMARY".equals(savedActiveFab)) {
-            lang = sharedPreferencesRepository.getTranslatedSummaryLanguage(currentId);
-            if (lang == null) lang = sharedPreferencesRepository.getDefaultTranslationLanguage();
-        } else if (isSummaryView) {
-            lang = feedLanguage != null ? feedLanguage : "en";
-        } else {
-            lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
-        }
+        String contentToRead = selection.content;
+        String lang = selection.language;
+        String contentMode = selection.mode;
+        Log.d(TAG, "loadEntryContent: selected contentMode=" + contentMode + ", lang=" + lang);
 
         if (!"NONE".equals(savedActiveFab)) {
             activeFab = ActiveFab.valueOf(savedActiveFab);
@@ -1358,6 +1353,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
         Log.d(TAG, "Calling setCurrentLanguage with: " + lang + ", lock=true");
         ttsExtractor.setCurrentLanguage(lang, true);
+        ttsPlayer.setCurrentContentMode(contentMode);
 
         boolean canExtractTts = (!isSummaryView && html != null && !html.trim().isEmpty())
                 || (isSummaryView && contentToRead != null && !contentToRead.trim().isEmpty());
@@ -1383,7 +1379,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 loadHtmlIntoWebView(html);
             }
 
-            if (!ttsPlayer.isSameArticleState(entry.getId(), finalLang)) {
+            if (!ttsPlayer.isSameArticleState(entry.getId(), finalLang, contentMode)) {
                 compositeDisposable.add(
                         Completable.fromAction(() -> {
                             ttsPlayer.extract(entry.getId(), entry.getFeedId(), finalContentToRead, finalLang);
@@ -1503,6 +1499,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                 String contentToRead = isTranslatedView ? entry.getTranslated() : entry.getContent();
                                 if (contentToRead != null && !contentToRead.trim().isEmpty()) {
                                     String lang = getLanguageForCurrentView(currentId, isTranslatedView, "en");
+                                    ttsPlayer.setCurrentContentMode(isTranslatedView ? TtsContentSelection.MODE_TRANSLATED : TtsContentSelection.MODE_ORIGINAL);
                                     ttsPlayer.extract(entry.getId(), entry.getFeedId(), contentToRead, lang);
                                 }
                             }
@@ -2523,6 +2520,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                 sharedPreferencesRepository.setScrollX(currentId, webView.getScrollX());
                 sharedPreferencesRepository.setScrollY(currentId, webView.getScrollY());
                 sharedPreferencesRepository.setIsTranslatedView(currentId, isTranslatedView);
+                sharedPreferencesRepository.setIsSummaryView(currentId, isSummaryView);
                 sharedPreferencesRepository.setActiveFab(currentId, activeFab.name());
             }
         }
@@ -2820,6 +2818,16 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                                     }
 
                                                     loadSavedSummaryOrGenerate();
+
+                                                    if (!isSummaryView) {
+                                                        if (isTranslatedView && hasTranslation) {
+                                                            if (activeFab != ActiveFab.TRANSLATE) {
+                                                                setActiveFab(ActiveFab.TRANSLATE);
+                                                            }
+                                                        } else if (activeFab != ActiveFab.NONE) {
+                                                            setActiveFab(ActiveFab.NONE);
+                                                        }
+                                                    }
                                                 }
                                             } else {
                                                 isWaitingForArticleContent = true;

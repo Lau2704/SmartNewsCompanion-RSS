@@ -444,19 +444,25 @@ public class TtsExtractor {
                                         Log.e(TAG, "[onReceiveValue] Exception during extraction", error);
                                         failedIds.add(currentIdInProgress);
                                     } else if (success) {
-                                        boolean isTranslated = sharedPreferencesRepository.getIsTranslatedView(currentIdInProgress);
                                         if (currentIdInProgress == ttsPlaylist.getPlayingId()) {
                                             if (ttsCallback != null) {
-                                                String lang = currentLanguage != null ? currentLanguage : "en";
                                                 Entry entry = entryRepository.getEntryById(currentIdInProgress);
-                                                String contentToRead;
-                                                if (isTranslated && entry != null && entry.getTranslated() != null && !entry.getTranslated().trim().isEmpty()) {
-                                                    contentToRead = entry.getTranslated();
-                                                    Log.d(TAG, "[TtsExtractor] Using translated content for TTS");
-                                                } else {
-                                                    contentToRead = entry != null ? entry.getContent() : "";
-                                                    Log.d(TAG, "[TtsExtractor] Using original content for TTS");
-                                                }
+                                                my.mmu.Kaixuanrssnewsreader.model.EntryInfo info = entryRepository.getEntryInfoById(currentIdInProgress);
+                                                String feedLang = info != null ? info.getFeedLanguage() : null;
+                                                String defaultLang = sharedPreferencesRepository.getDefaultTranslationLanguage();
+                                                if (defaultLang == null || defaultLang.isEmpty()) defaultLang = "en";
+
+                                                TtsContentSelection selection = TtsContentSelection.select(
+                                                        currentIdInProgress,
+                                                        entry,
+                                                        entry != null ? entry.getTitle() : null,
+                                                        feedLang,
+                                                        defaultLang,
+                                                        sharedPreferencesRepository);
+
+                                                String contentToRead = selection.content;
+                                                String lang = selection.language != null ? selection.language : (currentLanguage != null ? currentLanguage : "en");
+                                                Log.d(TAG, "[TtsExtractor] contentMode=" + selection.mode + ", content length=" + (contentToRead != null ? contentToRead.length() : 0));
                                                 ttsCallback.extractToTts(contentToRead, lang);
                                                 ttsCallback = null;
                                             }
