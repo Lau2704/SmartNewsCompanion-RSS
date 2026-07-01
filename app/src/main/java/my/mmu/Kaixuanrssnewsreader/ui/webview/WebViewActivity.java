@@ -293,7 +293,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                     if (activeFab != ActiveFab.TRANSLATE_SUMMARY) {
                                         setActiveFab(ActiveFab.TRANSLATE);
                                     }
-                                    loadHtmlIntoWebView(finalHtml);
+                                    loadHtmlIntoWebView(finalHtml, true);
 
                                     String lang = getLanguageForCurrentView(currentId, true, "en");
                                     String content = translatedContentHolder[0];
@@ -327,6 +327,17 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void translate() {
+        Entry cachedEntry = webViewViewModel.getEntryById(currentId);
+        if (cachedEntry != null
+                && cachedEntry.getTranslated() != null && !cachedEntry.getTranslated().isEmpty()
+                && cachedEntry.getHtml() != null
+                && cachedEntry.getOriginalHtml() != null
+                && !cachedEntry.getHtml().equals(cachedEntry.getOriginalHtml())) {
+            Log.d(TAG, "translate: reusing cached translation, skipping API call");
+            showTranslatedArticleOrTranslate();
+            return;
+        }
+
         String apiKey = sharedPreferencesRepository.getApiKey();
         if (!sharedPreferencesRepository.getApiProvider().isLocal() && (apiKey == null || apiKey.isEmpty() || apiKey.contains("your-api-key-here"))) {
             showSetupRequiredDialog(getString(R.string.setup_required_title), getString(R.string.setup_required_api_key_message));
@@ -413,6 +424,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void performAutoSummary() {
+        if (!hasGeneratedSummary) {
+            String cachedSummary = sharedPreferencesRepository.getSummary(currentId);
+            if (cachedSummary != null && !cachedSummary.isEmpty()) {
+                if (originalHtmlForSummary == null) {
+                    String currentHtml = webViewViewModel.getHtmlById(currentId);
+                    originalHtmlForSummary = currentHtml;
+                }
+                summaryHtml = formatSummaryAsHtml(cachedSummary);
+                hasGeneratedSummary = true;
+                Log.d(TAG, "performAutoSummary: restored summary from cache, skipping API call");
+            }
+        }
+
         if (hasGeneratedSummary) {
             if (isSummaryView) {
                 switchToArticleView();
@@ -481,6 +505,10 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void loadSavedSummaryOrGenerate() {
+        if (isAnyAutoFeatureEnabled()) {
+            Log.d(TAG, "loadSavedSummaryOrGenerate: skipped, an auto feature is enabled");
+            return;
+        }
         String savedSummary = sharedPreferencesRepository.getSummary(currentId);
         String savedTranslatedSummary = sharedPreferencesRepository.getTranslatedSummary(currentId);
 
@@ -538,6 +566,47 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
         isSummaryView = false;
         activeFab = ActiveFab.NONE;
         currentHighlightText = null;
+    }
+
+    private boolean isAnyAutoFeatureEnabled() {
+        return sharedPreferencesRepository.getAutoTranslate()
+                || sharedPreferencesRepository.getDisplaySummary()
+                || sharedPreferencesRepository.getAutoTranslateSummary();
+    }
+
+    private void forceRevertToOriginalForAuto() {
+        isTranslatedView = false;
+        sharedPreferencesRepository.setIsTranslatedView(currentId, false);
+        isSummaryView = false;
+        sharedPreferencesRepository.setIsSummaryView(currentId, false);
+        setActiveFab(ActiveFab.NONE);
+        resetSummaryState();
+
+        String htmlToLoad = webViewViewModel.getOriginalHtmlById(currentId);
+        if (htmlToLoad == null) {
+            Entry entry = webViewViewModel.getEntryById(currentId);
+            if (entry != null) {
+                htmlToLoad = entry.getOriginalHtml();
+            }
+        }
+        if (htmlToLoad == null) {
+            htmlToLoad = originalHtmlForSummary;
+        }
+        if (htmlToLoad != null) {
+            loadHtmlIntoWebView(htmlToLoad, true);
+        }
+    }
+
+    private void triggerAutoFeatureForEntry() {
+        if (sharedPreferencesRepository.getAutoTranslateSummary()) {
+            setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
+            performTranslateAndSummary();
+        } else if (sharedPreferencesRepository.getDisplaySummary()) {
+            performAutoSummary();
+        } else if (sharedPreferencesRepository.getAutoTranslate()) {
+            setActiveFab(ActiveFab.TRANSLATE);
+            translate();
+        }
     }
 
     private void preSummarizeAdjacentEntries() {
@@ -621,6 +690,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
         if (summaryHtml != null) {
+            loadEpoch++;
             webView.loadDataWithBaseURL("file///android_res/", summaryHtml, "text/html", "UTF-8", null);
             isSummaryView = true;
             sharedPreferencesRepository.setIsSummaryView(currentId, true);
@@ -648,6 +718,7 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
             return;
         }
         if (translatedSummaryHtml != null) {
+            loadEpoch++;
             webView.loadDataWithBaseURL("file///android_res/", translatedSummaryHtml, "text/html", "UTF-8", null);
             isSummaryView = true;
             sharedPreferencesRepository.setIsSummaryView(currentId, true);
@@ -830,6 +901,20 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
     }
 
     private void performTranslateAndSummary() {
+        if (!hasTranslatedSummary) {
+            String cachedTs = sharedPreferencesRepository.getTranslatedSummary(currentId);
+            if (cachedTs != null && !cachedTs.isEmpty()) {
+                if (originalHtmlForSummary == null) {
+                    String currentHtml = webViewViewModel.getHtmlById(currentId);
+                    originalHtmlForSummary = currentHtml;
+                }
+                String cachedTitle = sharedPreferencesRepository.getTranslatedTitle(currentId);
+                translatedSummaryHtml = formatSummaryAsHtml(cachedTs, cachedTitle, "Summary & Translate");
+                hasTranslatedSummary = true;
+                Log.d(TAG, "performTranslateAndSummary: restored translated summary from cache, skipping API call");
+            }
+        }
+
         if (hasTranslatedSummary) {
             if (activeFab == ActiveFab.TRANSLATE_SUMMARY && isSummaryView) {
                 switchToArticleView();
@@ -1300,21 +1385,19 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                     } else {
                         isWaitingForArticleContent = false;
 
-                        if (!hasTranslation) {
-                            if (sharedPreferencesRepository.getAutoTranslateSummary()) {
-                                Log.d(TAG, "loadEntryContent: Auto translate+summary enabled");
-                                setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
-                                performTranslateAndSummary();
-                            } else if (sharedPreferencesRepository.getAutoTranslate()) {
-                                Log.d(TAG, "loadEntryContent: Auto-translate enabled, triggering translation");
-                                setActiveFab(ActiveFab.TRANSLATE);
-                                translate();
+                        if (isAnyAutoFeatureEnabled()) {
+                            forceRevertToOriginalForAuto();
+                            triggerAutoFeatureForEntry();
+                            html = isTranslatedView ? entry.getHtml() : entry.getOriginalHtml();
+                            if (html == null || html.trim().isEmpty()) {
+                                html = content;
                             }
-                        } else if (hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
-                            setActiveFab(ActiveFab.TRANSLATE);
+                        } else {
+                            if (hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
+                                setActiveFab(ActiveFab.TRANSLATE);
+                            }
+                            loadSavedSummaryOrGenerate();
                         }
-
-                        loadSavedSummaryOrGenerate();
                     }
 
         Log.d("LoadEntry", "htmlToLoad (translated) = " + (html != null ? html.length() : "null"));
@@ -1486,19 +1569,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
 
                                 boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
 
-                                if (!hasTranslation) {
-                                    if (sharedPreferencesRepository.getAutoTranslateSummary()) {
-                                        Log.d(TAG, "observeLiveEntry: Auto translate+summary enabled");
-                                        setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
-                                        performTranslateAndSummary();
-                                    } else if (sharedPreferencesRepository.getAutoTranslate()) {
-                                        Log.d(TAG, "observeLiveEntry: Article content now available, triggering auto-translate");
+                                if (isAnyAutoFeatureEnabled()) {
+                                    forceRevertToOriginalForAuto();
+                                    triggerAutoFeatureForEntry();
+                                } else {
+                                    if (hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
                                         setActiveFab(ActiveFab.TRANSLATE);
-                                        translate();
                                     }
+                                    loadSavedSummaryOrGenerate();
                                 }
-
-                                loadSavedSummaryOrGenerate();
 
                                 if (entry.getContent() != null && !entry.getContent().trim().isEmpty()) {
                                     content = entry.getContent();
@@ -2255,17 +2334,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                             if (entry != null) {
                                                 boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
 
-                                                if (!hasTranslation) {
-                                                    if (sharedPreferencesRepository.getAutoTranslateSummary()) {
-                                                        setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
-                                                        performTranslateAndSummary();
-                                                    } else if (sharedPreferencesRepository.getAutoTranslate()) {
+                                                if (isAnyAutoFeatureEnabled()) {
+                                                    forceRevertToOriginalForAuto();
+                                                    triggerAutoFeatureForEntry();
+                                                } else {
+                                                    if (hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
                                                         setActiveFab(ActiveFab.TRANSLATE);
-                                                        translate();
                                                     }
+                                                    loadSavedSummaryOrGenerate();
                                                 }
-
-                                                loadSavedSummaryOrGenerate();
                                             }
                                         } else {
                                             isWaitingForArticleContent = true;
@@ -2825,17 +2902,15 @@ public class WebViewActivity extends AppCompatActivity implements WebViewListene
                                                 if (entry != null) {
                                                     boolean hasTranslation = entry.getOriginalHtml() != null && entry.getHtml() != null && !entry.getOriginalHtml().equals(entry.getHtml());
 
-                                                    if (!hasTranslation) {
-                                                        if (sharedPreferencesRepository.getAutoTranslateSummary()) {
-                                                            setActiveFab(ActiveFab.TRANSLATE_SUMMARY);
-                                                            performTranslateAndSummary();
-                                                        } else if (sharedPreferencesRepository.getAutoTranslate()) {
+                                                    if (isAnyAutoFeatureEnabled()) {
+                                                        forceRevertToOriginalForAuto();
+                                                        triggerAutoFeatureForEntry();
+                                                    } else {
+                                                        if (hasTranslation && sharedPreferencesRepository.getAutoTranslate()) {
                                                             setActiveFab(ActiveFab.TRANSLATE);
-                                                            translate();
                                                         }
+                                                        loadSavedSummaryOrGenerate();
                                                     }
-
-                                                    loadSavedSummaryOrGenerate();
 
                                                     if (!isSummaryView) {
                                                         if (isTranslatedView && hasTranslation) {

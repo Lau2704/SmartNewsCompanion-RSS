@@ -136,6 +136,26 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         adapter = new EntryItemAdapter(this, autoTranslate);
         entriesRecycler.setAdapter(adapter);
 
+        entriesRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                int firstVisible = (lm instanceof LinearLayoutManager)
+                        ? ((LinearLayoutManager) lm).findFirstCompletelyVisibleItemPosition()
+                        : RecyclerView.NO_POSITION;
+                if (firstVisible > 3) {
+                    binding.scrollToTopButton.show();
+                } else if (firstVisible != RecyclerView.NO_POSITION) {
+                    binding.scrollToTopButton.hide();
+                }
+            }
+        });
+
+        binding.scrollToTopButton.setOnClickListener(v -> {
+            binding.entriesRecycler.smoothScrollToPosition(0);
+            binding.appBarLayout.setExpanded(true, true);
+        });
+
         sortBy = allEntriesViewModel.getSortBy();
 
         swipeRefreshLayout = binding.swipeRefreshLayout;
@@ -195,6 +215,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
 
                 if (entries.size() == 0) {
                     entriesRecycler.setVisibility(View.GONE);
+                    binding.scrollToTopButton.hide();
                     emptyContainer.setVisibility(View.VISIBLE);
                 } else {
                     emptyContainer.setVisibility(View.GONE);
@@ -269,6 +290,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
                                 final String entryTitle = entryInfo.getEntryTitle().toLowerCase(Locale.ROOT);
                                 if (entryTitle.contains(query)) filteredEntries.add(entryInfo);
                             }
+                            binding.scrollToTopButton.hide();
                             adapter.submitList(filteredEntries);
                             return true;
                         }
@@ -625,6 +647,7 @@ public class AllEntriesFragment extends Fragment implements EntryItemAdapter.Ent
         } else {
             Collections.sort(sortedEntries, new EntryInfo.LatestComparator());
         }
+        binding.scrollToTopButton.hide();
         adapter.submitList(sortedEntries);
         entries = sortedEntries;
     }
